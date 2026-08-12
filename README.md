@@ -157,6 +157,35 @@ action falls under a chattering tolerance of `n_states*1e-4` (1,487 on the
 A run that stops with `n_states_chattering > 0` says *"converged with N states
 still changing action"*, not *"converged optimally"*.
 
+## Physical constants
+
+Every constant traces to Riley's Table I (PDF pp. 29-30, printed 25-26), with
+exact conversions: 1 lb = 0.45359237 kg, 1 ft = 0.3048 m, 1 slug-ft2 =
+1.35581795 kg-m2.
+
+| code | Table I | value |
+|---|---|---|
+| `MASS` | Nominal test weight, lb | 1577 → 715.3152 kg |
+| `WING_SURFACE_AREA` | Wing: Area, ft² | 98.11 → 9.114717 m² |
+| `CHORD` | Wing: Mean aerodynamic chord, ft | 4.00 → 1.2192 m |
+| `WING_SPAN` | Overall dimensions: Span, ft | 24.46 → 7.455408 m |
+| `I_YY` | Moments of inertia: Iy, slug-ft² | 738 → 1000.5936 kg·m² |
+
+`MASS` and `CHORD` were mistranscribed as 715.21 and 1.22 until 2026-08-12;
+the values above were confirmed against the page. They are duplicated in the
+CUDA kernel, so both copies move together — `verificar_cpu_vs_kernel.py` is
+what catches it if they ever do not.
+
+Riley's Table I contradicts itself on span: *Overall dimensions* says 24.46 ft
+and *Wing* says 26.46 ft. The aspect ratio settles it — Riley states AR = 6.10,
+and b²/S gives 6.098 for 24.46 against 7.136 for 26.46. The span does not enter
+the 4-DOF longitudinal equations at all; it only appears in the lateral moment
+increments of the CG transfer, which this model discards.
+
+Table I also gives `Ixz = 0` and the CG at 0.25 c̄ — the first confirms by data
+that the inertia cross-terms the 4-DOF reduction drops were already zero, the
+second is the reference every aerodynamic coefficient is measured about.
+
 ## Provenance
 
 Migrated from `nromero@udesa:/home/nromero/stall-spin-recovery-dp` (the machine

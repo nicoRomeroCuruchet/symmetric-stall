@@ -164,9 +164,15 @@ class Grumman:
         self.Cl_RUDDER = 0.0143
 
         # Physical model
-        self.MASS = 715.21  # Mass (m) [kg] — Riley Table I: 1577 lb × 0.453592
-        self.WING_SURFACE_AREA = 9.1147  # Wing surface area (S) [m2]
-        self.CHORD = 1.22  # Chord (c) [m]
+        # Riley Table I, confirmed against PDF p. 30 (printed 26). Conversions
+        # are exact: 1 lb = 0.45359237 kg, 1 ft = 0.3048 m, 1 slug-ft2 =
+        # 1.35581795 kg-m2. MASS and CHORD used to be 715.21 and 1.22, which
+        # are mistranscriptions -- 1577 lb is 715.3152, not 715.21, and the
+        # comment itself already said 0.453592.
+        self.MASS = 715.3152  # Mass (m) [kg] — Riley Table I: 1577 lb
+        self.WING_SURFACE_AREA = 9.114717  # (S) [m2] — Table I: 98.11 ft2
+        self.CHORD = 1.2192  # Chord (c) [m] — Table I: 4.00 ft, rectangular
+        # wing, so root = tip = mean aerodynamic chord = 4.00 ft
         self.WING_SPAN = 7.455408  # Wing Span (b) [m]. NOTE: Riley's Table I contradicts itself: "Overall dimensions: Span 24.46" vs "Wing: Span 26.46".
         # The aspect ratio settles it -- Riley states AR = 6.10, and with
         # S = 98.11 ft2 that gives 6.098 for 24.46 ft and 7.136 for 26.46. The
@@ -174,8 +180,8 @@ class Grumman:
         # flight data (maneuver/SPIN_A_merged_Data.csv, column b) carries
         # 7.455408 m = 24.46 ft x 0.3048 exactly. Until 2026-08-10 this was
         # 8.066, i.e. 8.18%% too large in ALL lateral terms.
-        self.I_XX = 808.06   # Inertia [Kg.m^2]
-        self.I_YY = 1000.60  # Inertia [Kg.m^2] — Riley Table I: 738 slug·ft² × 1.35582
+        self.I_XX = 808.0675   # Inertia [Kg.m^2] — Table I: 596 slug-ft2
+        self.I_YY = 1000.5936  # Inertia [Kg.m^2] — Table I: 738 slug-ft2
 
         # Stall angle of attack (αs) [rad] — flat-top onset per Riley Table III
         self.ALPHA_STALL = np.deg2rad(14)

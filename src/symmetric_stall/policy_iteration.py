@@ -202,12 +202,12 @@ class PolicyIterationStall:
         cuda_source = reward_defines + r'''
         extern "C" {
 
-        __device__ const float MASS = 715.21f;   // Riley Table I: 1577 lb x 0.453592
-        __device__ const float S = 9.1147f;
-        __device__ const float CHORD = 1.22f;
+        __device__ const float MASS = 715.3152f; // Riley Table I: 1577 lb x 0.45359237
+        __device__ const float S = 9.114717f;   // Table I: 98.11 ft2
+        __device__ const float CHORD = 1.2192f; // Table I: 4.00 ft x 0.3048
         __device__ const float RHO = 1.225f;
         __device__ const float G = 9.81f;
-        __device__ const float I_YY = 1000.60f;  // Riley Table I: 738 slug-ft2 x 1.35582
+        __device__ const float I_YY = 1000.5936f; // Riley Table I: 738 slug-ft2 x 1.35581795
 
         __device__ const float SPAN = 7.455408f;  // 24.46 ft x 0.3048. Riley's Table I says 26.46 on the wing row and 24.46 under overall dimensions; his own AR = 6.10 and the 98.11 ft2 area both give 24.46, and so does the AA-1X flight data.
 
