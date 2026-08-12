@@ -1,0 +1,85 @@
+INFO:__main__:[*] Training new policy for symmetric_stall...
+2026-08-11 18:23:36.088 | INFO     | PolicyIteration:_precompute_grid_metadata:146 - Grid precomputed. Shape: [56 41 60 41], Strides: [100860   2460     41      1]
+2026-08-11 18:23:36.088 | INFO     | PolicyIteration:_allocate_tensors_and_compile:150 - Allocating procedural tensors and compiling 4-DOF CUDA JIT Kernels...
+2026-08-11 18:23:36.434 | SUCCESS  | PolicyIteration:_allocate_tensors_and_compile:181 - 4-DOF CUDA Kernels compiled. VRAM usage optimized.
+2026-08-11 18:23:36.434 | INFO     | PolicyIteration:run:919 - --- Iteration 1/1000 ---
+2026-08-11 18:33:59.619 | WARNING  | PolicyIteration:policy_evaluation:872 - GPU Evaluation hit max iterations (20000) with Δ=1.14502e-01
+2026-08-11 18:34:17.286 | INFO     | PolicyIteration:policy_improvement:907 - GPU Policy updated: 5246798 states changed optimal action. (Tolerance: 564)
+2026-08-11 18:34:17.286 | INFO     | PolicyIteration:run:919 - --- Iteration 2/1000 ---
+2026-08-11 18:35:30.299 | SUCCESS  | PolicyIteration:policy_evaluation:868 - GPU Evaluation converged at step 2325 with Δ=0.00000e+00
+2026-08-11 18:35:47.961 | INFO     | PolicyIteration:policy_improvement:907 - GPU Policy updated: 4011329 states changed optimal action. (Tolerance: 564)
+2026-08-11 18:35:47.961 | INFO     | PolicyIteration:run:919 - --- Iteration 3/1000 ---
+2026-08-11 18:46:18.281 | WARNING  | PolicyIteration:policy_evaluation:872 - GPU Evaluation hit max iterations (20000) with Δ=9.76562e-04
+2026-08-11 18:46:36.019 | INFO     | PolicyIteration:policy_improvement:907 - GPU Policy updated: 1674845 states changed optimal action. (Tolerance: 564)
+2026-08-11 18:46:36.019 | INFO     | PolicyIteration:run:919 - --- Iteration 4/1000 ---
+2026-08-11 18:47:58.867 | SUCCESS  | PolicyIteration:policy_evaluation:868 - GPU Evaluation converged at step 2625 with Δ=3.81470e-06
+2026-08-11 18:48:16.588 | INFO     | PolicyIteration:policy_improvement:907 - GPU Policy updated: 845563 states changed optimal action. (Tolerance: 564)
+2026-08-11 18:48:16.588 | INFO     | PolicyIteration:run:919 - --- Iteration 5/1000 ---
+2026-08-11 18:53:08.535 | SUCCESS  | PolicyIteration:policy_evaluation:868 - GPU Evaluation converged at step 9250 with Δ=3.81470e-06
+2026-08-11 18:53:26.251 | INFO     | PolicyIteration:policy_improvement:907 - GPU Policy updated: 603234 states changed optimal action. (Tolerance: 564)
+2026-08-11 18:53:26.251 | INFO     | PolicyIteration:run:919 - --- Iteration 6/1000 ---
+2026-08-11 18:53:58.637 | SUCCESS  | PolicyIteration:policy_evaluation:868 - GPU Evaluation converged at step 1025 with Δ=3.81470e-06
+2026-08-11 18:54:16.378 | INFO     | PolicyIteration:policy_improvement:907 - GPU Policy updated: 494418 states changed optimal action. (Tolerance: 564)
+2026-08-11 18:54:16.378 | INFO     | PolicyIteration:run:919 - --- Iteration 7/1000 ---
+2026-08-11 18:56:15.593 | SUCCESS  | PolicyIteration:policy_evaluation:868 - GPU Evaluation converged at step 3775 with Δ=4.76837e-06
+2026-08-11 18:56:33.316 | INFO     | PolicyIteration:policy_improvement:907 - GPU Policy updated: 399433 states changed optimal action. (Tolerance: 564)
+2026-08-11 18:56:33.316 | INFO     | PolicyIteration:run:919 - --- Iteration 8/1000 ---
+2026-08-11 18:57:09.641 | SUCCESS  | PolicyIteration:policy_evaluation:868 - GPU Evaluation converged at step 1150 with Δ=4.41074e-06
+2026-08-11 18:57:27.397 | INFO     | PolicyIteration:policy_improvement:907 - GPU Policy updated: 300542 states changed optimal action. (Tolerance: 564)
+2026-08-11 18:57:27.397 | INFO     | PolicyIteration:run:919 - --- Iteration 9/1000 ---
+2026-08-11 18:59:28.157 | SUCCESS  | PolicyIteration:policy_evaluation:868 - GPU Evaluation converged at step 3825 with Δ=4.88758e-06
+2026-08-11 18:59:45.910 | INFO     | PolicyIteration:policy_improvement:907 - GPU Policy updated: 229392 states changed optimal action. (Tolerance: 564)
+2026-08-11 18:59:45.910 | INFO     | PolicyIteration:run:919 - --- Iteration 10/1000 ---
+2026-08-11 19:00:30.918 | SUCCESS  | PolicyIteration:policy_evaluation:868 - GPU Evaluation converged at step 1425 with Δ=4.64916e-06
+2026-08-11 19:00:48.652 | INFO     | PolicyIteration:policy_improvement:907 - GPU Policy updated: 141316 states changed optimal action. (Tolerance: 564)
+2026-08-11 19:00:48.652 | INFO     | PolicyIteration:run:919 - --- Iteration 11/1000 ---
+2026-08-11 19:01:21.917 | SUCCESS  | PolicyIteration:policy_evaluation:868 - GPU Evaluation converged at step 1050 with Δ=4.52995e-06
+2026-08-11 19:01:39.743 | INFO     | PolicyIteration:policy_improvement:907 - GPU Policy updated: 88616 states changed optimal action. (Tolerance: 564)
+2026-08-11 19:01:39.743 | INFO     | PolicyIteration:run:919 - --- Iteration 12/1000 ---
+2026-08-11 19:01:59.561 | SUCCESS  | PolicyIteration:policy_evaluation:868 - GPU Evaluation converged at step 625 with Δ=4.76837e-06
+2026-08-11 19:02:17.410 | INFO     | PolicyIteration:policy_improvement:907 - GPU Policy updated: 58139 states changed optimal action. (Tolerance: 564)
+2026-08-11 19:02:17.410 | INFO     | PolicyIteration:run:919 - --- Iteration 13/1000 ---
+2026-08-11 19:02:34.061 | SUCCESS  | PolicyIteration:policy_evaluation:868 - GPU Evaluation converged at step 525 with Δ=3.81470e-06
+2026-08-11 19:02:51.864 | INFO     | PolicyIteration:policy_improvement:907 - GPU Policy updated: 41257 states changed optimal action. (Tolerance: 564)
+2026-08-11 19:02:51.864 | INFO     | PolicyIteration:run:919 - --- Iteration 14/1000 ---
+2026-08-11 19:02:59.807 | SUCCESS  | PolicyIteration:policy_evaluation:868 - GPU Evaluation converged at step 250 with Δ=4.76837e-06
+2026-08-11 19:03:17.642 | INFO     | PolicyIteration:policy_improvement:907 - GPU Policy updated: 29866 states changed optimal action. (Tolerance: 564)
+2026-08-11 19:03:17.642 | INFO     | PolicyIteration:run:919 - --- Iteration 15/1000 ---
+2026-08-11 19:03:23.212 | SUCCESS  | PolicyIteration:policy_evaluation:868 - GPU Evaluation converged at step 175 with Δ=4.29153e-06
+2026-08-11 19:03:41.045 | INFO     | PolicyIteration:policy_improvement:907 - GPU Policy updated: 20941 states changed optimal action. (Tolerance: 564)
+2026-08-11 19:03:41.045 | INFO     | PolicyIteration:run:919 - --- Iteration 16/1000 ---
+2026-08-11 19:03:45.825 | SUCCESS  | PolicyIteration:policy_evaluation:868 - GPU Evaluation converged at step 150 with Δ=1.90735e-06
+2026-08-11 19:04:03.679 | INFO     | PolicyIteration:policy_improvement:907 - GPU Policy updated: 14407 states changed optimal action. (Tolerance: 564)
+2026-08-11 19:04:03.679 | INFO     | PolicyIteration:run:919 - --- Iteration 17/1000 ---
+2026-08-11 19:04:09.250 | SUCCESS  | PolicyIteration:policy_evaluation:868 - GPU Evaluation converged at step 175 with Δ=9.53674e-07
+2026-08-11 19:04:27.055 | INFO     | PolicyIteration:policy_improvement:907 - GPU Policy updated: 10035 states changed optimal action. (Tolerance: 564)
+2026-08-11 19:04:27.055 | INFO     | PolicyIteration:run:919 - --- Iteration 18/1000 ---
+2026-08-11 19:04:31.042 | SUCCESS  | PolicyIteration:policy_evaluation:868 - GPU Evaluation converged at step 125 with Δ=4.76837e-07
+2026-08-11 19:04:48.885 | INFO     | PolicyIteration:policy_improvement:907 - GPU Policy updated: 6825 states changed optimal action. (Tolerance: 564)
+2026-08-11 19:04:48.885 | INFO     | PolicyIteration:run:919 - --- Iteration 19/1000 ---
+2026-08-11 19:04:52.081 | SUCCESS  | PolicyIteration:policy_evaluation:868 - GPU Evaluation converged at step 100 with Δ=4.76837e-07
+2026-08-11 19:05:09.907 | INFO     | PolicyIteration:policy_improvement:907 - GPU Policy updated: 4327 states changed optimal action. (Tolerance: 564)
+2026-08-11 19:05:09.907 | INFO     | PolicyIteration:run:919 - --- Iteration 20/1000 ---
+2026-08-11 19:05:13.102 | SUCCESS  | PolicyIteration:policy_evaluation:868 - GPU Evaluation converged at step 100 with Δ=0.00000e+00
+2026-08-11 19:05:30.933 | INFO     | PolicyIteration:policy_improvement:907 - GPU Policy updated: 2531 states changed optimal action. (Tolerance: 564)
+2026-08-11 19:05:30.933 | INFO     | PolicyIteration:run:919 - --- Iteration 21/1000 ---
+2026-08-11 19:05:33.336 | SUCCESS  | PolicyIteration:policy_evaluation:868 - GPU Evaluation converged at step 75 with Δ=0.00000e+00
+2026-08-11 19:05:51.146 | INFO     | PolicyIteration:policy_improvement:907 - GPU Policy updated: 1425 states changed optimal action. (Tolerance: 564)
+2026-08-11 19:05:51.146 | INFO     | PolicyIteration:run:919 - --- Iteration 22/1000 ---
+2026-08-11 19:05:52.757 | SUCCESS  | PolicyIteration:policy_evaluation:868 - GPU Evaluation converged at step 50 with Δ=0.00000e+00
+2026-08-11 19:06:10.574 | INFO     | PolicyIteration:policy_improvement:907 - GPU Policy updated: 720 states changed optimal action. (Tolerance: 564)
+2026-08-11 19:06:10.574 | INFO     | PolicyIteration:run:919 - --- Iteration 23/1000 ---
+2026-08-11 19:06:12.185 | SUCCESS  | PolicyIteration:policy_evaluation:868 - GPU Evaluation converged at step 50 with Δ=0.00000e+00
+2026-08-11 19:06:30.025 | SUCCESS  | PolicyIteration:run:925 - Algorithm converged optimally at iteration 23.
+2026-08-11 19:06:30.025 | INFO     | PolicyIteration:_pull_tensors_from_gpu:749 - Retrieving converged matrices from VRAM to CPU RAM...
+2026-08-11 19:06:30.027 | INFO     | PolicyIteration:_pull_tensors_from_gpu:762 - Released unused GPU tensors and freed VRAM pool.
+2026-08-11 19:06:30.034 | SUCCESS  | PolicyIteration:_pull_tensors_from_gpu:776 - Matrices successfully pulled to Host RAM. All VRAM released.
+2026-08-11 19:06:30.034 | INFO     | PolicyIteration:save:938 - Serializing policy to /home/nromero/stall-spin-recovery-dp/SymmetricStall_policy.npz...
+2026-08-11 19:06:30.176 | SUCCESS  | PolicyIteration:save:957 - Policy saved successfully to /home/nromero/stall-spin-recovery-dp/SymmetricStall_policy.npz
+2026-08-11 19:06:30.176 | INFO     | PolicyIteration:save:938 - Serializing policy to /home/nromero/stall-spin-recovery-dp/results/SymmetricStall_policy.npz...
+2026-08-11 19:06:30.196 | SUCCESS  | PolicyIteration:save:957 - Policy saved successfully to /home/nromero/stall-spin-recovery-dp/results/SymmetricStall_policy.npz
+INFO:__main__:[+] Policy cached to /home/nromero/stall-spin-recovery-dp/results/SymmetricStall_policy.npz
+INFO:__main__:[*] Eval policy: A (convex action blend)
+INFO:__main__:[*] Plot saved to: /home/nromero/stall-spin-recovery-dp/results/symmetric_stall_trajectory.png
+INFO:__main__:[*] Extracting 4D Tensors for heatmaps...
+INFO:__main__:[+] Heatmaps saved to /home/nromero/stall-spin-recovery-dp/results/symmetric_stall_heatmaps.png
