@@ -25,11 +25,11 @@ from symmetric_stall.aircraft.symmetric_stall import SymmetricStall
 RAW, FILLED = Path(sys.argv[1]), Path(sys.argv[2])
 V0S = np.round(np.arange(0.80, 0.9501, 0.01), 3)
 GAMMA0, ALPHA0, Q0 = 0.0, 20.0, 0.0
-COLOR = {"sin rellenar": "#D55E00", "rellenada": "#0072B2"}
+COLOR = {"unfilled": "#D55E00", "filled": "#0072B2"}
 
 env = SymmetricStall()
-pis = {"sin rellenar": PolicyIterationStall.load(RAW, env=env),
-       "rellenada": PolicyIterationStall.load(FILLED, env=env)}
+pis = {"unfilled": PolicyIterationStall.load(RAW, env=env),
+       "filled": PolicyIterationStall.load(FILLED, env=env)}
 
 res = {k: {"hmin": [], "gmin": [], "dur": [], "cerro": []} for k in pis}
 print("%6s | %-32s | %-32s" % ("", "SIN RELLENAR", "RELLENADA"))
@@ -86,6 +86,6 @@ out = main.RESULTS_DIR / "barrido_v0.png"
 fig.savefig(out, dpi=200)
 print("\n-> %s" % out)
 
-d = np.array(res["sin rellenar"]["hmin"]) - np.array(res["rellenada"]["hmin"])
+d = np.array(res["unfilled"]["hmin"]) - np.array(res["filled"]["hmin"])
 print("the fill is worth: min %.3f m, max %.3f m, median %.3f m" % (
     d.min(), d.max(), float(np.median(d))))

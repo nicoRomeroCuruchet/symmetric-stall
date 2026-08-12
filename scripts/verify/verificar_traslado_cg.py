@@ -111,7 +111,7 @@ print("  (3) alpha=14, C_L=1.26: CG 5%% aft dCm=%+.5f (nose-up, less stable); "
       "5%% forward dCm=%+.5f" % (dcm_aft, dcm_fwd))
 ok3 = dcm_aft > 0 > dcm_fwd
 
-# ---- (4) DXCG_OVER_CHORD sigue funcionando ----
+# ---- (4) DXCG_OVER_CHORD still works ----
 a.CG_AFT = a.CG_RIGHT = a.CG_BELOW = 0.0
 a.DXCG_OVER_CHORD = 0.05
 ok4 = abs(a.CG_AFT - 0.05 * a.CHORD) < 1e-12 and abs(a.DXCG_OVER_CHORD - 0.05) < 1e-12

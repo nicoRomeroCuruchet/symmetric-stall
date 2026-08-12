@@ -26,7 +26,7 @@ FILLED = Path(sys.argv[2])
 VS = [float(v) for v in sys.argv[3:]] or [0.95, 0.85]
 
 GAMMA0, ALPHA0, Q0 = 0.0, 20.0, 0.0
-COLOR = {"sin rellenar": "#D55E00", "rellenada": "#0072B2"}
+COLOR = {"unfilled": "#D55E00", "filled": "#0072B2"}
 
 env = SymmetricStall()
 policies = {}
