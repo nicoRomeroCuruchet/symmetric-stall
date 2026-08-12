@@ -19,7 +19,7 @@ COLS = [RAMPA[round(i * (len(RAMPA) - 1) / max(1, len(V0S) - 1))]
 PAN = [("gamma", r"$\gamma$ (deg)", np.rad2deg), ("v_norm", r"$V/V_s$", lambda x: x),
        ("alpha", r"$\alpha$ (deg)", np.rad2deg), ("q", r"$q$ (deg/s)", np.rad2deg),
        ("de", r"$\delta_e$ (deg)", np.rad2deg), ("dt_ctrl", r"$\delta_t$", lambda x: x),
-       ("h", "altura (m)", lambda x: x)]
+       ("h", "altitude (m)", lambda x: x)]
 
 hs = {}
 print("%6s %8s %10s %10s %9s" % ("V0", "dur", "h_min", "gamma_min", "alpha_min"))

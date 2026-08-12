@@ -15,7 +15,7 @@ ESTILO = {
 PAN = [("gamma", r"$\\gamma$ (deg)", np.rad2deg), ("v_norm", r"$V/V_s$", lambda x: x),
        ("alpha", r"$\\alpha$ (deg)", np.rad2deg), ("q", r"$q$ (deg/s)", np.rad2deg),
        ("de", r"$\\delta_e$ (deg)", np.rad2deg), ("dt_ctrl", r"$\\delta_t$", lambda x: x),
-       ("h", "altura (m)", lambda x: x)]
+       ("h", "altitude (m)", lambda x: x)]
 
 fig, axes = plt.subplots(len(PAN), 1, figsize=(7.4, 12.2), sharex=True)
 for ax, (k, et, cv) in zip(axes, PAN):

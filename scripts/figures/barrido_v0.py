@@ -55,7 +55,7 @@ fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(7.0, 6.4), sharex=True,
                                gridspec_kw={"height_ratios": [2, 1]})
 for k in pis:
     ax1.plot(V0S, res[k]["hmin"], "o-", ms=4, lw=1.6, color=COLOR[k], label=k)
-ax1.set_ylabel("excursion minima de altura  $h_{min}$  (m)", fontsize=9)
+ax1.set_ylabel("minimum altitude excursion  $h_{min}$  (m)", fontsize=9)
 ax1.axvline(0.9124, color="0.5", lw=0.9, ls="--")
 ax1.annotate(r"$V^*(20^\circ)=0.912$", xy=(0.9124, 0.02),
              xycoords=("data", "axes fraction"), rotation=90, fontsize=7.5,

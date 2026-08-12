@@ -79,7 +79,7 @@ COLOR = {"optimum (DP)": "#0072B2", "CAA alpha-hold": "#D55E00",
 PAN = [("gamma", r"$\gamma$ (deg)", np.rad2deg), ("v_norm", r"$V/V_s$", lambda x: x),
        ("alpha", r"$\alpha$ (deg)", np.rad2deg), ("q", r"$q$ (deg/s)", np.rad2deg),
        ("de", r"$\delta_e$ (deg)", np.rad2deg), ("dt_ctrl", r"$\delta_t$", lambda x: x),
-       ("h", "altura (m)", lambda x: x)]
+       ("h", "altitude (m)", lambda x: x)]
 
 fig, axes = plt.subplots(len(PAN), 1, figsize=(7.2, 12.0), sharex=True)
 for ax, (k, et, cv) in zip(axes, PAN):
