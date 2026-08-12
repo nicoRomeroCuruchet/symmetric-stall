@@ -31,11 +31,11 @@ CAB = (r"\begin{table}[hbt!]", r"    \centering",
        r"        \hline")
 
 
-def celda(entrada):
+def cell(entry):
     """-9.09 or -2.75^t if it did not return to level flight within the horizon."""
-    h = entrada["h"]
-    marca = "" if entrada.get("status") == "recovered" else r"\textsuperscript{t}"
-    return f"{h:.2f}{marca}"
+    h = entry["h"]
+    mark = "" if entry.get("status") == "recovered" else r"\textsuperscript{t}"
+    return f"{h:.2f}{mark}"
 
 
 def main():
@@ -51,7 +51,7 @@ def main():
     for a in ALPHAS:
         for v in VNORMS:
             k = f"a{a}_v{v:.2f}"
-            vals = " & ".join(celda(c[k]) for c in cols)
+            vals = " & ".join(cell(c[k]) for c in cols)
             lineas.append(f"        {a} & {v:.2f} & {vals} " + r"\\")
     lineas += [
         r"        \hline",

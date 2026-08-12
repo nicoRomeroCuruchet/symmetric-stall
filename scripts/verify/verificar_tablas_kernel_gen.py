@@ -155,7 +155,7 @@ def main():
             worst, worst_n = rel[i], kn
         if rel[i] > TOL:
             failures += 1
-            print(f"  DIFIERE  {kn:<22} <-> {cn:<26} entrada {i:2d}: "
+            print(f"  DIFFERS  {kn:<22} <-> {cn:<26} entry {i:2d}: "
                   f"kernel {kv[i]:+.7g}  CPU {cv[i]:+.7g}  rel {rel[i]:.2e}")
 
     for c in conventions:

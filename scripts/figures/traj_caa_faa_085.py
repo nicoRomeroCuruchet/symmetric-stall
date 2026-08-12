@@ -37,7 +37,7 @@ pi.states_space = states
 # the optimum's pull authority at THIS entry, used to cap the arms
 r_opt = pp.rollout(env, pi, pp.ctrl_optimal, ALPHA0, V0, record=True)
 tope = float(np.min(r_opt["hist"]["de"]))
-print("entrada: alpha0 = %.0f deg, V0 = %.2f Vs, gamma0 = 0, q0 = 0" % (ALPHA0, V0))
+print("entry: alpha0 = %.0f deg, V0 = %.2f Vs, gamma0 = 0, q0 = 0" % (ALPHA0, V0))
 print("optimum's deepest pull: %.2f deg (used as the cap for CAA and FAA)"
       % np.rad2deg(tope))
 

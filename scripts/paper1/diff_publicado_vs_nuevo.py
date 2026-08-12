@@ -47,20 +47,20 @@ def section(title, name, filt=None):
     if a is None or b is None:
         print(f"  (missing: published={a is not None} new={b is not None})")
         return
-    hojas = []
-    walk(a, b, "", hojas)
+    leaves = []
+    walk(a, b, "", leaves)
     if filt:
-        hojas = [h for h in hojas if filt(h[0])]
-    if not hojas:
-        print("  (sin hojas numericas comparables)")
+        leaves = [h for h in leaves if filt(h[0])]
+    if not leaves:
+        print("  (sin leaves numericas comparables)")
         return
     print(f"{'metrica':<42s}{'publicado':>11}{'nuevo':>11}{'cambio':>17}")
-    cambiados = 0
-    for path, va, vb in hojas:
+    changed = 0
+    for path, va, vb in leaves:
         if abs(vb - va) > 1e-9:
-            cambiados += 1
+            changed += 1
             print(row(path, va, vb))
-    print(f"\n  {cambiados} de {len(hojas)} valores cambiaron")
+    print(f"\n  {changed} of {len(leaves)} values changed")
 
 
 if __name__ == "__main__":

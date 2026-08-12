@@ -94,7 +94,7 @@ def main() -> int:
         status = "ok" if rel[i] <= 1e-6 else "DIFIERE"
         if rel[i] > 1e-6:
             failures += 1
-            print(f"  {status:<8}{kn:<20} entrada {i:2d}: kernel {kv[i]:+.6f} "
+            print(f"  {status:<8}{kn:<20} entry {i:2d}: kernel {kv[i]:+.6f} "
                   f"vs CPU {cv[i]:+.6f}  rel {rel[i]:.2e}")
         if rel[i] > worst:
             worst, worst_name = rel[i], kn

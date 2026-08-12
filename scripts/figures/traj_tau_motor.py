@@ -68,7 +68,7 @@ BRAZOS = [
     ("FAA de-opt", lambda: pp.make_power_gated(ramp=True), "tab:purple", "-."),
 ]
 
-print("entrada: alpha0 = %.0f deg, V0 = %.2f Vs, gamma0 = 0, q0 = 0" % (ALPHA0, V0))
+print("entry: alpha0 = %.0f deg, V0 = %.2f Vs, gamma0 = 0, q0 = 0" % (ALPHA0, V0))
 print("engine lag from eq. (A4), tau_e in seconds\n")
 print("  tau_e      DP optimum       CAA de-opt       FAA de-opt     gap opt->CAA")
 table = {}
