@@ -92,7 +92,7 @@ for _ in range(200):
 
     c_n = cl_ * np.cos(al) + cd_ * np.sin(al)
     c_a = cd_ * np.cos(al) - cl_ * np.sin(al)
-    r_cg = np.array([-dx, dy, dz])          # posicion del CG en ejes de cuerpo
+    r_cg = np.array([-dx, dy, dz])          # CG position in body axes
     F = np.array([-c_a, cy_, -c_n])
     dM = np.cross(-r_cg, F)                 # (r_ref - r_CG) x F, with r_ref = 0
     esp = np.array([dM[0] / a.WING_SPAN, dM[1] / a.CHORD, dM[2] / a.WING_SPAN])
@@ -107,7 +107,7 @@ a.CG_AFT = 0.05 * a.CHORD
 _, dcm_aft, _ = a._delta_momentos_cg(1.26, 0.24, al14)
 a.CG_AFT = -0.05 * a.CHORD
 _, dcm_fwd, _ = a._delta_momentos_cg(1.26, 0.24, al14)
-print("  (3) alpha=14, C_L=1.26: CG 5%% atras dCm=%+.5f (cabreo, menos estable); "
+print("  (3) alpha=14, C_L=1.26: CG 5%% aft dCm=%+.5f (nose-up, less stable); "
       "5%% forward dCm=%+.5f" % (dcm_aft, dcm_fwd))
 ok3 = dcm_aft > 0 > dcm_fwd
 

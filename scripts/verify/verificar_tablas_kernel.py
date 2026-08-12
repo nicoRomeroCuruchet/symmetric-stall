@@ -51,9 +51,9 @@ def kernel_tables(source: str) -> dict:
         r"__device__\s+const\s+float\s+([A-Z_0-9]+)\s*\[\s*(\d+)\s*\]\s*=\s*\{([^}]*)\}",
         re.S)
     out = {}
-    for name, n, cuerpo in pattern.findall(source):
+    for name, n, body in pattern.findall(source):
         vals = [float(x) for x in re.findall(r"[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?f?",
-                                             cuerpo.replace("f", ""))]
+                                             body.replace("f", ""))]
         if len(vals) != int(n):
             print(f"  !! {name}: declara {n} entradas y tiene {len(vals)}")
         out[name] = np.array(vals, dtype=np.float64)

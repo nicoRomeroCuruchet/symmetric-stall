@@ -48,24 +48,24 @@ def carga_avion():
     raise SystemExit("could not find the aircraft class on this branch")
 
 
-def tablas_del_kernel(fuente):
+def tablas_del_kernel(source):
     # The comments inside the braces carry numbers -- conversion factors
     # conversion, rangos de alpha -- y si se cuelan al extraer, corren TODAS
     # the entries of that table, and the difference that follows is the parser's,
     # no del kernel. Se sacan antes de mirar nada.
-    fuente = re.sub(r"/\*.*?\*/", " ", fuente, flags=re.S)
-    fuente = re.sub(r"//[^\n]*", " ", fuente)
-    patron = re.compile(
+    source = re.sub(r"/\*.*?\*/", " ", source, flags=re.S)
+    source = re.sub(r"//[^\n]*", " ", source)
+    pattern = re.compile(
         r"__device__\s+const\s+float\s+([A-Z_0-9]+)\s*\[\s*(\d+)\s*\]\s*=\s*\{([^}]*)\}",
         re.S)
     out = {}
-    for name, n, cuerpo in patron.findall(fuente):
+    for name, n, body in pattern.findall(source):
         # Entries can be products: "-0.00116f*57.2958f". Each element has to
         # be evaluated, not the loose numbers collected: otherwise the
         # conversion factor enters as if it were a table value and
         # corre todo un lugar.
         vals = []
-        for elem in cuerpo.split(","):
+        for elem in body.split(","):
             nums = re.findall(r"[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?", elem)
             if not nums:
                 continue

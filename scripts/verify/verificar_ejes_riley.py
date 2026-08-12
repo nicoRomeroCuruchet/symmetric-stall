@@ -71,7 +71,7 @@ def coefficients(a, vt, al, q, de, th, alpha_dot):
 
 
 def riley_ejes_cuerpo(a, gam, vn, al, q, de, th):
-    """Apendice B literal: estabilidad -> rotacion de alpha -> ejes cuerpo."""
+    """Appendix B verbatim: stability -> alpha rotation -> body axes."""
     vs = a.STALL_AIRSPEED
     m, g = a.MASS, a.GRAVITY
     vt = max(vn * vs, 0.1)
@@ -83,12 +83,12 @@ def riley_ejes_cuerpo(a, gam, vn, al, q, de, th):
     alpha_dot = 0.0
     for _ in range(200):
         cl, cd, cm = coefficients(a, vt, al, q, de, th, alpha_dot)
-        # fuerzas en ejes de estabilidad
+        # forces in stability axes
         Fxs, Fzs = -cd * qS, -cl * qS
         # LA ROTACION del Apendice B
         Fxb = np.cos(al) * Fxs - np.sin(al) * Fzs
         Fzb = np.sin(al) * Fxs + np.cos(al) * Fzs
-        # ecuaciones de cuerpo (v = p = r = 0, phi = 0)
+        # body equations (v = p = r = 0, phi = 0)
         u_dot = -q * w - g * np.sin(theta) + Fxb / m
         w_dot = q * u + g * np.cos(theta) + Fzb / m
         nuevo = (u * w_dot - w * u_dot) / (vt * vt)

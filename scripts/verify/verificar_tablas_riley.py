@@ -178,14 +178,14 @@ def numbers(line):
             if len(tok) >= 3 and any(c in "._" for c in tok):
                 out.append(None)
             continue
-        signo = ""
-        cuerpo = tok
-        if cuerpo[:1] in "-+":
-            signo, cuerpo = cuerpo[0], cuerpo[1:]
-        if cuerpo[:1] in "oO0Cc*,.°•" and not cuerpo.startswith("0."):
-            cuerpo = "." + cuerpo[1:]
-        t = (signo + cuerpo).translate(OCR)
-        # un token legible es signo opcional, digitos y a lo sumo un punto
+        sign = ""
+        body = tok
+        if body[:1] in "-+":
+            sign, body = body[0], body[1:]
+        if body[:1] in "oO0Cc*,.°•" and not body.startswith("0."):
+            body = "." + body[1:]
+        t = (sign + body).translate(OCR)
+        # un token legible es sign opcional, digitos y a lo sumo un punto
         if re.fullmatch(r"[-+]?\d*\.?\d+", t) and any(ch.isdigit() for ch in t):
             out.append(float(t))
         elif re.search(r"[\d._]", tok):
