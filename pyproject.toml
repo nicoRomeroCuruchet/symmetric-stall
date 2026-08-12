@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "symmetric-stall"
+version = "0.1.0"
+description = "Optimal symmetric stall recovery via GPU policy iteration (4-DOF, Riley aerodynamics)"
+requires-python = ">=3.10"
+dependencies = [
+    # Nucleo numerico
+    "numpy>=1.24.0",
+    "numba>=0.58.0",
+    "scipy>=1.11.0",
+    # GPU. NO estaba en requirements.txt aunque el solver entero depende de
+    # cupy: policy_iteration.py compila su kernel con cupy.RawModule. Elegi
+    # el wheel de CUDA 12; para CUDA 11 es cupy-cuda11x.
+    #
+    # El extra [ctk] NO es opcional aca: sin los headers de CUDA, cupy falla al
+    # compilar el kernel en tiempo de ejecucion con "Failed to find CUDA
+    # headers". Solo se puede omitir si tenes el CUDA toolkit del sistema y
+    # CUDA_PATH apuntando a el.
+    "cupy-cuda12x[ctk]>=13.0",
+    # Entorno
+    "gymnasium>=0.29.1",
+    # Figuras y logging
+    "matplotlib>=3.8.0",
+    "loguru>=0.7.2",
+]
+
+[project.optional-dependencies]
+# Solo para el optimizador de pullout con CasADi (validate_with_casadi) y los
+# baselines de PPO, que estan en attic/.
+extra = [
+    "casadi>=3.6.0",
+    "pygame>=2.5.2",
+]
+
+[project.scripts]
+symstall-train = "symmetric_stall.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 92
+exclude = [".venv", "attic", "_incoming"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+# Long lines inside CUDA/C++ kernel strings cannot be broken
+"src/symmetric_stall/policy_iteration.py" = ["E501"]

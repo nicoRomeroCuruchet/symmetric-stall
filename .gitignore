@@ -1,0 +1,21 @@
+# Environments
+.venv/
+venv/
+*.egg-info/
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Trained policies: 119 MB each, and regenerable (see README).
+data/policies/*.npz
+data/policies/*.npz.raw
+data/policies/*.npz.bak
+
+# Reference PDFs: copyrighted, they do not belong in the repo.
+# refs/README.md records what they are; papers/ is a hand-curated set.
+refs/*.pdf
+papers/
+
+# Staging area for the migration from udesa
+_incoming/
