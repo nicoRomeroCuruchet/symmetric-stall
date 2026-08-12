@@ -5,7 +5,7 @@ Cuatro cosas, todas repetibles:
   1. With the CG where Riley takes it (0.25 c on the fuselage centreline,
      report p. 5 and Table I) the transfer must be the BIT-FOR-BIT IDENTITY
      on the plant derivatives. If it is not,
-     agregar el traslado movio resultados publicados.
+     adding the transfer moved published results.
   2. With the CG shifted, the three deltas must agree with a cross
      product computed SEPARATELY in this same file -- not by calling the
      plant, which is what is under test:
@@ -49,14 +49,14 @@ if name == "4dof":
                for al in np.deg2rad((-5., 5., 14., 25., 35.))
                for q in (-0.5, 0.0, 0.5) for de in (-0.4, 0.0, 0.4)
                for dt in (0.0, 1.0)]
-    llamar = lambda: [a.derivatives(*s) for s in STATES]
+    call_plant = lambda: [a.derivatives(*s) for s in STATES]
 elif name == "6dof":
     STATES = [(g, v, al, q, mu, p, de, da, dt)
                for g in (-0.3, 0.0) for v in (0.6, 1.0, 1.6)
                for al in np.deg2rad((-5., 5., 14., 25., 35.))
                for q in (-0.5, 0.5) for mu in (-0.5, 0.0, 0.5) for p in (-0.3, 0.3)
                for de in (-0.4, 0.4) for da in (-0.2, 0.2) for dt in (0.0, 1.0)]
-    llamar = lambda: [a.derivatives(*s) for s in STATES]
+    call_plant = lambda: [a.derivatives(*s) for s in STATES]
 else:
     STATES = [(g, v, al, be, q, mu, p, r, de, da, dr, dt)
                for g in (-0.3, 0.0) for v in (0.6, 1.0, 1.6)
@@ -65,17 +65,17 @@ else:
                for q in (-0.5, 0.5) for mu in (-0.5, 0.5) for p in (-0.3, 0.3)
                for r in (-0.2, 0.2) for de in (-0.4, 0.4) for da in (-0.2, 0.2)
                for dr in (-0.2, 0.2) for dt in (0.0, 1.0)][:4000]
-    llamar = lambda: [a._derivatives(s[0], s[1], s[2], s[3], s[5], s[6], s[4],
+    call_plant = lambda: [a._derivatives(s[0], s[1], s[2], s[3], s[5], s[6], s[4],
                                      s[7], s[8], s[9], s[11], s[10],
                                      a.STALL_AIRSPEED) for s in STATES]
 
 print("model %s -- %d test states" % (name, len(STATES)))
 
 # ---- (1) identity with the CG at Riley's reference ----
-base = np.array(llamar(), dtype=np.float64)
+base = np.array(call_plant(), dtype=np.float64)
 a.CG_AFT = 0.0; a.CG_RIGHT = 0.0; a.CG_BELOW = 0.0
-otra = np.array(llamar(), dtype=np.float64)
-ident = np.array_equal(base, otra)
+other = np.array(call_plant(), dtype=np.float64)
+ident = np.array_equal(base, other)
 print("  (1) CG en la referencia -> identidad bit a bit: %s" % ("SI" if ident else "NO"))
 
 # ---- (2) the transfer against an explicit cross product ----

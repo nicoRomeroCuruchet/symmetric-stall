@@ -55,7 +55,7 @@ def kernel_tables(source: str) -> dict:
         vals = [float(x) for x in re.findall(r"[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?f?",
                                              body.replace("f", ""))]
         if len(vals) != int(n):
-            print(f"  !! {name}: declara {n} entradas y tiene {len(vals)}")
+            print(f"  !! {name}: declares {n} entries and has {len(vals)}")
         out[name] = np.array(vals, dtype=np.float64)
     return out
 

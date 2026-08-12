@@ -5,7 +5,7 @@ Three ingredients, all three requested:
   1. the pilot applies the delta_e the DP asks for, but TAU_H seconds late
      (pure delay: he sees the state, decides, and the arm arrives afterwards);
   2. power comes up with Gratton's 2 s ramp, from t=0 (CAA) or from
-     el desestancamiento (FAA);
+     the unstall (FAA);
   3. the engine adds a first-order lag TAU_M on top of the throttle
      comandado:  d(dt_ef)/dt = (dt_cmd - dt_ef) / TAU_M.
 
@@ -60,7 +60,7 @@ def run_arm(mode, tau_m, tau_h=TAU_H):
         de_opt = float(get_optimal_action(obs, pi)[0][0])
         if mode == "optimal":
             de = de_opt
-        else:                       # el piloto ejecuta lo de hace tau_h
+        else:                       # the pilot applies what was asked tau_h ago
             de = float(cola[0]) if n_ret > 0 else de_opt
             cola.append(np.float32(de_opt))
 
@@ -73,7 +73,7 @@ def run_arm(mode, tau_m, tau_h=TAU_H):
         else:                       # faa: the ramp starts on unstalling
             dt_cmd = 0.0 if t_uns is None else min((t - t_uns) / GRATTON_RAMP_S, 1.0)
 
-        if tau_m > 0.0:             # motor de primer orden (Riley A4)
+        if tau_m > 0.0:             # first-order engine (Riley A4)
             dt_ef += (dt_cmd - dt_ef) * (dt / tau_m)
         else:
             dt_ef = dt_cmd
@@ -162,7 +162,7 @@ for ax, (k, et, cv) in zip(axes, PAN):
                     fontsize=7, color="#b2182b")
     if k == "dt":
         ax.set_ylim(-0.02, 1.05)
-        ax.annotate("punteado = comandado, lleno = efectivo (motor)",
+        ax.annotate("dotted = commanded, solid = effective (engine)",
                     xy=(0.99, 0.32), xycoords=("axes fraction", "data"),
                     ha="right", fontsize=7.5, color="0.35")
     if k in ("gamma", "h"):

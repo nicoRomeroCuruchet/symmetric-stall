@@ -3,8 +3,8 @@
   t = 0        the aircraft stalls and the pilot does NOT react: he keeps
                PULLING (delta_e = DE_NOREAC, negative), which deepens the
                stall
-  t = 0.33 s   el detector de stall dispara y engancha el controlador (DP).
-               Desde ahi el DP comanda el elevador de forma continua y sube la
+  t = 0.33 s   the stall detector fires and engages the controller (DP).
+               From there the DP commands the elevator continuously and brings up the
                throttle with a 0.6 s ramp
   t = 1.00 s   only then do the trained pilots react. Their elevator is
                ESCALONADO (heaviside), no modulado:
@@ -67,7 +67,7 @@ def run(mode):
             de = float(DE_NOREAC)                    # todavia tirando
         elif mode == "dp":
             de = float(get_optimal_action(obs, pi)[0][0])
-        else:                                        # piloto: dos escalones
+        else:                                        # pilot: two steps
             dtr = t - t_det                      # three steps that follow
             if dtr < D_PUSH:                     # the optimum's shape
                 de = float(DE_PUSH)
@@ -106,12 +106,12 @@ def run(mode):
 
 
 BRAZOS = [("DP  automatico (det. %.2f s)" % T_DP,       "dp",  "#0072B2"),
-          ("CAA piloto     (reacciona %.2f s)" % T_PIL, "caa", "#D55E00"),
-          ("FAA piloto     (reacciona %.2f s)" % T_PIL, "faa", "#009E73")]
+          ("CAA pilot      (reacts %.2f s)" % T_PIL, "caa", "#D55E00"),
+          ("FAA pilot      (reacts %.2f s)" % T_PIL, "faa", "#009E73")]
 
-print("V=%.2f Vs, alpha0=20 deg   |   motor tau=%.2f s" % (V0, TAU_M))
-print("sin reaccionar: de=%.0f deg (TIRANDO)   |   piloto: +15 deg hasta el "
-      "nose-down, despues %.0f deg fijo\n"
+print("V=%.2f Vs, alpha0=20 deg   |   engine tau=%.2f s" % (V0, TAU_M))
+print("not reacting: de=%.0f deg (PULLING)   |   pilot: +15 deg until the "
+      "nose-down, then %.0f deg fixed\n"
       % (np.rad2deg(DE_NOREAC), np.rad2deg(DE_PULL)))
 print("%-36s %9s %8s %10s %9s %11s" % ("arm", "h_min", "dur", "nose-down",
                                        "alpha_max", "status"))
@@ -167,7 +167,7 @@ axes[-1].set_xlabel("tiempo (s)", fontsize=9)
 axes[0].legend(loc="lower left", fontsize=7.5, frameon=False, ncol=1,
                bbox_to_anchor=(0.0, 1.02))
 fig.suptitle("Escenario completo: no-reaccion, detector a %.2f s, pilotos a %.2f s"
-             "\n$V_0=%.2f\\,V_s$, piloto escalonado siguiendo la forma del DP" % (T_DP, T_PIL, V0),
+             "\n$V_0=%.2f\\,V_s$, stepped pilot following the DP shape" % (T_DP, T_PIL, V0),
              fontsize=10, y=0.99)
 fig.tight_layout(rect=[0, 0, 1, 0.94])
 out = main.RESULTS_DIR / ("3_maniobras/escenario_pd_v%03d.png" % round(V0 * 100))

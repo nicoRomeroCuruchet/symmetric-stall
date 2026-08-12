@@ -37,7 +37,7 @@ def load():
             return getattr(m, cls)()
         except ImportError:
             continue
-    raise SystemExit("no encontre la clase del avion")
+    raise SystemExit("could not find the aircraft class")
 
 
 def main():
@@ -80,7 +80,7 @@ def main():
 
     riley = filas[0]
     print("\n  alpha: vuelo %.2f deg, simulacion de Riley %.2f deg, "
-          "este modelo %.2f deg" % (ALPHA_FLIGHT, ALPHA_SIM_RILEY, riley[2]))
+          "this model %.2f deg" % (ALPHA_FLIGHT, ALPHA_SIM_RILEY, riley[2]))
     ok = abs(riley[4]) < TOL_ACC
     print("\n%s: with the Appendix A thrust the aircraft %s the measured airspeed"
           % ("PASS" if ok else "FAIL", "sustains" if ok else "does NOT sustain"))

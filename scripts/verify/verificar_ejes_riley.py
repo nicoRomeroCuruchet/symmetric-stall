@@ -85,7 +85,7 @@ def riley_ejes_cuerpo(a, gam, vn, al, q, de, th):
         cl, cd, cm = coefficients(a, vt, al, q, de, th, alpha_dot)
         # forces in stability axes
         Fxs, Fzs = -cd * qS, -cl * qS
-        # LA ROTACION del Apendice B
+        # THE ROTATION of Appendix B
         Fxb = np.cos(al) * Fxs - np.sin(al) * Fzs
         Fzb = np.sin(al) * Fxs + np.cos(al) * Fzs
         # body equations (v = p = r = 0, phi = 0)

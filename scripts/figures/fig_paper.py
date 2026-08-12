@@ -2,7 +2,7 @@
 
 Copies rc, layout, colours, line styles and panel labels from
 `procedures.make_trajectory_comparison_figure`, so that the figures
-nuevas entren en el paper sin retoques.
+new ones drop into the paper without retouching.
 
 Uso: fig_paper.py <npz> <V0> [t_dp] [t_pil] [tau_m] [de_noreac] [de_pull]
 """

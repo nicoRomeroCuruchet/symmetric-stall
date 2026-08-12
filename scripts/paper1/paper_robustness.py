@@ -155,7 +155,7 @@ def normalization_gap(long_horizon_s: float = 60.0):
     floor = float(np.load(POLICY_PATH, allow_pickle=True)["bounds_low"][1])
 
     def free_run(env, vnorm0):
-        """Rollout sin regla de parada: h(T) y el swing de gamma en la cola."""
+        """Rollout with no stopping rule: h(T) and the gamma swing in the tail."""
         vs = env.airplane.STALL_AIRSPEED
         dt = env.airplane.TIME_STEP
         obs, _ = env.specific_reset(0.0, vnorm0, np.deg2rad(a0), 0.0)
@@ -491,7 +491,7 @@ def main():
     write_cg_gap_table(data)
 
 
-ETA_NOMINAL = 0.903           # rendimiento de helice IMPLICITO en el modelo
+ETA_NOMINAL = 0.903           # propeller efficiency IMPLICIT in the model
 ETA_LIST = [0.75, 0.80, 0.85, 0.90, 0.95]
 
 

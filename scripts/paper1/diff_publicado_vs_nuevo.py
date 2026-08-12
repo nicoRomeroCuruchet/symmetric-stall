@@ -20,7 +20,7 @@ def load(name):
 
 def row(label, a, b, unit="m"):
     if a is None or b is None:
-        return f"{label:<42s}{'—':>11}{'—':>11}{'(falta)':>11}"
+        return f"{label:<42s}{'—':>11}{'—':>11}{'(missing)':>11}"
     d = b - a
     pct = (d / abs(a) * 100) if a else float("nan")
     return f"{label:<42s}{a:11.3f}{b:11.3f}{d:+9.3f} {pct:+6.1f}%"
@@ -45,7 +45,7 @@ def section(title, name, filt=None):
     a, b = load(name)
     print(f"\n{'='*80}\n{title}  ({name})\n{'='*80}")
     if a is None or b is None:
-        print(f"  (falta: publicado={a is not None} nuevo={b is not None})")
+        print(f"  (missing: published={a is not None} new={b is not None})")
         return
     hojas = []
     walk(a, b, "", hojas)
@@ -65,7 +65,7 @@ def section(title, name, filt=None):
 
 if __name__ == "__main__":
     print("DIFF: published paper  vs  regenerated with MCA + drag fix + filled")
-    section("Procedimientos y sensibilidad del piloto", "procedures.json")
+    section("Procedures and pilot sensitivity", "procedures.json")
     section("Maniobras CAA / FAA", "maneuvers.json")
     section("Comparacion de esquemas", "mca_comparison.json")
     section("Robustez", "robustness.json")

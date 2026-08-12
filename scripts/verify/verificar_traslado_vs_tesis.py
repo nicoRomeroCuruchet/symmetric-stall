@@ -39,7 +39,7 @@ for _ in range(N):
                         dM_tesis[1] / a.CHORD,
                         dM_tesis[2] / a.WING_SPAN])
 
-    # --- lo nuestro. dx = hacia la COLA = -x_cg ---
+    # --- ours. dx = towards the TAIL = -x_cg ---
     a.CG_AFT, a.CG_RIGHT, a.CG_BELOW = -x_cg, y_cg, z_cg
     d_ours = np.array(a._delta_momentos_cg(cl_, cd_, al, cy=cy_))
 

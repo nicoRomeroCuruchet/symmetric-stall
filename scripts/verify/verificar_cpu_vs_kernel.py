@@ -1,6 +1,6 @@
 """Check that the CPU model and the CUDA kernel compute the SAME dynamics.
 
-Las tablas aerodinamicas estan duplicadas -- en aircraft/grumman.py y en el
+The aerodynamic tables are duplicated -- in aircraft/grumman.py and in the
 .cu embedded in policy_iteration.py -- and so are the formulas. Nothing keeps
 them in sync: the kernel trains the policy and the CPU evaluates it, so if they
 diverge, the policy is optimised for an aircraft slightly different from the one
@@ -10,7 +10,7 @@ Comparing the tables is not enough: two identical tables with different formulas
 give different results. This compares the DERIVATIVES evaluated over random
 states across the whole grid, which is where any difference shows up.
 
-Correr despues de tocar cualquier cosa aerodinamica:
+Run after touching anything aerodynamic:
 
     python verificar_cpu_vs_kernel.py
 

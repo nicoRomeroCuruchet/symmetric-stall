@@ -25,7 +25,7 @@ If the term is missing, the response is zero; if it multiplies something else,
 it does not match; if there is a spurious term, it shows up in the base case.
 
 Terms the model cannot have by its own reduction --- flaps
-siempre retraidos, o derrape en un model simetrico --- se declaran y se
+always retracted, or sideslip in a symmetric model --- are declared and
 are reported as ABSENT BY REDUCTION, which is not the same as missing.
 
     THRUST_MODEL=riley PYTHONPATH=. python verificar_expresiones_riley.py
@@ -48,7 +48,7 @@ def load():
             return getattr(__import__(mod, fromlist=[cls]), cls)(), name
         except ImportError:
             continue
-    raise SystemExit("no encontre la clase del avion")
+    raise SystemExit("could not find the aircraft class")
 
 
 def main():
@@ -73,7 +73,7 @@ def main():
             ("C_D", "|dr|^3",  lambda al, ct, h: cd(al, ct, dr=h),
              # the rudder table is PER DEGREE^3 and the model converts dr to
              # degrees before applying it, so differentiating w.r.t. dr in
-             # radianes el factor es 57.2958^3
+             # radians the factor is 57.2958^3
              lambda al, ct: bi(al, ct, a._CD_DR3_TABLE_CT0,
                                a._CD_DR3_TABLE_CT05) * 57.2958 ** 3, 3),
         ]
@@ -148,7 +148,7 @@ def main():
                 obt = (ev(al, ct, h) + ev(al, ct, -h) - 2 * base) / h ** 2 / 2
             else:
                 # cubic: with small h, dividing by h^3 amplifies the noise of
-                # float hasta taparlo todo. Hace falta un paso grande.
+                # float until it swamps everything. A large step is needed.
                 h = 0.3
                 obt = (ev(al, ct, h) - base) / h ** 3
             if esperado is None:

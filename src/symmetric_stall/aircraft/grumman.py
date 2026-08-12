@@ -312,7 +312,7 @@ class Grumman:
 
     @property
     def DXCG_OVER_CHORD(self):
-        """Compatibilidad: el desplazamiento longitudinal en fraccion de cuerda."""
+        """Compatibility: the longitudinal offset as a chord fraction."""
         return self.CG_AFT / self.CHORD
 
     @DXCG_OVER_CHORD.setter

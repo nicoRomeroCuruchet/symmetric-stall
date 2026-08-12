@@ -1,6 +1,6 @@
 """Automatic system against human pilot: each with its own DETECTION delay.
 
-Antes de detectar, nadie toca nada (de = 0, palanca = 0): el avion entra en
+Before detection nobody touches anything (de = 0, throttle = 0): the aircraft enters the
 stall and falls. On detecting, each arm starts acting:
 
   DP   detects at 0.33 s  (Bunge's detector with flow-angle sensors) and from
@@ -98,7 +98,7 @@ def run_arm(t_det, ramp, when):
     return dict(hmin=min(hs), t=t, est="not closed", H=H, t_uns=t_uns)
 
 
-print("IC: gamma=0, V=%.2f Vs, alpha=20 deg    motor tau_e=%.2f s" % (V0, TAU_M))
+print("IC: gamma=0, V=%.2f Vs, alpha=20 deg    engine tau_e=%.2f s" % (V0, TAU_M))
 print("before detecting: de=%.1f deg (the pilot PULLS, he did not react), throttle=0\n"
       % np.rad2deg(DE_NOREAC))
 print("%-46s %9s %8s %10s %11s" % ("arm", "h_min", "dur", "nose-down", "status"))
@@ -139,14 +139,14 @@ for ax, (k, et, cv) in zip(axes, PAN):
         ax.axhline(14.0, color="0.5", lw=0.8, ls="--", zorder=1)
     if k == "dt":
         ax.set_ylim(-0.02, 1.05)
-        ax.annotate("punteado = palanca, lleno = motor", xy=(0.99, 0.28),
+        ax.annotate("dotted = throttle, solid = engine", xy=(0.99, 0.28),
                     xycoords=("axes fraction", "data"), ha="right", fontsize=7.5,
                     color="0.35")
     if k == "gamma":
         ax.annotate("%.2f s\ndetecta\nel sistema" % TAU_DP, xy=(TAU_DP, 0.02),
                     xycoords=("data", "axes fraction"), fontsize=6.5, color="0.4",
                     ha="center", va="bottom")
-        ax.annotate("%.2f s\ndetecta\nel piloto" % TAU_H, xy=(TAU_H, 0.02),
+        ax.annotate("%.2f s\npilot\ndetects" % TAU_H, xy=(TAU_H, 0.02),
                     xycoords=("data", "axes fraction"), fontsize=6.5, color="0.4",
                     ha="center", va="bottom")
     if k in ("gamma", "h"):
@@ -159,7 +159,7 @@ for ax, (k, et, cv) in zip(axes, PAN):
 axes[-1].set_xlabel("tiempo (s)", fontsize=9)
 axes[0].legend(loc="lower left", fontsize=7.5, frameon=False, ncol=1,
                bbox_to_anchor=(0.0, 1.02))
-fig.suptitle(r"Deteccion: sistema (%.2f s) vs piloto (%.2f s), motor $\tau_e=%.2f$ s"
+fig.suptitle(r"Detection: system (%.2f s) vs pilot (%.2f s), engine $\tau_e=%.2f$ s"
              "\n$V_0=%.2f\\,V_s$, not reacting $\\delta_e=%.0f^\\circ$" % (TAU_DP, TAU_H, TAU_M, V0, np.rad2deg(DE_NOREAC)), fontsize=10, y=0.99)
 fig.tight_layout(rect=[0, 0, 1, 0.94])
 out = main.RESULTS_DIR / ("3_maniobras/deteccion_v%03d_de%+03d.png" % (round(V0*100), round(np.rad2deg(DE_NOREAC))))

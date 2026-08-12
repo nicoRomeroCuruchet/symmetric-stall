@@ -28,7 +28,7 @@ TOL = 1e-6      # float32 rounds to ~1e-7; above this it is transcription
 # The thrust tables admit TWO conventions, and the branches disagree: the
 # 6-DOF stores them raw, in lbf and ft/s as the report does, and converts
 # inside compute_ct; the 8-DOF stores them already in N and N/(m/s) because its
-# compute_ct usa vt en m/s directamente. Las dos son correctas. El chequeo
+# compute_ct uses vt in m/s directly. Both are correct. The check
 # tries both and REPORTS which one it found, instead of assuming: assuming
 # would flag a healthy branch as broken and -- worse -- would mask the case
 # where the table really is wrong by a similar factor.
@@ -52,7 +52,7 @@ def tablas_del_kernel(source):
     # The comments inside the braces carry numbers -- conversion factors
     # conversion, rangos de alpha -- y si se cuelan al extraer, corren TODAS
     # the entries of that table, and the difference that follows is the parser's,
-    # no del kernel. Se sacan antes de mirar nada.
+    # not the kernel's. They are stripped before anything is inspected.
     source = re.sub(r"/\*.*?\*/", " ", source, flags=re.S)
     source = re.sub(r"//[^\n]*", " ", source)
     pattern = re.compile(
@@ -63,7 +63,7 @@ def tablas_del_kernel(source):
         # Entries can be products: "-0.00116f*57.2958f". Each element has to
         # be evaluated, not the loose numbers collected: otherwise the
         # conversion factor enters as if it were a table value and
-        # corre todo un lugar.
+        # shifts everything by one place.
         vals = []
         for elem in body.split(","):
             nums = re.findall(r"[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?", elem)
@@ -85,9 +85,9 @@ def candidatos(kn):
     The branches do not share a convention -- TBL vs nothing, ROLL vs R,
     ADOT vs AD -- so several are tried and the one that stuck is reported.
     """
-    # Abreviaturas del kernel -> name largo del CPU. Se declaran a mano
+    # Kernel abbreviations -> the CPU's long name. Declared by hand
     # because guessing them would pair wrongly in silence; whatever finds no pair
-    # se reporta.
+    # is reported.
     ALIAS = {"CL_RB": "CL_ROLL_BETA", "CL_RP": "CL_ROLL_PHAT",
              "CL_RR": "CL_ROLL_RHAT", "CL_RDA": "CL_ROLL_DA",
              "CL_RDR": "CL_ROLL_DR", "CL_RO": "CL_ROLL_O",
@@ -117,18 +117,18 @@ def candidatos(kn):
 
 
 def main():
-    ruta = sys.argv[1] if len(sys.argv) > 1 else None
-    if ruta is None:
+    path = sys.argv[1] if len(sys.argv) > 1 else None
+    if path is None:
         raise SystemExit("uso: verificar_tablas_kernel.py <fuente_kernel.py>")
-    K = tablas_del_kernel(open(ruta).read())
+    K = tablas_del_kernel(open(path).read())
     a = carga_avion()
     attrs = {n: np.asarray(getattr(a, n), dtype=np.float64)
              for n in dir(a) if n.startswith("_") and
              isinstance(getattr(a, n, None), np.ndarray)}
 
-    print(f"{len(K)} tablas en {ruta}, {len(attrs)} arreglos en el modelo CPU\n")
+    print(f"{len(K)} tables in {path}, {len(attrs)} arrays in the CPU model\n")
     paired, unpaired, failures, worst, worst_n = 0, [], 0, 0.0, None
-    convenciones = []
+    conventions = []
     usados = set()
     for kn in sorted(K):
         kv = K[kn]
@@ -146,10 +146,10 @@ def main():
             rel2 = np.abs(kv - cv2) / np.maximum(np.abs(cv2), 1e-9)
             if rel2.max() <= rel.max():
                 cv, rel = cv2, rel2
-                convenciones.append("%s: el kernel la guarda ya convertida "
+                conventions.append("%s: the kernel stores it already converted "
                                     "(x%.6g)" % (kn, ESCALA_ALTERNATIVA[kn]))
             else:
-                convenciones.append("%s: el kernel la guarda cruda" % kn)
+                conventions.append("%s: the kernel stores it raw" % kn)
         i = int(rel.argmax())
         if rel[i] > worst:
             worst, worst_n = rel[i], kn
@@ -158,16 +158,16 @@ def main():
             print(f"  DIFIERE  {kn:<22} <-> {cn:<26} entrada {i:2d}: "
                   f"kernel {kv[i]:+.7g}  CPU {cv[i]:+.7g}  rel {rel[i]:.2e}")
 
-    for c in convenciones:
+    for c in conventions:
         print("  convencion detectada -- " + c)
     if unpaired:
-        print(f"\n  SIN PAR en el CPU ({len(unpaired)}): {', '.join(unpaired)}")
-    huerfanas = [n for n in attrs if n not in usados and attrs[n].size == 14]
-    if huerfanas:
-        print(f"  arreglos del CPU de 14 entradas sin usar ({len(huerfanas)}): "
-              f"{', '.join(sorted(huerfanas))}")
+        print(f"\n  UNPAIRED in the CPU ({len(unpaired)}): {', '.join(unpaired)}")
+    orphans = [n for n in attrs if n not in usados and attrs[n].size == 14]
+    if orphans:
+        print(f"  unused 14-entry CPU arrays ({len(orphans)}): "
+              f"{', '.join(sorted(orphans))}")
 
-    print(f"\n{paired} tablas paired, {failures} difieren, "
+    print(f"\n{paired} tables paired, {failures} differ, "
           f"{len(unpaired)} unpaired  (worst {worst:.2e} in {worst_n})")
     return 1 if (failures or unpaired) else 0
 

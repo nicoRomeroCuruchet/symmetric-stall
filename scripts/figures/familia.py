@@ -43,7 +43,7 @@ for ax, (k, et, cv) in zip(axes, PAN):
     if k in ("gamma", "h"):
         ax.axhline(0.0, color="0.85", lw=0.6, zorder=0)
     if k == "dt_ctrl":
-        ax.set_ylim(-0.02, 1.05)          # si no, matplotlib hace zoom en el ULP
+        ax.set_ylim(-0.02, 1.05)          # otherwise matplotlib zooms into the ULP
         ax.annotate("1.000 in all four", xy=(0.99, 1.0),
                     xycoords=("axes fraction", "data"), ha="right", va="top",
                     fontsize=7.5, color="0.35")

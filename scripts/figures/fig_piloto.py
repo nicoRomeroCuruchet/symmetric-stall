@@ -8,8 +8,8 @@ s += '''
 SEL = [
     ("optimum, ideal engine",         (0.0, "optimal"), "#0072B2", "-"),
     ("optimum, engine tau=1.0 s",     (1.0, "optimal"), "#0072B2", "--"),
-    ("CAA: de del DP + 1 s, motor ideal", (0.0, "caa"),  "#D55E00", "-"),
-    ("FAA: de del DP + 1 s, motor ideal", (0.0, "faa"),  "#009E73", "-"),
+    ("CAA: DP de + 1 s, ideal engine", (0.0, "caa"),  "#D55E00", "-"),
+    ("FAA: DP de + 1 s, ideal engine", (0.0, "faa"),  "#009E73", "-"),
 ]
 SEL = [(n, k, c, l) for (n, k, c, l) in SEL if k in guardar]
 
@@ -41,7 +41,7 @@ for ax, (k, et, cv) in zip(axes, PAN):
                     fontsize=7, color="#b2182b")
     if k == "dt":
         ax.set_ylim(-0.02, 1.05)
-        ax.annotate("punteado = comandado, lleno = efectivo (motor)",
+        ax.annotate("dotted = commanded, solid = effective (engine)",
                     xy=(0.99, 0.32), xycoords=("axes fraction", "data"),
                     ha="right", fontsize=7.5, color="0.35")
     if k in ("gamma", "h"):

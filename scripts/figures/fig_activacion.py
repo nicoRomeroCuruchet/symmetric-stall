@@ -5,11 +5,11 @@
   (3) CAA flown by the pilot from 1.00 s
   (4) FAA flown by the pilot from 1.00 s
 
-Los cuatro: el piloto TIRA mientras no reacciona, y el motor tiene el retardo
+All four: the pilot PULLS while not reacting, and the engine carries the lag
 Riley first-order lag. (2) isolates what the automatic detector is worth: same
 controller, same plant, only who engages it and when changes.
 
-Estilo del paper 1. Uso: fig_activacion.py <npz> <V0> [t_det] [t_pil] [tau_m]
+Paper-1 style. Usage: fig_activacion.py <npz> <V0> [t_det] [t_pil] [tau_m]
 """
 import sys
 import logging
@@ -46,7 +46,7 @@ RUNS = [
     ("FAA pilot (%.2f s)"             % T_PIL, "#2CA02C", "-.", correr("faa", T_PIL)),
 ]
 
-print("V=%.2f Vs   motor tau=%.2f s   sin reaccionar de=%.0f deg\n"
+print("V=%.2f Vs   engine tau=%.2f s   not reacting de=%.0f deg\n"
       % (E.V0, E.TAU_M, np.rad2deg(E.DE_NOREAC)))
 print("%-34s %10s %8s %11s" % ("arm", "h_min", "dur", "status"))
 print("-" * 66)
@@ -55,7 +55,7 @@ for lab, _, _, r in RUNS:
 auto, pil = RUNS[0][3]["hmin"], RUNS[1][3]["hmin"]
 print("\n  the automatic DETECTOR is worth:  %+.3f m  (same controller, %.2f s earlier)"
       % (auto - pil, T_PIL - T_DET))
-print("  el CONTROLADOR vale, a igual instante de activacion (%.2f s):" % T_PIL)
+print("  the CONTROLLER is worth, at equal activation instant (%.2f s):" % T_PIL)
 print("      against CAA  %+.3f m" % (pil - RUNS[2][3]["hmin"]))
 print("      against FAA  %+.3f m" % (pil - RUNS[3][3]["hmin"]))
 

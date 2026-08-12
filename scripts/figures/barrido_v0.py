@@ -3,7 +3,7 @@
 h_min = the minimum altitude excursion, which does NOT depend on the cut-off
 criterion nor on the has_dived threshold. It also reports the minimum gamma, to
 see where the threshold
--2 deg deja de dispararse.
+-2 deg stops firing.
 
 Uso: python barrido_v0.py <raw.npz> <filled.npz>
 """
@@ -87,5 +87,5 @@ fig.savefig(out, dpi=200)
 print("\n-> %s" % out)
 
 d = np.array(res["sin rellenar"]["hmin"]) - np.array(res["rellenada"]["hmin"])
-print("el fill vale: min %.3f m, max %.3f m, mediana %.3f m" % (
+print("the fill is worth: min %.3f m, max %.3f m, median %.3f m" % (
     d.min(), d.max(), float(np.median(d))))

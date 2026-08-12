@@ -9,7 +9,7 @@ throttle and the thrust,
 
 What the report does NOT give is the value of tau_e -- it appears in the
 glossary as
-"engine-response time constant, sec" y en ningun lado mas. Por eso se barre.
+"engine-response time constant, sec" and nowhere else. Hence the sweep.
 
 The lag is applied in evaluation, not in the DP: the policy was solved
 without it, so this measures what happens to a policy optimised for an ideal
@@ -69,7 +69,7 @@ BRAZOS = [
 ]
 
 print("entrada: alpha0 = %.0f deg, V0 = %.2f Vs, gamma0 = 0, q0 = 0" % (ALPHA0, V0))
-print("retardo de motor de la ec. (A4), tau_e en segundos\n")
+print("engine lag from eq. (A4), tau_e in seconds\n")
 print("  tau_e      DP optimum       CAA de-opt       FAA de-opt     gap opt->CAA")
 table = {}
 for tau in TAUS:
@@ -100,7 +100,7 @@ for name, _, color, ls in BRAZOS:
             etiq = None
 for ax, lab in ((axes[0, 0], r"$\gamma$ (deg)"), (axes[0, 1], r"$\alpha$ (deg)"),
                 (axes[0, 2], r"$V/V_s$ (--)"), (axes[1, 0], r"$\delta_e$ (deg)"),
-                (axes[1, 1], r"$\delta_t$ entregado al motor (--)"),
+                (axes[1, 1], r"$\delta_t$ delivered to the engine (--)"),
                 (axes[1, 2], r"$\Delta h$ (m)")):
     ax.set_title(lab, fontsize=10)
     ax.set_xlabel("t (s)")
@@ -108,7 +108,7 @@ for ax, lab in ((axes[0, 0], r"$\gamma$ (deg)"), (axes[0, 1], r"$\alpha$ (deg)")
 axes[0, 1].axhline(14.0, color="grey", lw=0.8, ls="--")
 axes[1, 2].axhline(0.0, color="grey", lw=0.8, ls="--")
 axes[0, 0].legend(fontsize=8, loc="lower right")
-fig.suptitle(r"Retardo de motor (A4) a $%.2f\,V_s$: fino $\tau_e=0$ (ideal), "
+fig.suptitle(r"Engine lag (A4) at $%.2f\,V_s$: thin $\tau_e=0$ (ideal), "
              r"grueso $\tau_e=%.1f$ s" % (V0, TAU_FIG), fontsize=11)
 fig.tight_layout()
 out = main.RESULTS_DIR / ("riley_tau_motor_v%03d.png" % round(V0 * 100))

@@ -23,7 +23,7 @@ from symmetric_stall.aircraft.symmetric_stall import SymmetricStall
 
 PREF = sys.argv[1] if len(sys.argv) > 1 else "barrido_riley"
 
-# (gamma0, V0/Vs, alpha0) -- la primera es la canonica del paper 1
+# (gamma0, V0/Vs, alpha0) -- the first is paper 1's canonical one
 ICS = [
     (0.0, 0.95, 20.0),
     (-10.0, 0.95, 20.0),

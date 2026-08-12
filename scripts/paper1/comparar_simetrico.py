@@ -1,6 +1,6 @@
 """Compare the volcar_simetrico.py dumps from the three branches.
 
-Los tres modelos describen el MISMO avion. Puesto beta = mu = p = r = 0 y
+The three models describe the SAME aircraft. With beta = mu = p = r = 0 and
 aileron = rudder = 0, the 6-DOF and the 8-DOF must reduce exactly to the
 4-DOF. When they do not it is because one branch fell behind another, and that
 happened more than once: the 6-DOF did not carry the alpha-dot terms and its
@@ -9,7 +9,7 @@ branch noticing, because all of its own checks compared the branch to itself.
 
     # on each branch
     THRUST_MODEL=riley PYTHONPATH=. python volcar_simetrico.py v4.json
-    # y despues
+    # and then
     python comparar_simetrico.py v4.json v6.json v8.json
 """
 import json
@@ -28,7 +28,7 @@ def main():
         d = json.load(open(r))
         V[d["modelo"]] = d
     if "4dof" not in V:
-        raise SystemExit("hace falta el volcado del 4-DOF: es la referencia")
+        raise SystemExit("the 4-DOF dump is required: it is the reference")
 
     print("=== CONSTANTES DE LA CELULA ===")
     bad = 0

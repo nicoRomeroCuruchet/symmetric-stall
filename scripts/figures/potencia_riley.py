@@ -41,9 +41,9 @@ env = SymmetricStall()
 pi = PolicyIterationStall.load(POLICY, env=env)
 v_stall, dt = env.airplane.STALL_AIRSPEED, env.airplane.TIME_STEP
 
-ARMS = [("DP   (palanca 0.6 s)",        0.6, "t0",      "#0072B2"),
-          ("CAA  (palanca 2 s)",          2.0, "t0",      "#D55E00"),
-          ("FAA  (palanca 2 s tras n-d)", 2.0, "unstall", "#009E73")]
+ARMS = [("DP   (throttle 0.6 s)",        0.6, "t0",      "#0072B2"),
+          ("CAA  (throttle 2 s)",          2.0, "t0",      "#D55E00"),
+          ("FAA  (throttle 2 s after n-d)", 2.0, "unstall", "#009E73")]
 
 
 def run_arm(ramp, start, tau_e):

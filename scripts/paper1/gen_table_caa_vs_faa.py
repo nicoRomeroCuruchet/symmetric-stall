@@ -32,7 +32,7 @@ CAB = (r"\begin{table}[hbt!]", r"    \centering",
 
 
 def celda(entrada):
-    """-9.09 o -2.75^t si no volvio a vuelo nivelado dentro del horizonte."""
+    """-9.09 or -2.75^t if it did not return to level flight within the horizon."""
     h = entrada["h"]
     marca = "" if entrada.get("status") == "recovered" else r"\textsuperscript{t}"
     return f"{h:.2f}{marca}"

@@ -30,7 +30,7 @@ for name in ("plot_time_response", "plot_results", "plot_trajectory"):
 
 g = np.rad2deg(hist["gamma"]); a = np.rad2deg(hist["alpha"])
 de = np.rad2deg(hist["de"]); d = np.asarray(hist["dt_ctrl"]); h = np.asarray(hist["h"])
-print("\n=== canonica del paper 1, THRUST_MODEL=%s ===" % os.environ.get("THRUST_MODEL","paper1"))
+print("\n=== paper-1 canonical, THRUST_MODEL=%s ===" % os.environ.get("THRUST_MODEL","paper1"))
 print("  altura           %+9.3f m   (paper 1 publica -7.796)" % h[-1])
 print("  duracion         %9.2f s   (paper 1 publica 7.67)" % hist["t"][-1])
 print("  gamma min        %+9.2f deg (paper 1 publica -3.3)" % min(g))
