@@ -119,7 +119,7 @@ def candidatos(kn):
 def main():
     path = sys.argv[1] if len(sys.argv) > 1 else None
     if path is None:
-        raise SystemExit("uso: verificar_tablas_kernel.py <fuente_kernel.py>")
+        raise SystemExit("usage: verificar_tablas_kernel.py <kernel_source.py>")
     K = tablas_del_kernel(open(path).read())
     a = carga_avion()
     attrs = {n: np.asarray(getattr(a, n), dtype=np.float64)
