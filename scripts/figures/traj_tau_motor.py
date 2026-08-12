@@ -5,7 +5,7 @@ instantly. A piston engine with a fixed-pitch propeller does not do that, and
 Riley knows it: equation (A4) of Appendix A puts a first-order lag between the
 throttle and the thrust,
 
-    delta_t = 1/(tau_e s + 1) * delta_t,comandado
+    delta_t = 1/(tau_e s + 1) * delta_t,commanded
 
 What the report does NOT give is the value of tau_e -- it appears in the
 glossary as

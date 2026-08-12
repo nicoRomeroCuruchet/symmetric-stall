@@ -17,7 +17,7 @@ thing that tells them apart is WHEN they start and how they bring power up.
 
 The engine carries Riley's first-order lag (A4) in all three.
 
-Uso: deteccion.py <policy.npz> <V0> [tau_dp] [tau_humano] [tau_motor]
+Usage: deteccion.py <policy.npz> <V0> [tau_dp] [tau_human] [tau_engine]
 """
 import sys
 import logging

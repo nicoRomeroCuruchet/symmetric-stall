@@ -7,7 +7,7 @@ Three ingredients, all three requested:
   2. power comes up with Gratton's 2 s ramp, from t=0 (CAA) or from
      the unstall (FAA);
   3. the engine adds a first-order lag TAU_M on top of the throttle
-     comandado:  d(dt_ef)/dt = (dt_cmd - dt_ef) / TAU_M.
+     commanded:  d(dt_ef)/dt = (dt_cmd - dt_ef) / TAU_M.
 
 The optimum also goes through the engine, so the comparison is fair: the only
 advantage it keeps is having no human delay and commanding full from t=0.
