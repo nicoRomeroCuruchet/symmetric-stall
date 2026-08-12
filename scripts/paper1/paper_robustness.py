@@ -39,7 +39,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from symmetric_stall.aircraft.symmetric_stall import SymmetricStall
-from paper_procedures import rollout, ctrl_optimal
+from symmetric_stall.procedures import rollout, ctrl_optimal
 from paper_table_dp_vs_ppo import ALPHA_GRID_DEG, VNORM_GRID
 from symmetric_stall.policy_iteration import PolicyIterationStall
 from symmetric_stall.utils.utils import get_optimal_action

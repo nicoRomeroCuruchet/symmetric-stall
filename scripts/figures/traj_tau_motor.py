@@ -25,7 +25,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from symmetric_stall import train as main
-import paper_procedures as pp
+from symmetric_stall import procedures as pp
 from symmetric_stall.aircraft.symmetric_stall import SymmetricStall
 from symmetric_stall.policy_iteration import PolicyIterationStall
 

@@ -5,7 +5,7 @@ import numpy as np
 logging.disable(logging.INFO)
 from symmetric_stall.policy_iteration import PolicyIterationStall
 from symmetric_stall.aircraft.symmetric_stall import SymmetricStall
-from paper_procedures import rollout, ctrl_optimal, make_maneuver
+from symmetric_stall.procedures import rollout, ctrl_optimal, make_maneuver
 
 pi = PolicyIterationStall.load(Path(sys.argv[1]), env=SymmetricStall())
 V0, A0 = float(sys.argv[2]), 20.0

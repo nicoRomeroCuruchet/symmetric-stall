@@ -29,7 +29,7 @@ logging.disable(logging.INFO)
 from symmetric_stall.policy_iteration import PolicyIterationStall
 from symmetric_stall.aircraft.symmetric_stall import SymmetricStall
 from symmetric_stall.utils.utils import get_optimal_action
-from paper_procedures import RecoveryMonitor, GRATTON_RAMP_S, DE_DOWN
+from symmetric_stall.procedures import RecoveryMonitor, GRATTON_RAMP_S, DE_DOWN
 
 POLICY = Path(sys.argv[1])
 V0 = float(sys.argv[2])

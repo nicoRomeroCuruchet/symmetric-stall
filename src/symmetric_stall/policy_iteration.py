@@ -487,7 +487,7 @@ class PolicyIterationStall:
 
             float cm_full = cm + cm_adot * k_ad * d_a;
 
-            // Traslado al CG: con cl y cd ya cerrados por el alpha-punto.
+            // Transfer to the CG: with cl and cd already closed by alpha-dot.
             float cl_full = cl + cl_adot * k_ad * d_a;
             float dcl_roll_, dcm_, dcn_;
             delta_momentos_cg(cl_full, cd, 0.0f, alpha, &dcl_roll_, &dcm_, &dcn_);

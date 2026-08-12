@@ -29,7 +29,7 @@ logging.disable(logging.INFO)
 from symmetric_stall import train as main
 from symmetric_stall.policy_iteration import PolicyIterationStall
 from symmetric_stall.aircraft.symmetric_stall import SymmetricStall
-from paper_procedures import rollout, ctrl_optimal, make_maneuver
+from symmetric_stall.procedures import rollout, ctrl_optimal, make_maneuver
 
 POLICY = Path(sys.argv[1])
 V0 = float(sys.argv[2])

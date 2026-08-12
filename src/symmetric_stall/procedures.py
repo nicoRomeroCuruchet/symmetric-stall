@@ -46,7 +46,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from symmetric_stall.aircraft.symmetric_stall import SymmetricStall
-from paper_table_dp_vs_ppo import ALPHA_GRID_DEG, VNORM_GRID
+# Shared evaluation grid. It used to be imported from the paper-1 script
+# paper_table_dp_vs_ppo.py, which only resolved because the two files were
+# siblings on sys.path[0]; now this package is the single source and that
+# script imports from here.
+ALPHA_GRID_DEG = [16.0, 18.0, 20.0]
+VNORM_GRID = [0.90, 0.95, 1.00]
 from symmetric_stall.policy_iteration import PolicyIterationStall
 from symmetric_stall.utils.recovery import DIVE_THRESHOLD_DEG, RecoveryMonitor
 from symmetric_stall.utils.utils import get_optimal_action, get_optimal_action_greedy
@@ -282,13 +287,13 @@ def make_maneuver(power_start, pull="alpha_hold", de_pull_limit=None):
 def run_maneuvers(pi, env):
     """DP optimum vs scripted CAA vs scripted FAA over the IC grid.
 
-    Los brazos `alpha_hold` se acotan a la MISMA autoridad de tirada que el
-    optimo alcanza en esa entrada, igual que en
-    make_trajectory_comparison_figure: sin eso la tabla y la figura describen
-    el mismo experimento con dos modelos de piloto distintos. El efecto es
-    chico (~0.2 m en la IC canonica) pero la inconsistencia no.
-    Los brazos `full_pull` NO se acotan: su proposito es justamente mostrar
-    que pasa cuando el piloto tira al tope del actuador.
+    The `alpha_hold` arms are capped to the SAME pull authority the optimum
+    reaches at that initial condition, as in
+    make_trajectory_comparison_figure: without that, the table and the figure
+    describe the same experiment with two different pilot models. The effect
+    is small (~0.2 m at the canonical IC) but the inconsistency is not.
+    The `full_pull` arms are NOT capped: their whole purpose is to show what
+    happens when the pilot pulls to the actuator stop.
     """
     def cap_en(alpha0, v0):
         r = rollout(env, pi, ctrl_optimal, alpha0, v0, record=True)
@@ -308,9 +313,9 @@ def run_maneuvers(pi, env):
                 lim = cap_en(alpha0, v0) if acotar else None
                 ctrl = make_maneuver(power_start, pull, lim)
                 r = rollout(env, pi, ctrl, alpha0, v0, record=True)
-                # alpha_max sostiene la afirmacion del pie de tabla de que el
-                # tiron completo re-estanca el ala. Sin guardarlo, esa frase
-                # no tenia ningun numero detras que alguien pudiera chequear.
+                # alpha_max backs the table footnote's claim that the full
+                # pull re-stalls the wing. Without recording it, that sentence
+                # had no number behind it for anyone to check.
                 per_ic[f"a{alpha0:.0f}_v{v0:.2f}"] = {
                     "h": r["h"], "t": r["t"], "status": r["status"],
                     "alpha_max_deg": float(np.rad2deg(
@@ -331,8 +336,8 @@ def main_maneuvers():
 
     opt = json.loads((OUT_DIR / "mca_comparison.json").read_text())["fixed"]["rollouts"]
 
-    print("\n=== Δh (m) por IC: DP óptimo vs maniobras CAA / FAA (α-hold pilot) ===")
-    hdr = (f"{'IC':<14}{'DP ÓPT':>9}{'CAA':>9}{'FAA':>9}"
+    print("\n=== Δh (m) by IC: optimal DP vs CAA / FAA manoeuvres (α-hold pilot) ===")
+    hdr = (f"{'IC':<14}{'DP OPT':>9}{'CAA':>9}{'FAA':>9}"
            f"{'CAA/OPT':>9}{'FAA/CAA':>9}")
     print(hdr); print("-" * len(hdr))
     rows_tex = []
@@ -366,10 +371,10 @@ def main_maneuvers():
     ]
     for a0, v0, o, c, f, cfp, ffp, st in rows_tex:
         m = "" if st == "recovered" else r"\textsuperscript{t}"
-        # La IC canonica se resalta: es la maniobra que la figura de
-        # trayectorias muestra en el dominio del tiempo, y sin la marca el
-        # lector no tiene como ubicar en la tabla la fila que esa figura
-        # desarrolla.
+        # The canonical IC is highlighted: it is the manoeuvre the
+        # trajectory figure shows in the time domain, and without the mark the
+        # reader has no way to locate, in the table, the row that figure
+        # develops.
         b = (r"\bfseries " if (a0, v0) == CANONICAL else "")
         lines.append(f"        {b}{a0:.0f} & {b}{v0:.2f} & {b}{o:.2f}{m} & "
                      f"{b}{c:.2f} ({cfp:.2f}) & {b}{f:.2f} ({ffp:.2f}) \\\\")
@@ -445,10 +450,10 @@ def make_pilot_sensitivity_figure(report):
     ax_l.annotate(f"$\\times${h05 / ref['h']:.1f}", xy=(0.5, h05),
                   xytext=(6, 6), textcoords="offset points",
                   fontsize=10, color="#2C4B9E")
-    # El ultimo punto cae en la esquina inferior derecha. Arriba-izquierda la
-    # etiqueta queda sobre la propia curva (la recta pasa justo por ahi), y
-    # abajo pisa el eje x. Va a la DERECHA del marcador, con margen extra en
-    # el eje para abrirle lugar.
+    # The last point falls in the bottom-right corner. Up-and-left the label
+    # sits on the curve itself (the line passes right through there), and
+    # below it overlaps the x axis. It goes to the RIGHT of the marker, with
+    # extra axis margin to make room.
     ax_l.margins(x=0.22)
     ax_l.annotate(f"$\\times${h1 / ref['h']:.1f}", xy=(1.0, h1),
                   xytext=(9, -3), textcoords="offset points",
@@ -483,12 +488,12 @@ def make_pilot_sensitivity_figure(report):
         # Neutral grey: the red family is taken by the open-loop CURVE, and
         # a red band next to a red curve reads as "more of the same" when
         # the left branch of the valley fails by the opposite mechanism.
-        # Margen sobre alpha_s, no el umbral desnudo. Con > 14.0 entraba
-        # tambien el -5 deg, cuyo alpha_max es 14.10: eso no es un
-        # re-estancamiento sino el control equivalente rozando el limite, y es
-        # como lo describe el texto. Sombrearlo ponia el borde de la banda
-        # justo sobre la linea del control equivalente y sobre el minimo del
-        # valle, que es precisamente el punto que NO falla.
+        # A margin above alpha_s, not the bare threshold. With > 14.0 the
+        # -5 deg case came in too, whose alpha_max is 14.10: that is not a
+        # re-stall but the equivalent control grazing the limit, which is how
+        # the text describes it. Shading it put the band edge exactly on the
+        # equivalent-control line and on the minimum of the valley, which is
+        # precisely the point that does NOT fail.
         restall = [p for p in pulls_h
                    if e3d[f"{-p:g}"]["alpha_max_deg"] > 14.0 + 0.5]
         if restall:
@@ -660,8 +665,8 @@ def make_trajectory_comparison_figure():
     # optimum stops at -17.98 deg, and the visible gap mixes the timing of the
     # power application with a pull the optimum never commands.
     de_cap = float(np.min(r_opt["hist"]["de"]))
-    logger.info(f"[traj] pull de los pilotos guionados acotado a "
-                f"{np.rad2deg(de_cap):.2f} deg (minimo del optimo)")
+    logger.info(f"[traj] scripted pilots' pull capped at "
+                f"{np.rad2deg(de_cap):.2f} deg (the optimum's minimum)")
 
     runs = [
         ("DP optimum", "#2C4B9E", "-", r_opt),
@@ -735,11 +740,12 @@ def make_trajectory_comparison_figure():
         axs[0].axhline(0.0, color="0.45", linestyle="--", linewidth=0.9)
         axs[1].axhline(1.0, color="0.45", linestyle="--", linewidth=0.9)
         axs[2].axhline(14.0, color="0.45", linestyle="--", linewidth=0.9)
-        # El calificador va SOBRE el simbolo, no entre parentesis al final:
-        # "(power-off)" se leia como el estado del avion -- que vuela a plena
-        # potencia -- cuando en realidad califica a la LINEA, que es el limite
-        # medido con la helice sin traccion. Con potencia el CL de Riley sigue
-        # creciendo hasta 40 deg, asi que cruzar esta linea no es re-estancar.
+        # The qualifier goes ON the symbol, not in parentheses at the end:
+        # "(power-off)" read as the state of the aircraft -- which is flying
+        # at full power -- when it actually qualifies the LINE, which is the
+        # limit measured with the propeller producing no thrust. With power,
+        # Riley's CL keeps growing up to 40 deg, so crossing this line is not
+        # a re-stall.
         axs[2].annotate(r"$\alpha_s^{\mathrm{power\text{-}off}} = 14^\circ$",
                         xy=(0.98, 14.0), xycoords=("axes fraction", "data"),
                         xytext=(0, 5), textcoords="offset points",
@@ -954,22 +960,21 @@ GA_VNORMS = [0.90, 1.00, 1.10]
 GA_ALPHAS = np.arange(14.0, 20.01, 0.25)   # 25 values
 GA_GAMMAS = np.arange(-30.0, 0.01, 1.0)    # 31 values
 
-# PENDIENTE: refinar cerca del cero. Con paso de 1 deg, entre gamma_0 = -1.0 y
-# -2.0 a 1.10 Vs el brazo de potencia demorada salta de +0.08 a +6.32 m y el
-# mapa lo dibuja como un acantilado. Medido en el punto intermedio, a -1.5 deg
-# ya cuesta 6.01 m: hay una bifurcacion real -- el avion detiene el hundimiento
-# de inmediato (recupera en 0.6 s, la demora de 2 s ni llega a importar) o no
-# lo detiene (se hunde otro grado y tarda 8.9 s). Por debajo de cierto angulo
-# de entrada, demorar la potencia deja de ser gratis; ubicarlo es un resultado
-# publicable.
+# TODO: refine near zero. At a 1 deg step, between gamma_0 = -1.0 and -2.0 at
+# 1.10 Vs the delayed-power arm jumps from +0.08 to +6.32 m and the map draws
+# it as a cliff. Measured at the midpoint, -1.5 deg already costs 6.01 m: there
+# is a real bifurcation -- either the aircraft arrests the sink immediately
+# (recovers in 0.6 s, the 2 s delay never even matters) or it does not (sinks
+# another degree and takes 8.9 s). Below a certain entry angle, delaying power
+# stops being free; locating that angle is a publishable result.
 #
-# La grilla fina seria:
-#     np.concatenate([np.arange(-30.0, -3.0, 1.0),      # 27 valores
-#                     np.arange(-3.0, 0.01, 0.25)])     # 13 valores
+# The fine grid would be:
+#     np.concatenate([np.arange(-30.0, -3.0, 1.0),      # 27 values
+#                     np.arange(-3.0, 0.01, 0.25)])     # 13 values
 #
-# Cuesta 12000 rollouts (~70 min solo la primera fase) y expone tres filas en
-# la zona muerta de la regla de parada en vez de una, asi que conviene hacerlo
-# junto con el arreglo de utils/recovery.py y no antes.
+# It costs 12,000 rollouts (~70 min for the first phase alone) and exposes
+# three rows in the stopping rule's dead zone instead of one, so it is worth
+# doing together with the utils/recovery.py fix, not before.
 GA_ARMS = ["optimal", "caa_ramp", "gated"]
 
 
@@ -1033,16 +1038,16 @@ def compute_ic_gamma_alpha(arms=None, workers=None):
 # the recovery climbs a little past level -- entries where the filled policy
 # loses 0.44 m against 2.78 m unfilled. The mask was hiding its best results.
 #
-# 2026-07-29: desactivada a pedido, para poder VER la fila gamma_0 = 0 de
-# V/Vs = 1.10 en vez de que la figura la grise. Dos salvedades sobre esos 25
-# nodos, medidas y no supuestas:
-#   - recuperan los 25, sin timeouts, perdiendo 5.1-5.6 m contra los 11.3-12.3
-#     de la politica publicada; el resultado es mejor, no peor
-#   - pero cruzan a los 14.58-14.68 s de un horizonte de 15.0, y trepan a
-#     6.8-7.5 deg cuando la grilla del solver termina en +5.0 deg: ahi la
-#     consulta de politica satura en el borde, o sea extrapola
-# Poner de nuevo en 95.0/55.0 (un intervalo de grilla) para restaurar la
-# mascara, o en 0.5*95.0/55.0 para el criterio original de medio intervalo.
+# 2026-07-29: disabled on request, so that the gamma_0 = 0 row of V/Vs = 1.10
+# can be SEEN instead of being greyed out by the figure. Two caveats about
+# those 25 nodes, measured and not assumed:
+#   - all 25 recover, with no timeouts, losing 5.1-5.6 m against the 11.3-12.3
+#     of the published policy; the result is better, not worse
+#   - but they cross at 14.58-14.68 s out of a 15.0 horizon, and climb to
+#     6.8-7.5 deg while the solver grid ends at +5.0 deg: there the policy
+#     lookup saturates at the edge, i.e. it extrapolates
+# Set it back to 95.0/55.0 (one grid interval) to restore the mask, or to
+# 0.5*95.0/55.0 for the original half-interval criterion.
 GA_GMAX_MASK_DEG = 1e9
 
 
@@ -1194,17 +1199,17 @@ def make_ic_optimum_figure(data=None):
         data = json.loads((OUT_DIR / "ic_gamma_alpha.json").read_text())
     A = np.array(data["alpha0_deg"])
     G = np.array(data["gamma0_deg"])
-    # Los tres regimenes se dibujan. El slice de 1.10 Vs estaba excluido
-    # porque su fila de entrada nivelada (gamma_0 = 0) trepaba a la region
-    # gamma > 0 "sin policia" en el primer paso: ahi la politica conservaba su
-    # inicializacion (motor al ralenti) y la perdida medida era un artefacto.
-    # El relleno de celdas terminales elimina esa causa, y esa fila pasa de
-    # -11.3/-12.3 m a -5.1/-5.6 m con las 25 entradas recuperando.
+    # All three regimes are drawn. The 1.10 Vs slice used to be excluded
+    # because its level-entry row (gamma_0 = 0) climbed into the unpoliced
+    # gamma > 0 region on the first step: there the policy kept its
+    # initialisation (engine at idle) and the measured loss was an artefact.
+    # Filling the terminal cells removes that cause, and the row goes from
+    # -11.3/-12.3 m to -5.1/-5.6 m with all 25 entries recovering.
     #
-    # Queda una salvedad medida, no supuesta: esas trayectorias trepan a
-    # 6.8-7.5 deg y el techo de gamma de la grilla es +5.0 deg, asi que ahi la
-    # consulta de politica satura en el borde (extrapola), y cruzan a los
-    # 14.6 s de un horizonte de 15.0 s. Ver GA_GMAX_MASK_DEG.
+    # One caveat remains, measured and not assumed: those trajectories climb
+    # to 6.8-7.5 deg while the grid's gamma ceiling is +5.0 deg, so the policy
+    # lookup saturates at the edge there (it extrapolates), and they cross at
+    # 14.6 s out of a 15.0 s horizon. See GA_GMAX_MASK_DEG.
     keep = list(range(len(data["vnorms"])))
     V = [data["vnorms"][j] for j in keep]
     opt = [_ga_masked(data["arms"]["optimal"][j]) for j in keep]
@@ -1213,41 +1218,42 @@ def make_ic_optimum_figure(data=None):
         for g, j in zip(opt, keep):
             g[dom[j]] = np.nan
 
-    # La fila gamma_0 = 0 se deja como sale del rollout.
+    # The gamma_0 = 0 row is left exactly as the rollout produces it.
     #
-    # Es tentador ponerla en cero: el conjunto absorbente del DP es
-    # {gamma >= 0} y su funcion de valor da 0.0000 exacto ahi, para todo alpha
-    # y todo V. Pero el conjunto terminal NO mira el angulo de ataque, y un
-    # avion nivelado y estancado a 20 deg no esta recuperado: se cae, y el
-    # rollout mide cuanto. La IC canonica de todo el paper es exactamente ese
-    # caso -- gamma_0 = 0, alpha_0 = 20 deg, V/Vs = 0.95, -7.83 m -- asi que
-    # anular la fila borraria el resultado central del trabajo.
+    # It is tempting to zero it: the DP's absorbing set is {gamma >= 0} and its
+    # value function is exactly 0.0000 there, for every alpha and every V. But
+    # the terminal set does NOT look at angle of attack, and an aircraft that
+    # is level and stalled at 20 deg is not recovered: it falls, and the
+    # rollout measures how far. The canonical IC of the entire paper is
+    # exactly that case -- gamma_0 = 0, alpha_0 = 20 deg, V/Vs = 0.95,
+    # -7.83 m -- so zeroing the row would erase the central result of the work.
     #
-    # Lo que esa fila contiene realmente:
-    #     V/Vs=0.90   -18.14 a -15.47 m   (fila -1: -16.31 a -14.73)  continua
-    #     V/Vs=1.00    -1.07 a  -0.44 m   (fila -1:  -0.50 a  -0.34)  continua
-    #     V/Vs=1.10    -5.55 a  -5.08 m   (fila -1:  -0.07 a  -0.04)  salta
+    # What the row actually contains:
+    #     V/Vs=0.90   -18.14 to -15.47 m   (row -1: -16.31 to -14.73)  continuous
+    #     V/Vs=1.00    -1.07 to  -0.44 m   (row -1:  -0.50 to  -0.34)  continuous
+    #     V/Vs=1.10    -5.55 to  -5.08 m   (row -1:  -0.07 to  -0.04)  jumps
     #
-    # Solo el ultimo regimen es anomalo, y su causa esta en la regla de parada
-    # (ver utils/recovery.py): con velocidad de sobra la recuperacion sube en
-    # vez de picar, el candado has_dived no se abre, y la metrica termina
-    # midiendo un fugoide completo en vez de la maniobra.
+    # Only the last regime is anomalous, and its cause is in the stopping rule
+    # (see utils/recovery.py): with airspeed to spare the recovery climbs
+    # instead of diving, the has_dived latch never opens, and the metric ends
+    # up measuring a full phugoid instead of the manoeuvre.
     #
-    # Se neutraliza SOLO donde el salto es grande en terminos absolutos: la
-    # fila toma el valor de su vecina. El umbral es de 3 m y no un multiplo
-    # del escalon tipico, porque el criterio relativo tambien disparaba a
-    # 0.90 Vs, donde el desplazamiento es de 2.24 m y la lectura del mapa no
-    # sufre. Medido, salto contra la fila vecina vs escalon tipico del panel:
+    # It is neutralised ONLY where the jump is large in absolute terms: the row
+    # takes its neighbour's value. The threshold is 3 m rather than a multiple
+    # of the typical step, because the relative criterion also fired at
+    # 0.90 Vs, where the displacement is 2.24 m and reading the map does not
+    # suffer. Measured, jump against the neighbouring row vs the panel's
+    # typical step:
     #
-    #     V/Vs=0.90   2.24 m   (tipico 0.17)   queda intacta
-    #     V/Vs=1.00   0.36 m   (tipico 1.05)   queda intacta
-    #     V/Vs=1.10   5.19 m   (tipico 0.21)   se neutraliza
+    #     V/Vs=0.90   2.24 m   (typical 0.17)   left intact
+    #     V/Vs=1.00   0.36 m   (typical 1.05)   left intact
+    #     V/Vs=1.10   5.19 m   (typical 0.21)   neutralised
     #
-    # Esto es un parche de presentacion sobre un problema de metrica. La
-    # solucion de fondo esta en utils/recovery.py: el candado has_dived no se
-    # abre cuando la recuperacion sube en vez de picar, y el episodio termina
-    # midiendo un fugoide entero. Arreglado eso, las tres filas quedan bien
-    # solas y este bloque sobra.
+    # This is a presentation patch over a metric problem. The real fix is in
+    # utils/recovery.py: the has_dived latch never opens when the recovery
+    # climbs instead of diving, and the episode ends up measuring a whole
+    # phugoid. Once that is fixed the three rows come out right on their own
+    # and this block becomes unnecessary.
     GA_ROW0_JUMP_M = 3.0
     i0 = int(np.argmin(np.abs(G)))
     if abs(G[i0]) < 1e-9 and len(G) > 2:
@@ -1262,9 +1268,9 @@ def make_ic_optimum_figure(data=None):
     cmap.set_bad("0.5")
     Am, Gm = np.meshgrid(A, G, indexing="xy")
 
-    # Alto reducido de 3.8 a 3.1: con tres paneles en vez de dos cada uno
-    # queda mas angosto, y a 3.8 la figura salia desproporcionadamente alta
-    # sobre la caja de texto.
+    # Height reduced from 3.8 to 3.1: with three panels instead of two each
+    # one is narrower, and at 3.8 the figure came out disproportionately tall
+    # against the text box.
     fig, axes = plt.subplots(1, len(V), figsize=(8.8, 3.1), sharey=True,
                              constrained_layout=True)
     for ax, g, v in zip(axes, opt, V):
@@ -1301,10 +1307,10 @@ def make_ic_procedures_figure(data=None):
         data = json.loads((OUT_DIR / "ic_gamma_alpha.json").read_text())
     A = np.array(data["alpha0_deg"])
     G = np.array(data["gamma0_deg"])
-    # Mismo criterio que make_ic_optimum_figure: los tres regimenes. El slice
-    # de 1.10 Vs estaba excluido porque su fila gamma_0 = 0 trepaba a la
-    # region gamma > 0 sin policia; el relleno de celdas terminales elimina
-    # esa causa.
+    # Same criterion as make_ic_optimum_figure: all three regimes. The
+    # 1.10 Vs slice used to be excluded because its gamma_0 = 0 row climbed
+    # into the unpoliced gamma > 0 region; filling the terminal cells removes
+    # that cause.
     keep = list(range(len(data["vnorms"])))
     V = [data["vnorms"][j] for j in keep]
     opt = [_ga_masked(data["arms"]["optimal"][j]) for j in keep]
@@ -1312,53 +1318,54 @@ def make_ic_procedures_figure(data=None):
                for o, j in zip(opt, keep)]
            for k in ("caa_ramp", "gated", "pd")}
 
-    # La fila gamma_0 = 0 se deja como sale del rollout. Anularla, que es lo
-    # coherente con make_ic_optimum_figure, aca hace mas daño que bien: a
-    # 0.90 y 1.00 Vs esa fila ya es continua con la de abajo y forzarla a cero
-    # abre un escalon de 8 m que no existe. Medido, contra la fila gamma_0=-1:
+    # The gamma_0 = 0 row is left as the rollout produces it. Zeroing it,
+    # which is what make_ic_optimum_figure does, would do more harm than good
+    # here: at 0.90 and 1.00 Vs that row is already continuous with the one
+    # below, and forcing it to zero opens an 8 m step that does not exist.
+    # Measured, against the gamma_0 = -1 row:
     #
-    #     V/Vs    original   anulado   fila -1
-    #     0.90     +6.84      0.00      +7.99   <- original acierta
-    #     1.00     +5.73      0.00      +6.71   <- original acierta
-    #     1.10     -6.60      0.00      +0.07   <- solo aca hay anomalia
+    #     V/Vs    original   zeroed   row -1
+    #     0.90     +6.84      0.00     +7.99   <- the original is right
+    #     1.00     +5.73      0.00     +6.71   <- the original is right
+    #     1.10     -6.60      0.00     +0.07   <- only here is there an anomaly
     #
-    # Zona muerta de la regla de parada. El episodio no cierra hasta que
-    # gamma baje de DIVE_THRESHOLD_DEG (-0.5 deg) al menos una vez. Una
-    # entrada que arranca POR ENCIMA de ese valor y cuya recuperacion sube en
-    # vez de picar -- lo que pasa a 1.10 Vs, donde sobra velocidad -- nunca
-    # abre el candado: corre hasta MAX_TIME y sale marcada como timeout,
-    # aunque termine 1.3 m mas arriba de donde empezo. _ga_masked la pasa a
-    # NaN y el mapa la dibuja gris, o sea la etiqueta como "no recupera",
-    # que es exactamente lo contrario de lo que ocurrio.
+    # Dead zone of the stopping rule. The episode does not close until gamma
+    # drops below DIVE_THRESHOLD_DEG (-0.5 deg) at least once. An entry that
+    # starts ABOVE that value and whose recovery climbs instead of diving --
+    # which is what happens at 1.10 Vs, where there is airspeed to spare --
+    # never opens the latch: it runs to MAX_TIME and comes out marked as a
+    # timeout, even though it ends 1.3 m higher than it started. _ga_masked
+    # turns it into NaN and the map draws it grey, i.e. labels it "does not
+    # recover", which is exactly the opposite of what happened.
     #
-    # Se neutralizan las filas con gamma_0 > DIVE_THRESHOLD_DEG tomando la
-    # primera fila que si esta fuera de la zona muerta. El criterio es la
-    # causa, no la apariencia: no depende de cuanto salte el numero ni de la
-    # densidad de la grilla, asi que sigue valiendo si el barrido se refina
-    # (con paso de 0.25 deg caen tres filas en la zona, no una).
+    # Rows with gamma_0 > DIVE_THRESHOLD_DEG are neutralised by taking the
+    # first row that is outside the dead zone. The criterion is the cause, not
+    # the appearance: it does not depend on how far the number jumps nor on
+    # the grid density, so it still holds if the sweep is refined (at a
+    # 0.25 deg step three rows fall in the zone, not one).
     #
-    # Parche de presentacion sobre un problema de metrica: la solucion de
-    # fondo es una clausula en utils/recovery.py que cierre el episodio
-    # cuando la trayectoria nunca pica y termina en gamma >= 0.
+    # A presentation patch over a metric problem: the real fix is a clause in
+    # utils/recovery.py that closes the episode when the trajectory never
+    # dives and ends at gamma >= 0.
     from symmetric_stall.utils.recovery import DIVE_THRESHOLD_DEG as _DIVE
-    muertas = [i for i, g in enumerate(G) if g > _DIVE]
-    if muertas:
+    dead_rows = [i for i, g in enumerate(G) if g > _DIVE]
+    if dead_rows:
         i_ok = max(i for i, g in enumerate(G) if g <= _DIVE)
         for gs in exc.values():
             for g in gs:
-                for i in muertas:
+                for i in dead_rows:
                     g[i, :] = g[i_ok, :]
 
     from matplotlib.colors import Normalize, TwoSlopeNorm
-    # Viridis secuencial anclada en cero mientras todo exceso sea positivo,
-    # que es el caso hoy en los tres regimenes: los unicos nodos que podrian
-    # dar negativo (gamma_0 = 0 a 1.10 Vs) son timeouts y salen enmascarados
-    # antes de llegar aca.
+    # Sequential viridis anchored at zero as long as every excess is
+    # positive, which is the case today across all three regimes: the only
+    # nodes that could come out negative (gamma_0 = 0 at 1.10 Vs) are timeouts
+    # and are masked out before reaching here.
     #
-    # La rama divergente esta por si eso cambia. Con Normalize(vmin=0) un
-    # exceso negativo se clipea a cero y se ve igual que un empate, sin
-    # avisar; la escala se elige sola para que un procedimiento que realmente
-    # le gane al optimo no quede escondido.
+    # The diverging branch is there in case that changes. With
+    # Normalize(vmin=0) a negative excess clips to zero and looks the same as
+    # a tie, with no warning; the scale picks itself so that a procedure that
+    # genuinely beats the optimum does not stay hidden.
     g_all = [x for gs in exc.values() for x in gs]
     vmin = min(np.nanmin(x) for x in g_all)
     vmax = max(np.nanmax(x) for x in g_all)
@@ -1374,9 +1381,9 @@ def make_ic_procedures_figure(data=None):
             ("pd", "Power-delayed (Gratton)")]
     Am, Gm = np.meshgrid(A, G, indexing="xy")
 
-    # Alto reducido de 9.8 a 8.2, como en make_ic_optimum_figure: con tres
-    # columnas en vez de dos cada panel queda mas angosto y la figura salia
-    # desproporcionadamente alta sobre la caja de texto.
+    # Height reduced from 9.8 to 8.2, as in make_ic_optimum_figure: with
+    # three columns instead of two each panel is narrower and the figure came
+    # out disproportionately tall against the text box.
     fig, axes = plt.subplots(3, len(V), figsize=(8.8, 8.2), sharex=True,
                              sharey=True, constrained_layout=True)
     for i, (key, title) in enumerate(rows):

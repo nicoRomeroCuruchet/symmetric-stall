@@ -20,8 +20,7 @@ from symmetric_stall.utils.utils import get_optimal_action
 
 logger = logging.getLogger(__name__)
 
-ALPHA_GRID_DEG = [16.0, 18.0, 20.0]
-VNORM_GRID = [0.90, 0.95, 1.00]
+from symmetric_stall.procedures import ALPHA_GRID_DEG, VNORM_GRID
 GAMMA_0_DEG = 0.0
 Q_0_DEG = 0.0
 MAX_TIME = 15.0

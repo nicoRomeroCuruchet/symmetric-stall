@@ -32,7 +32,7 @@ from symmetric_stall import train as main
 from symmetric_stall.policy_iteration import PolicyIterationStall
 from symmetric_stall.aircraft.symmetric_stall import SymmetricStall
 from symmetric_stall.utils.utils import get_optimal_action
-from paper_procedures import RecoveryMonitor
+from symmetric_stall.procedures import RecoveryMonitor
 
 A = sys.argv
 POLICY, V0 = Path(A[1]), float(A[2])
