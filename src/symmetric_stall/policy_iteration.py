@@ -908,6 +908,11 @@ class PolicyIterationStall:
 
         policy_stable = (changes <= tolerance_threshold)
 
+        #: states still changing their optimal action at the last sweep. Kept
+        #: so that a run which stops under the tolerance can say how far under
+        #: it actually was, instead of reporting a bare "converged".
+        self.n_states_chattering = changes
+
         if not policy_stable:
             logger.info(
                 f"GPU Policy updated: {changes} states changed optimal action. "
@@ -917,9 +922,19 @@ class PolicyIterationStall:
         return policy_stable
 
     def run(self, save_path: Path | None = None) -> None:
-        """Execute the complete Policy Iteration architecture."""
+        """Execute the complete Policy Iteration architecture.
+
+        Saves ONLY when `save_path` is given. It used to always call save(),
+        and save() falls back to the current working directory when it gets
+        None, so every caller that saved afterwards -- train.py and
+        paper_cg_sweep_solve.py both do -- wrote the policy twice: once
+        anonymously into the CWD and once where it was meant to go. That is
+        where the stray SymmetricStall_policy.npz at the root of the udesa
+        tree came from, byte-identical to the one under results/politicas/.
+        """
         self.n_policy_steps = 0
         self.final_residual = float("inf")
+        self.n_states_chattering = 0
         for n in range(self.config.n_steps):
             logger.info(f"--- Iteration {n + 1}/{self.config.n_steps} ---")
             self.final_residual = self.policy_evaluation()
@@ -927,11 +942,23 @@ class PolicyIterationStall:
             self.n_policy_steps = n + 1
 
             if is_stable:
-                logger.success(f"Algorithm converged optimally at iteration {n + 1}.")
+                if self.n_states_chattering:
+                    logger.success(
+                        f"Algorithm converged at iteration {n + 1} with "
+                        f"{self.n_states_chattering} states still changing "
+                        f"action, under the {int(self.n_states * 0.0001)} "
+                        f"chattering tolerance."
+                    )
+                else:
+                    logger.success(
+                        f"Algorithm converged optimally at iteration {n + 1}: "
+                        f"no state changed its action."
+                    )
                 break
 
         self._pull_tensors_from_gpu()
-        self.save(save_path)
+        if save_path is not None:
+            self.save(save_path)
 
     def save(
         self, filepath: Path | None = None, metadata: dict | None = None
@@ -946,6 +973,7 @@ class PolicyIterationStall:
             filepath = Path.cwd() / f"{self.env.unwrapped.__class__.__name__}_policy.npz"
 
         filepath = filepath.with_suffix(".npz")
+        filepath.parent.mkdir(parents=True, exist_ok=True)
 
         logger.info(f"Serializing policy to {filepath.resolve()}...")
 

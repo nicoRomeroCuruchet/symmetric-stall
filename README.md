@@ -133,17 +133,29 @@ attic/                   dead or single-use code — see attic/README.md
    crashing. It does not affect the 4-DOF model in this repo (alpha ceiling at
    +40).
 
-### Known issues in the solver
+### How a run reports itself
 
-Found while auditing, not yet fixed:
+`run()` saves only when given a path; the single write happens in
+`train_or_load_policy`, together with the metadata. It used to always call
+`save()`, which falls back to the current working directory when given `None`,
+so every policy was written twice — once anonymously into the CWD. That is
+where the stray `SymmetricStall_policy.npz` at the root of the udesa tree came
+from, byte-identical to the one under `results/politicas/`.
 
-- `run()` saves the policy twice — the second one anonymously into the current
-  working directory, which is where the stray `SymmetricStall_policy.npz` at the
-  root of the udesa tree came from.
-- The chattering tolerance lets policy iteration report *"converged optimally"*
-  with up to `n_states*1e-4` states still changing their optimal action (1,487
-  on the `riley` grid), without recording it.
-- The `.npz` records neither the final residual nor the number of iterations.
+Policy iteration stops when the number of states still changing their optimal
+action falls under a chattering tolerance of `n_states*1e-4` (1,487 on the
+`riley` grid). That is a declared approximation, not exact convergence, so the
+`.npz` records what actually happened:
+
+| key | meaning |
+|---|---|
+| `n_policy_steps` | policy-iteration steps taken |
+| `final_residual` | last evaluation residual |
+| `n_states_chattering` | states still changing action when it stopped |
+| `chattering_tolerance` | the threshold that allowed it to stop |
+
+A run that stops with `n_states_chattering > 0` says *"converged with N states
+still changing action"*, not *"converged optimally"*.
 
 ## Provenance
 

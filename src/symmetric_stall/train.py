@@ -268,6 +268,7 @@ def train_or_load_policy(
     if warm_start_ppo is not None:
         pi.warm_start_policy_from_ppo(warm_start_ppo)
 
+    # run() does not save; the single write happens here, with the metadata.
     pi.run()
 
     pi.save(policy_path, metadata={
@@ -279,6 +280,12 @@ def train_or_load_policy(
         "theta": config.theta,
         "n_micro": config.n_micro,
         "use_mca_timestep": bool(config.use_mca_timestep),
+        # How the run ended, not just how it was configured. Without these a
+        # policy cannot say whether it converged or ran out of iterations.
+        "n_policy_steps": int(getattr(pi, "n_policy_steps", 0)),
+        "final_residual": float(getattr(pi, "final_residual", float("nan"))),
+        "n_states_chattering": int(getattr(pi, "n_states_chattering", 0)),
+        "chattering_tolerance": int(np.prod(grid_shape(grid)) * 1e-4),
     })
     logger.info(f"[+] Policy cached to {policy_path.resolve()}")
     return pi

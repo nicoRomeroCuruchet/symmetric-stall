@@ -92,7 +92,13 @@ def main():
             # Warm start from the nominal converged policy
             pi.d_policy[:] = cp.asarray(baseline_policy, dtype=cp.int32)
             pi.run()
-            pi.save(out_path)
+            pi.save(out_path, metadata={
+                "dxcg_over_chord": dxcg,
+                "cg_aft_m": dxcg * env.airplane.CHORD,
+                "n_policy_steps": int(getattr(pi, "n_policy_steps", 0)),
+                "final_residual": float(getattr(pi, "final_residual", float("nan"))),
+                "n_states_chattering": int(getattr(pi, "n_states_chattering", 0)),
+            })
 
         res = rollout(pi, dxcg)
         summary[f"{xcg:.2f}"] = res
