@@ -1,7 +1,8 @@
-"""Barrido de la IC en velocidad: h_min(V0) para la politica rellenada y sin rellenar.
+"""Airspeed IC sweep: h_min(V0) for the filled and unfilled policies.
 
-h_min = excursion minima de altura, que NO depende del criterio de corte ni del
-umbral has_dived. Reporta ademas el gamma minimo, para ver donde el umbral de
+h_min = the minimum altitude excursion, which does NOT depend on the cut-off
+criterion nor on the has_dived threshold. It also reports the minimum gamma, to
+see where the threshold
 -2 deg deja de dispararse.
 
 Uso: python barrido_v0.py <raw.npz> <filled.npz>
@@ -81,9 +82,9 @@ for ax in (ax1, ax2):
 fig.suptitle(r"Sensibilidad a la IC: $\gamma_0=0$, $\alpha_0=20^\circ$, $q_0=0$",
              fontsize=10, y=0.98)
 fig.tight_layout(rect=[0, 0, 1, 0.96])
-salida = main.RESULTS_DIR / "barrido_v0.png"
-fig.savefig(salida, dpi=200)
-print("\n-> %s" % salida)
+out = main.RESULTS_DIR / "barrido_v0.png"
+fig.savefig(out, dpi=200)
+print("\n-> %s" % out)
 
 d = np.array(res["sin rellenar"]["hmin"]) - np.array(res["rellenada"]["hmin"])
 print("el fill vale: min %.3f m, max %.3f m, mediana %.3f m" % (

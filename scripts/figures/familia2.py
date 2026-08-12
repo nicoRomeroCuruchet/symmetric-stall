@@ -1,4 +1,4 @@
-"""Familia de trayectorias, politica rellenada. Uso: familia2.py <npz> <salida> V0..."""
+"""Family of trajectories, filled policy. Usage: familia2.py <npz> <out> V0..."""
 import sys, logging
 from pathlib import Path
 import numpy as np
@@ -39,7 +39,7 @@ for ax, (k, et, cv) in zip(axes, PAN):
             i = int(np.argmin(y))
             ax.plot(h["t"][i], y[i], "o", ms=4.5, color=col, mec="white",
                     mew=1.0, zorder=4)
-    if k == "h":                       # una sola etiqueta por curva, a la derecha
+    if k == "h":                       # one label per curve, on the right
         for v0, col in zip(V0S, COLS):
             y = np.asarray(hs[v0]["h"]); i = int(np.argmin(y))
             ax.annotate("%.2f" % y[i], xy=(hs[v0]["t"][i], y[i]), xytext=(6, 0),
@@ -63,7 +63,7 @@ axes[-1].set_xlabel("tiempo (s)", fontsize=9)
 axes[0].legend(loc="lower left", fontsize=8, frameon=False, ncol=len(V0S),
                bbox_to_anchor=(0.0, 1.02), title=r"$V_0/V_s$",
                title_fontsize=8)
-fig.suptitle(r"$\alpha_0=20^\circ$, $\gamma_0=0$, politica rellenada",
+fig.suptitle(r"$\alpha_0=20^\circ$, $\gamma_0=0$, filled policy",
              fontsize=10, y=0.985)
 fig.tight_layout(rect=[0, 0, 1, 0.965])
 out = main.RESULTS_DIR / NOMBRE

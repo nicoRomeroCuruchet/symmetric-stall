@@ -7,10 +7,10 @@ s += '''
 # ───────────────────────── figura ─────────────────────────
 ESTILO = {
     "optimo (DP)":                  ("#0072B2", "-",  1.9),
-    "gatillo 14 + rampa   (= CAA)": ("#D55E00", "-",  1.4),
-    "gatillo 17 + rampa":           ("#D55E00", ":",  1.4),
-    "gatillo 14 + escalon":         ("#009E73", "-",  1.4),
-    "gatillo 17 + escalon":         ("#009E73", ":",  1.4),
+    "trigger 14 + ramp   (= CAA)": ("#D55E00", "-",  1.4),
+    "trigger 17 + ramp":           ("#D55E00", ":",  1.4),
+    "trigger 14 + step":         ("#009E73", "-",  1.4),
+    "trigger 17 + step":         ("#009E73", ":",  1.4),
 }
 PAN = [("gamma", r"$\\gamma$ (deg)", np.rad2deg), ("v_norm", r"$V/V_s$", lambda x: x),
        ("alpha", r"$\\alpha$ (deg)", np.rad2deg), ("q", r"$q$ (deg/s)", np.rad2deg),
@@ -35,7 +35,7 @@ for ax, (k, et, cv) in zip(axes, PAN):
                     fontsize=7, color="0.35")
     if k == "dt_ctrl":
         ax.set_ylim(-0.02, 1.05)
-        ax.annotate("rampa 2 s vs escalon", xy=(0.99, 0.45),
+        ax.annotate("2 s ramp vs step", xy=(0.99, 0.45),
                     xycoords=("axes fraction", "data"), ha="right",
                     fontsize=7.5, color="0.35")
     if k in ("gamma", "h"):
@@ -48,7 +48,7 @@ for ax, (k, et, cv) in zip(axes, PAN):
 axes[-1].set_xlabel("tiempo (s)", fontsize=9)
 axes[0].legend(loc="lower left", fontsize=7.5, frameon=False, ncol=2,
                bbox_to_anchor=(0.0, 1.02))
-fig.suptitle(r"Ablacion gatillo vs potencia — $V_0=%.2f\\,V_s$, $\\alpha_0=%.0f^\\circ$"
+fig.suptitle(r"Trigger vs power ablation — $V_0=%.2f\\,V_s$, $\\alpha_0=%.0f^\\circ$"
              % (V0, A0), fontsize=10, y=0.988)
 fig.tight_layout(rect=[0, 0, 1, 0.955])
 out = main.RESULTS_DIR / ("ablacion_v%03d.png" % round(V0 * 100))

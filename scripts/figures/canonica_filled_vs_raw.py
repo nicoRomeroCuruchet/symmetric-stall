@@ -1,8 +1,8 @@
-"""Trayectoria desde la IC canonica: politica RELLENADA contra SIN RELLENAR.
+"""Trajectory from the canonical IC: FILLED policy against UNFILLED.
 
-Genera, para cada V0 pedida:
-  - un PNG por politica, con el mismo formato que main.plot_time_response
-  - un PNG comparativo con las dos superpuestas
+For each requested V0 it generates:
+  - one PNG per policy, in the same format as main.plot_time_response
+  - one comparison PNG with the two overlaid
 
 Uso:  python canonica_filled_vs_raw.py <raw.npz> <filled.npz> [V0 ...]
 """
@@ -90,10 +90,10 @@ for v0 in VS:
     axes[0].legend(loc="lower left", fontsize=8, frameon=False, ncol=2,
                    bbox_to_anchor=(0.0, 1.02))
     fig.suptitle(r"IC canonica $V_0=%.2f\,V_s$, $\alpha_0=20^\circ$: "
-                 "politica rellenada vs sin rellenar" % v0, fontsize=10,
+                 "filled vs unfilled policy" % v0, fontsize=10,
                  y=0.985)
     fig.tight_layout(rect=[0, 0, 1, 0.965])
-    salida = main.RESULTS_DIR / ("comparacion_fill_v%03d.png" % round(v0 * 100))
-    fig.savefig(salida, dpi=200)
+    out = main.RESULTS_DIR / ("comparacion_fill_v%03d.png" % round(v0 * 100))
+    fig.savefig(out, dpi=200)
     plt.close(fig)
-    print("  -> %s" % salida)
+    print("  -> %s" % out)

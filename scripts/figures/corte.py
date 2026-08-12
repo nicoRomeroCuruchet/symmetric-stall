@@ -1,4 +1,4 @@
-"""Criterio de corte: umbral has_dived de -2 deg contra gamma < 0."""
+"""Cut-off criterion: the -2 deg has_dived threshold against gamma < 0."""
 import sys, logging
 from pathlib import Path
 import numpy as np

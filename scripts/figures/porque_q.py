@@ -1,4 +1,4 @@
-"""q = gamma_dot + alpha_dot: se verifica sobre la trayectoria?"""
+"""q = gamma_dot + alpha_dot: does it hold along the trajectory?"""
 import sys, logging
 from pathlib import Path
 import numpy as np

@@ -36,7 +36,7 @@ for ax, (k, et, cv) in zip(axes, PAN):
     if k == "alpha":
         ax.axhline(14.0, color="0.5", lw=0.8, ls="--", zorder=1)
         ax.axhline(40.0, color="#b2182b", lw=0.8, ls="--", zorder=1)
-        ax.annotate("choque: 40", xy=(0.99, 40.0),
+        ax.annotate("crash: 40", xy=(0.99, 40.0),
                     xycoords=("axes fraction", "data"), ha="right", va="top",
                     fontsize=7, color="#b2182b")
     if k == "dt":
@@ -54,7 +54,7 @@ for ax, (k, et, cv) in zip(axes, PAN):
 axes[-1].set_xlabel("tiempo (s)", fontsize=9)
 axes[0].legend(loc="lower left", fontsize=7.5, frameon=False, ncol=2,
                bbox_to_anchor=(0.0, 1.02))
-fig.suptitle(r"Piloto con retardo de %.1f s y motor de primer orden — $V_0=%.2f\\,V_s$"
+fig.suptitle(r"Pilot with %.1f s delay and first-order engine — $V_0=%.2f\\,V_s$"
              % (TAU_H, V0), fontsize=10, y=0.988)
 fig.tight_layout(rect=[0, 0, 1, 0.955])
 out = main.RESULTS_DIR / ("piloto_realista_v%03d.png" % round(V0 * 100))

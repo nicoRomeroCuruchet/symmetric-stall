@@ -1,7 +1,7 @@
-"""La figura del escenario, con el estilo EXACTO del paper 1.
+"""The scenario figure, in the EXACT style of paper 1.
 
-Copia rc, layout, colores, estilos de linea y etiquetas de panel de
-`paper_procedures.make_trajectory_comparison_figure`, para que las figuras
+Copies rc, layout, colours, line styles and panel labels from
+`procedures.make_trajectory_comparison_figure`, so that the figures
 nuevas entren en el paper sin retoques.
 
 Uso: fig_paper.py <npz> <V0> [t_dp] [t_pil] [tau_m] [de_noreac] [de_pull]
@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 logging.disable(logging.INFO)
 
 from symmetric_stall import train as main
-import escenario as E          # reusa rodar() y los parametros ya cargados
+import escenario as E          # reuses run() and the already-loaded parameters
 
 RUNS = [("DP optimum (automatic, %.2f s)" % E.T_DP,      "#2C4B9E", "-",  "dp"),
         ("CAA pilot (reacts %.2f s)" % E.T_PIL,          "#E8742A", "--", "caa"),
@@ -66,7 +66,7 @@ with plt.rc_context(rc):
                 fontsize=11, va="bottom", ha="left")
         axs.append(ax)
 
-    # los dos instantes que estructuran el escenario
+    # the two instants that structure the scenario
     for ax in axs:
         ax.axvline(E.T_DP,  color="0.45", linestyle=":", linewidth=1.0)
         ax.axvline(E.T_PIL, color="0.45", linestyle=":", linewidth=1.0)

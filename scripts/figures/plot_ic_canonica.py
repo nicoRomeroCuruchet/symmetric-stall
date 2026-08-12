@@ -1,10 +1,10 @@
-"""Trayectoria 4-DOF desde la entrada canonica, con el empuje de Riley.
+"""4-DOF trajectory from the canonical entry, with Riley's thrust.
 
     alpha0 = 20 deg, V0 = 0.95 Vs, gamma0 = 0, q0 = 0
 
-Es la misma entrada que el paper 1 reporta en -7.796 m / 7.67 s usando el
-mapa lineal de empuje. Corrida con THRUST_MODEL=riley mide cuanto de ese
-numero depende de una calibracion que el Apendice A del propio informe de
+This is the same entry paper 1 reports at -7.796 m / 7.67 s using the linear
+thrust map. Run with THRUST_MODEL=riley it measures how much of that number
+depends on a calibration that Appendix A of Riley's own report
 Riley vuelve innecesaria.
 
 Usage:  THRUST_MODEL=riley PYTHONPATH=. python plot_ic_canonica.py [prefijo]

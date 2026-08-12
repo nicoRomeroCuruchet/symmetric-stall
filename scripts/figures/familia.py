@@ -1,4 +1,4 @@
-"""Familia de trayectorias 0.91-0.94 Vs, politica rellenada, superpuestas."""
+"""Family of 0.91-0.94 Vs trajectories, filled policy, overlaid."""
 import sys, logging
 from pathlib import Path
 import numpy as np
@@ -44,7 +44,7 @@ for ax, (k, et, cv) in zip(axes, PAN):
         ax.axhline(0.0, color="0.85", lw=0.6, zorder=0)
     if k == "dt_ctrl":
         ax.set_ylim(-0.02, 1.05)          # si no, matplotlib hace zoom en el ULP
-        ax.annotate("1.000 en las cuatro", xy=(0.99, 1.0),
+        ax.annotate("1.000 in all four", xy=(0.99, 1.0),
                     xycoords=("axes fraction", "data"), ha="right", va="top",
                     fontsize=7.5, color="0.35")
     ax.set_ylabel(et, fontsize=9); ax.grid(True, color="0.92", lw=0.5)
@@ -55,7 +55,7 @@ for ax, (k, et, cv) in zip(axes, PAN):
 axes[-1].set_xlabel("tiempo (s)", fontsize=9)
 axes[0].legend(loc="lower left", fontsize=8, frameon=False, ncol=4,
                bbox_to_anchor=(0.0, 1.02))
-fig.suptitle(r"Entradas marginales: $\alpha_0=20^\circ$, politica rellenada",
+fig.suptitle(r"Marginal entries: $\alpha_0=20^\circ$, filled policy",
              fontsize=10, y=0.985)
 fig.tight_layout(rect=[0, 0, 1, 0.965])
 out = main.RESULTS_DIR / "familia_v091_v094.png"
