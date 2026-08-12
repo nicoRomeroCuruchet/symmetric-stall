@@ -79,7 +79,7 @@ ident = np.array_equal(base, otra)
 print("  (1) CG en la referencia -> identidad bit a bit: %s" % ("SI" if ident else "NO"))
 
 # ---- (2) the transfer against an explicit cross product ----
-# M_CG = M_ref + (r_ref - r_CG) x F, en ejes de cuerpo (x adelante, y derecha,
+# M_CG = M_ref + (r_ref - r_CG) x F, in body axes (x forward, y right,
 # z down). F_x = -C_A, F_y = C_Y, F_z = -C_N (non-dimensionalised by qS).
 rng = np.random.default_rng(0)
 worst = 0.0
@@ -104,12 +104,12 @@ a.CG_AFT, a.CG_RIGHT, a.CG_BELOW = 0.0, 0.0, 0.0
 al14 = np.deg2rad(14.0)
 _, dcm0, _ = a._delta_momentos_cg(1.26, 0.24, al14)
 a.CG_AFT = 0.05 * a.CHORD
-_, dcm_atras, _ = a._delta_momentos_cg(1.26, 0.24, al14)
+_, dcm_aft, _ = a._delta_momentos_cg(1.26, 0.24, al14)
 a.CG_AFT = -0.05 * a.CHORD
-_, dcm_adel, _ = a._delta_momentos_cg(1.26, 0.24, al14)
+_, dcm_fwd, _ = a._delta_momentos_cg(1.26, 0.24, al14)
 print("  (3) alpha=14, C_L=1.26: CG 5%% atras dCm=%+.5f (cabreo, menos estable); "
-      "5%% adelante dCm=%+.5f" % (dcm_atras, dcm_adel))
-ok3 = dcm_atras > 0 > dcm_adel
+      "5%% forward dCm=%+.5f" % (dcm_aft, dcm_fwd))
+ok3 = dcm_aft > 0 > dcm_fwd
 
 # ---- (4) DXCG_OVER_CHORD sigue funcionando ----
 a.CG_AFT = a.CG_RIGHT = a.CG_BELOW = 0.0

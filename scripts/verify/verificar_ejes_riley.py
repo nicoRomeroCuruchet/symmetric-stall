@@ -36,7 +36,7 @@ def traslado_cg(a, cl, cd, cy, al):
     """(dC_l, dC_m, dC_n) by an EXPLICIT cross product, not by calling the
     planta: si la planta se equivoca en un signo, esto no la acompana.
 
-        M_CG = M_ref + (r_ref - r_CG) x F,   ejes de cuerpo (x adelante,
+        M_CG = M_ref + (r_ref - r_CG) x F,   body axes (x forward,
        y right wing, z down);  F/qS = (-C_A, C_Y, -C_N).
     """
     if a.CG_AFT == 0.0 and a.CG_RIGHT == 0.0 and a.CG_BELOW == 0.0:
