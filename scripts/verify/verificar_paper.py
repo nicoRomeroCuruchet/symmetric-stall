@@ -83,7 +83,7 @@ def main():
         targets.append(("figura", PAPER / f))
     for i in inputs:
         p = PAPER / i
-        targets.append(("tabla", p if p.suffix else p.with_suffix(".tex")))
+        targets.append(("table", p if p.suffix else p.with_suffix(".tex")))
 
     stale, missing, ok = [], [], []
     for kind, p in targets:

@@ -114,7 +114,7 @@ print("sin reaccionar: de=%.0f deg (TIRANDO)   |   piloto: +15 deg hasta el "
       "nose-down, despues %.0f deg fijo\n"
       % (np.rad2deg(DE_NOREAC), np.rad2deg(DE_PULL)))
 print("%-36s %9s %8s %10s %9s %11s" % ("arm", "h_min", "dur", "nose-down",
-                                       "alpha_max", "estado"))
+                                       "alpha_max", "status"))
 print("-" * 88)
 res = {}
 for name, mode, col in BRAZOS:

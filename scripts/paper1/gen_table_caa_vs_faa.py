@@ -1,10 +1,10 @@
-"""Genera table_caa_vs_faa.tex desde results/paper/procedures.json.
+"""Generate table_caa_vs_faa.tex from results/paper/procedures.json.
 
-La tabla estaba en el paper pero ningun script la producia: se escribio a
-mano una sola vez (commit dbd7f6f) y despues quedo huerfana. El mapeo de
-columnas se verifico contra los valores publicados, celda por celda.
+The table was in the paper but no script produced it: it was written by hand
+once (commit dbd7f6f) and then left orphaned. The column mapping was verified
+against the published values, cell by cell.
 
-    Optimal  = e3b_switch_delay["0"]                 (politica pura)
+    Optimal  = e3b_switch_delay["0"]                 (pure policy)
     tau=0.5  = e1_power_delay.instant["0.5"]
     tau=1    = e1_power_delay.instant["1"]
     PD       = e1_power_delay.ramp2s["2"]            (Gratton power-delayed)

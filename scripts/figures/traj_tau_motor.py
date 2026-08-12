@@ -1,19 +1,20 @@
 """Cuanto de la ventaja del optimo sobrevive si el motor no puede dar un escalon.
 
-La politica manda potencia maxima desde t=0 y la planta se la da instantanea.
-Un motor a piston con helice de paso fijo no hace eso, y Riley lo sabe: la
-ecuacion (A4) del Apendice A mete un retardo de primer orden entre la palanca
-y el empuje,
+The policy commands maximum power from t=0 and the plant delivers it
+instantly. A piston engine with a fixed-pitch propeller does not do that, and
+Riley knows it: equation (A4) of Appendix A puts a first-order lag between the
+throttle and the thrust,
 
     delta_t = 1/(tau_e s + 1) * delta_t,comandado
 
-Lo que NO da el informe es el valor de tau_e -- figura en el glosario como
+What the report does NOT give is the value of tau_e -- it appears in the
+glossary as
 "engine-response time constant, sec" y en ningun lado mas. Por eso se barre.
 
-El retardo se aplica en la evaluacion, no en el DP: la politica se resolvio
-sin el, asi que esto mide que le pasa a una politica optimizada para un motor
-ideal cuando vuela uno real. Es la pregunta conservadora, y la que importa,
-porque es el numero que uno reporta.
+The lag is applied in evaluation, not in the DP: the policy was solved
+without it, so this measures what happens to a policy optimised for an ideal
+engine when it flies a real one. That is the conservative question, and the one
+that matters, because it is the number one reports.
 
     THRUST_MODEL=riley PYTHONPATH=. python traj_tau_motor.py [V0]
 """
@@ -32,15 +33,15 @@ from symmetric_stall.policy_iteration import PolicyIterationStall
 V0 = float(sys.argv[1]) if len(sys.argv) > 1 else 0.85
 ALPHA0 = 20.0
 TAUS = [0.0, 0.3, 0.6, 1.0]
-TAU_FIG = 0.6            # el tau que se dibuja en los paneles de trayectoria
+TAU_FIG = 0.6            # the tau drawn in the trajectory panels
 
 
 def con_retardo(ctrl, tau, dt):
-    """Envuelve un controlador con el retardo de motor de la ec. (A4).
+    """Wrap a controller with the engine lag of eq. (A4).
 
-    El estado del filtro vive en ctx, que rollout crea nuevo por corrida, asi
-    que dos brazos no se contaminan. Arranca en 0: la entrada en perdida es
-    con motor en ralenti, que es lo que suponen las dos maniobras guionadas.
+    The filter state lives in ctx, which rollout creates fresh per run, so
+    two arms cannot contaminate each other. It starts at 0: the stall entry is
+    at idle, which is what both scripted manoeuvres assume.
     """
     if tau <= 0.0:
         return ctrl
@@ -70,25 +71,25 @@ BRAZOS = [
 print("entrada: alpha0 = %.0f deg, V0 = %.2f Vs, gamma0 = 0, q0 = 0" % (ALPHA0, V0))
 print("retardo de motor de la ec. (A4), tau_e en segundos\n")
 print("  tau_e      DP optimo        CAA de-opt       FAA de-opt     brecha opt->CAA")
-tabla = {}
+table = {}
 for tau in TAUS:
     fila = []
-    for nombre, mk, _, _ in BRAZOS:
+    for name, mk, _, _ in BRAZOS:
         r = pp.rollout(env, pi, con_retardo(mk(), tau, DT), ALPHA0, V0,
                        record=True)
         fila.append(r)
-        tabla[(tau, nombre)] = r
+        table[(tau, name)] = r
     hs = [np.asarray(r["hist"]["h"]).min() for r in fila]
     print("  %4.2f s   %+8.2f m       %+8.2f m       %+8.2f m       %6.2f m (x%.2f)"
           % (tau, hs[0], hs[1], hs[2], hs[1] - hs[0], hs[1] / hs[0]))
 
 fig, axes = plt.subplots(2, 3, figsize=(13.5, 6.2))
-for nombre, _, color, ls in BRAZOS:
+for name, _, color, ls in BRAZOS:
     for tau, lw, alpha in ((0.0, 1.1, 0.45), (TAU_FIG, 2.0, 1.0)):
-        r = tabla[(tau, nombre)]
+        r = table[(tau, name)]
         h = r["hist"]
         t = np.asarray(h["t"])
-        etiq = ("%s, $\\tau_e$=%.1f s" % (nombre, tau)) if tau else None
+        etiq = ("%s, $\\tau_e$=%.1f s" % (name, tau)) if tau else None
         for ax, y in ((axes[0, 0], np.rad2deg(h["gamma"])),
                       (axes[0, 1], np.rad2deg(h["alpha"])),
                       (axes[0, 2], np.asarray(h["v_norm"])),

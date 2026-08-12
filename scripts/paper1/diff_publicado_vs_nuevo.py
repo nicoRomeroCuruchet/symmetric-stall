@@ -1,7 +1,7 @@
-"""Tabla de diff: cada numero publicado contra su nuevo valor.
+"""Diff table: every published number against its new value.
 
-Compara los json de results/paper/ (recien regenerados con la politica
-MCA + fix de drag + filled) contra los que estaban commiteados en HEAD,
+Compares the json files in results/paper/ (freshly regenerated with the
+MCA + drag-fix + filled policy) against those committed at HEAD,
 guardados previamente en PUB.
 """
 import json
@@ -26,19 +26,19 @@ def fila(etiqueta, a, b, unidad="m"):
     return f"{etiqueta:<42s}{a:11.3f}{b:11.3f}{d:+9.3f} {pct:+6.1f}%"
 
 
-def recorre(pa, pb, ruta, salida, prof=0):
-    """Recorre dos dicts en paralelo y emite las hojas numericas."""
-    if prof > 3:
+def walk(pa, pb, path, out, depth=0):
+    """Walk two dicts in parallel and emit the numeric leaves."""
+    if depth > 3:
         return
     for k in pa:
         if k not in pb:
             continue
         va, vb = pa[k], pb[k]
         if isinstance(va, dict) and isinstance(vb, dict):
-            recorre(va, vb, f"{ruta}.{k}" if ruta else k, salida, prof + 1)
+            walk(va, vb, f"{path}.{k}" if path else k, out, depth + 1)
         elif isinstance(va, (int, float)) and isinstance(vb, (int, float)) \
                 and not isinstance(va, bool):
-            salida.append(((f"{ruta}.{k}" if ruta else k), va, vb))
+            out.append(((f"{path}.{k}" if path else k), va, vb))
 
 
 def seccion(titulo, nombre, filtro=None):
@@ -48,7 +48,7 @@ def seccion(titulo, nombre, filtro=None):
         print(f"  (falta: publicado={a is not None} nuevo={b is not None})")
         return
     hojas = []
-    recorre(a, b, "", hojas)
+    walk(a, b, "", hojas)
     if filtro:
         hojas = [h for h in hojas if filtro(h[0])]
     if not hojas:
@@ -56,15 +56,15 @@ def seccion(titulo, nombre, filtro=None):
         return
     print(f"{'metrica':<42s}{'publicado':>11}{'nuevo':>11}{'cambio':>17}")
     cambiados = 0
-    for ruta, va, vb in hojas:
+    for path, va, vb in hojas:
         if abs(vb - va) > 1e-9:
             cambiados += 1
-            print(fila(ruta, va, vb))
+            print(fila(path, va, vb))
     print(f"\n  {cambiados} de {len(hojas)} valores cambiaron")
 
 
 if __name__ == "__main__":
-    print("DIFF: paper publicado  vs  regenerado con MCA + fix de drag + filled")
+    print("DIFF: published paper  vs  regenerated with MCA + drag fix + filled")
     seccion("Procedimientos y sensibilidad del piloto", "procedures.json")
     seccion("Maniobras CAA / FAA", "maneuvers.json")
     seccion("Comparacion de esquemas", "mca_comparison.json")

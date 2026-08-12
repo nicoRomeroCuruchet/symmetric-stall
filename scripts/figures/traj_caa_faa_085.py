@@ -92,7 +92,7 @@ axes[0, 1].axhline(14.0, color="grey", lw=0.8, ls="--")
 axes[1, 2].axhline(0.0, color="grey", lw=0.8, ls="--")
 axes[0, 0].legend(fontsize=9)
 fig.suptitle(r"Entrada canonica a $%.2f\,V_s$ ($\alpha_0=%.0f^\circ$, "
-             r"$\gamma_0=0$): optimo DP vs CAA vs FAA, empuje de Riley"
+             r"$\gamma_0=0$): DP optimum vs CAA vs FAA, Riley thrust"
              % (V0, ALPHA0), fontsize=11)
 fig.tight_layout()
 out = main.RESULTS_DIR / ("riley_caa_faa_v%03d.png" % round(V0 * 100))

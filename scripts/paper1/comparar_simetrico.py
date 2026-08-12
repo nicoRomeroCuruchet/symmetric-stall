@@ -1,13 +1,13 @@
-"""Compara los volcados de volcar_simetrico.py de las tres ramas.
+"""Compare the volcar_simetrico.py dumps from the three branches.
 
 Los tres modelos describen el MISMO avion. Puesto beta = mu = p = r = 0 y
-aleron = timon = 0, el 6-DOF y el 8-DOF tienen que reducirse exactamente al
-4-DOF. Cuando no lo hacen es porque una rama quedo atras de otra, y eso paso
-mas de una vez: el 6-DOF no llevaba los terminos de alpha-punto y su q_dot
-difería del 4-DOF por un factor 23 sin que ningun chequeo de esa rama lo
-notara, porque todos los suyos comparaban la rama consigo misma.
+aileron = rudder = 0, the 6-DOF and the 8-DOF must reduce exactly to the
+4-DOF. When they do not it is because one branch fell behind another, and that
+happened more than once: the 6-DOF did not carry the alpha-dot terms and its
+q_dot differed from the 4-DOF by a factor of 23 without any check on that
+branch noticing, because all of its own checks compared the branch to itself.
 
-    # en cada rama
+    # on each branch
     THRUST_MODEL=riley PYTHONPATH=. python volcar_simetrico.py v4.json
     # y despues
     python comparar_simetrico.py v4.json v6.json v8.json
@@ -18,7 +18,7 @@ import sys
 import numpy as np
 
 NOM = ["gamma_dot", "v_dot", "alpha_dot", "q_dot"]
-TOL = 1e-4          # holgura de float32 en las tablas; muy por debajo de lo fisico
+TOL = 1e-4          # float32 slack in the tables; far below anything physical
 
 
 def main():
@@ -44,15 +44,15 @@ def main():
                             for x in vals),
                  "" if igual else "<-- DIFIERE"))
 
-    print("\n=== C_T, con el mismo modelo de empuje ===")
+    print("\n=== C_T, with the same thrust model ===")
     ref = np.array(V["4dof"]["ct"])
     for n in orden[1:]:
         d = np.abs(np.array(V[n]["ct"]) - ref).max()
         malas += 0 if d < 1e-9 else 1
-        print("  %-6s peor diferencia contra el 4-DOF: %.2e %s"
+        print("  %-6s worst difference against the 4-DOF: %.2e %s"
               % (n, d, "" if d < 1e-9 else "<-- DIFIERE"))
 
-    print("\n=== DERIVADAS EN EL LIMITE SIMETRICO, contra el 4-DOF ===")
+    print("\n=== DERIVATIVES IN THE SYMMETRIC LIMIT, against the 4-DOF ===")
     A = np.array(V["4dof"]["derivadas"])
     peor = 0.0
     for n in orden[1:]:
@@ -67,7 +67,7 @@ def main():
                                         for i in range(4)))
 
     ok = malas == 0 and peor < TOL
-    print("\n%s (peor %.2e sobre %d estados, tolerancia %.0e)"
+    print("\n%s (worst %.2e over %d states, tolerance %.0e)"
           % ("LOS MODELOS SON CONSISTENTES" if ok else "LOS MODELOS DIFIEREN",
              peor, A.shape[0], TOL))
     return 0 if ok else 1
