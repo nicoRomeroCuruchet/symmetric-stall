@@ -1,15 +1,15 @@
-"""Optimo DP contra CAA y FAA, entrada canonica a 0.85 Vs, empuje de Riley.
+"""DP optimum against CAA and FAA, canonical entry at 0.85 Vs, Riley thrust.
 
-Reusa las maniobras guionadas de paper_procedures.py -- no las reescribe --
-para que la comparacion sea la misma del paper 1 y lo unico que cambie sea el
-modelo de empuje y la grilla.
+Reuses the scripted manoeuvres from procedures.py -- it does not rewrite them
+-- so that the comparison is the same as paper 1's and the only things that
+change are the thrust model and the grid.
 
-    CAA   morro abajo y potencia AL MISMO TIEMPO (rampa de 2 s desde t=0)
-    FAA   morro abajo primero, potencia recien al des-entrar en perdida
+    CAA   nose down and power AT THE SAME TIME (2 s ramp from t=0)
+    FAA   nose down first, power only once out of the stall
 
-Ambos brazos se acotan a la MISMA autoridad de tirada que alcanza el optimo en
-esta entrada, como hace run_maneuvers: sin eso la comparacion mezclaria CUANDO
-se aplica potencia con CUANTO tira el piloto.
+Both arms are capped to the SAME pull authority the optimum reaches at this
+entry, as run_maneuvers does: without that the comparison would mix WHEN power
+is applied with HOW HARD the pilot pulls.
 
     THRUST_MODEL=riley PYTHONPATH=. python traj_caa_faa_085.py [V0]
 """
@@ -34,23 +34,23 @@ pi = PolicyIterationStall.load(main.RESULTS_DIR / "SymmetricStall_policy.npz",
 _, states, _, _ = main.setup_symmetric_stall_experiment()
 pi.states_space = states
 
-# autoridad de tirada del optimo en ESTA entrada, para acotar los brazos
+# the optimum's pull authority at THIS entry, used to cap the arms
 r_opt = pp.rollout(env, pi, pp.ctrl_optimal, ALPHA0, V0, record=True)
 tope = float(np.min(r_opt["hist"]["de"]))
 print("entrada: alpha0 = %.0f deg, V0 = %.2f Vs, gamma0 = 0, q0 = 0" % (ALPHA0, V0))
-print("tirada mas profunda del optimo: %.2f deg (se usa como tope de CAA y FAA)"
+print("optimum's deepest pull: %.2f deg (used as the cap for CAA and FAA)"
       % np.rad2deg(tope))
 
 # Dos familias.
 #
-# Las guionadas son las de Gratton tal cual: empujan a +15 hasta cruzar 14 deg
-# y despues sostienen alpha con una ley proporcional. Su elevador no se parece
-# en nada al del optimo, asi que su diferencia contra el optimo mezcla DOS
-# decisiones -- cuando entra la potencia y como se maneja el morro.
+# The scripted ones are Gratton's as they stand: they push to +15 until
+# crossing 14 deg and then hold alpha with a proportional law. Their elevator
+# looks nothing like the optimum's, so their difference against the optimum
+# mixes TWO decisions -- when the power comes in and how the nose is handled.
 #
-# Las de "delta_e optimo" toman el elevador del propio optimo y solo cambian
-# el momento de la potencia. Aislan la decision que CAA y FAA realmente
-# discuten, que es esa y no el pitcheo.
+# The "optimal delta_e" ones take the elevator from the optimum itself and
+# only change the timing of the power. They isolate the decision CAA and FAA
+# actually disagree about, which is that one and not the pitching.
 BRAZOS = [
     ("DP optimo", r_opt, "tab:blue", "-"),
     ("CAA de-opt", pp.rollout(env, pi, pp.make_power_delay(0.0, ramp=True),

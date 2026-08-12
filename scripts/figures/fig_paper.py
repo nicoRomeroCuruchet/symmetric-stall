@@ -24,7 +24,7 @@ RUNS = [("DP optimum (automatic, %.2f s)" % E.T_DP,      "#2C4B9E", "-",  "dp"),
         ("CAA pilot (reacts %.2f s)" % E.T_PIL,          "#E8742A", "--", "caa"),
         ("FAA pilot (reacts %.2f s)" % E.T_PIL,          "#2CA02C", "-.", "faa")]
 
-datos = [(lab, col, ls, E.rodar(modo)) for lab, col, ls, modo in RUNS]
+data = [(lab, col, ls, E.run(mode)) for lab, col, ls, mode in RUNS]
 
 rc = {"font.family": "serif", "mathtext.fontset": "stix",
       "font.size": 12, "axes.labelsize": 13,
@@ -45,10 +45,10 @@ with plt.rc_context(rc):
                           hspace=0.42, wspace=0.24)
     slots = [gs[0, 0], gs[0, 1], gs[1, 0], gs[1, 1], gs[2, 0], gs[2, 1], gs[3, :]]
     axs = []
-    t_end = max(r["H"]["t"][-1] for _, _, _, r in datos)
+    t_end = max(r["H"]["t"][-1] for _, _, _, r in data)
     for k, (slot, (key, ylab, conv, estilo)) in enumerate(zip(slots, SIG)):
         ax = fig.add_subplot(slot)
-        for lab, col, ls, r in datos:
+        for lab, col, ls, r in data:
             t = np.asarray(r["H"]["t"]); y = np.asarray(r["H"][key])
             if conv is not None:
                 y = conv(y)
@@ -87,5 +87,5 @@ with plt.rc_context(rc):
                                     % round(E.V0 * 100)), dpi=300,
                 bbox_inches="tight")
 print("-> 3_maniobras/fig_escenario_v%03d.{png,pdf}" % round(E.V0 * 100))
-for lab, _, _, r in datos:
+for lab, _, _, r in data:
     print("   %-34s h_min %+8.3f m   dur %5.2f s" % (lab, r["hmin"], r["t"]))

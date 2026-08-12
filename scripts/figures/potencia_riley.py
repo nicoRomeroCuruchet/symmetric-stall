@@ -1,14 +1,14 @@
-"""Mismo elevador (el del DP), distinta potencia, CON LA DINAMICA DE MOTOR DE RILEY.
+"""Same elevator (the DP's), different power, WITH RILEY'S ENGINE DYNAMICS.
 
 Riley, Apendice A, ec. (A4):   delta_t = 1/(tau_e s + 1) * delta_t,c
-o sea el empuje efectivo sigue al comando de palanca con un retardo de primer
-orden. Riley NO publica tau_e (solo lo define en la lista de simbolos), asi que
+i.e. the effective thrust follows the throttle command with a first-order lag.
+Riley does NOT publish tau_e (he only defines it in the symbol list), so
 se barre.
 
-  palanca:  DP   rampa 0.6 s desde t=0
-            CAA  rampa 2.0 s desde t=0
-            FAA  rampa 2.0 s desde el nose-down (alpha < 14)
-  motor:    d(dt_ef)/dt = (dt_cmd - dt_ef) / tau_e     en los TRES
+  throttle: DP   0.6 s ramp from t=0
+            CAA  2.0 s ramp from t=0
+            FAA  2.0 s ramp from the nose-down (alpha < 14)
+  engine:   d(dt_ef)/dt = (dt_cmd - dt_ef) / tau_e     in ALL THREE
 
 Uso: potencia_riley.py <policy.npz> <V0> <tau_figura> [tau ...]
 """
@@ -41,12 +41,12 @@ env = SymmetricStall()
 pi = PolicyIterationStall.load(POLICY, env=env)
 v_stall, dt = env.airplane.STALL_AIRSPEED, env.airplane.TIME_STEP
 
-BRAZOS = [("DP   (palanca 0.6 s)",        0.6, "t0",      "#0072B2"),
+ARMS = [("DP   (palanca 0.6 s)",        0.6, "t0",      "#0072B2"),
           ("CAA  (palanca 2 s)",          2.0, "t0",      "#D55E00"),
           ("FAA  (palanca 2 s tras n-d)", 2.0, "unstall", "#009E73")]
 
 
-def rodar(rampa, inicio, tau_e):
+def run_arm(ramp, start, tau_e):
     obs, _ = env.specific_reset(0.0, V0, np.deg2rad(A0), 0.0)
     t, h, t_uns, dt_ef = 0.0, 0.0, None, 0.0
     stop, hs = RecoveryMonitor(dt), [0.0]
@@ -56,8 +56,8 @@ def rodar(rampa, inicio, tau_e):
         de = float(get_optimal_action(obs, pi)[0][0])
         if t_uns is None and obs[2] < ALPHA_UNSTALL:
             t_uns = t
-        t_pwr = 0.0 if inicio == "t0" else t_uns
-        cmd = 0.0 if t_pwr is None else float(np.clip((t - t_pwr) / rampa, 0.0, 1.0))
+        t_pwr = 0.0 if start == "t0" else t_uns
+        cmd = 0.0 if t_pwr is None else float(np.clip((t - t_pwr) / ramp, 0.0, 1.0))
         dt_ef = cmd if tau_e <= 0 else dt_ef + (cmd - dt_ef) * (dt / tau_e)
 
         for k, v in (("t", t), ("gamma", obs[0]), ("v_norm", obs[1]),
@@ -76,7 +76,7 @@ def rodar(rampa, inicio, tau_e):
     return dict(hmin=min(hs), t=t, est="sin cerrar", H=H, t_uns=t_uns)
 
 
-print("IC: gamma=0, V=%.2f Vs, alpha=20 deg   |   elevador: el del DP en los tres\n"
+print("IC: gamma=0, V=%.2f Vs, alpha=20 deg   |   elevator: the DP's in all three\n"
       % V0)
 print("%8s | %-22s | %-22s | %-22s" % ("tau_e", "DP", "CAA", "FAA"))
 print("%8s | %9s %6s %5s | %9s %6s %5s | %9s %6s %5s" % (
@@ -85,33 +85,33 @@ print("-" * 84)
 G = {}
 for tau in sorted(TAUS):
     fila = "%8.2f |" % tau
-    for nom, rampa, inicio, _ in BRAZOS:
-        r = rodar(rampa, inicio, tau); G[(tau, nom)] = r
+    for name, ramp, start, _ in ARMS:
+        r = run_arm(ramp, start, tau); G[(tau, name)] = r
         fila += " %9.3f %5.2fs %5s |" % (r["hmin"], r["t"], r["est"][:5])
     print(fila)
 
-print("\npenalizacion contra el DP, para cada motor:")
+print("\npenalty against the DP, for each engine:")
 for tau in sorted(TAUS):
-    d = G[(tau, BRAZOS[0][0])]["hmin"]
+    d = G[(tau, ARMS[0][0])]["hmin"]
     print("  tau_e=%.2f s:  CAA %+8.3f m   FAA %+8.3f m   (FAA-CAA %+7.3f m)" % (
-        tau, G[(tau, BRAZOS[1][0])]["hmin"] - d,
-        G[(tau, BRAZOS[2][0])]["hmin"] - d,
-        G[(tau, BRAZOS[2][0])]["hmin"] - G[(tau, BRAZOS[1][0])]["hmin"]))
+        tau, G[(tau, ARMS[1][0])]["hmin"] - d,
+        G[(tau, ARMS[2][0])]["hmin"] - d,
+        G[(tau, ARMS[2][0])]["hmin"] - G[(tau, ARMS[1][0])]["hmin"]))
 
-# ───── figura con tau = TAU_FIG ─────
+# ───── figure with tau = TAU_FIG ─────
 PAN = [("gamma", r"$\gamma$ (deg)", np.rad2deg), ("v_norm", r"$V/V_s$", lambda x: x),
        ("alpha", r"$\alpha$ (deg)", np.rad2deg), ("q", r"$q$ (deg/s)", np.rad2deg),
        ("de", r"$\delta_e$ (deg)", np.rad2deg), ("dt", r"$\delta_t$", lambda x: x),
        ("h", "altura (m)", lambda x: x)]
 fig, axes = plt.subplots(len(PAN), 1, figsize=(7.4, 12.2), sharex=True)
 for ax, (k, et, cv) in zip(axes, PAN):
-    for nom, rampa, inicio, col in BRAZOS:
-        H = G[(TAU_FIG, nom)]["H"]
+    for name, ramp, start, col in ARMS:
+        H = G[(TAU_FIG, name)]["H"]
         if k == "dt":
             ax.plot(H["t"], H["dt_cmd"], lw=1.0, ls=":", color=col, alpha=0.6, zorder=2)
-            ax.plot(H["t"], H["dt_ef"], lw=1.5, color=col, label=nom, zorder=3)
+            ax.plot(H["t"], H["dt_ef"], lw=1.5, color=col, label=name, zorder=3)
         else:
-            ax.plot(H["t"], cv(np.asarray(H[k])), lw=1.5, color=col, label=nom, zorder=3)
+            ax.plot(H["t"], cv(np.asarray(H[k])), lw=1.5, color=col, label=name, zorder=3)
             if k == "h":
                 y = np.asarray(H[k]); i = int(np.argmin(y))
                 ax.plot(H["t"][i], y[i], "o", ms=5, color=col, mec="white", mew=1.0, zorder=4)
@@ -121,7 +121,7 @@ for ax, (k, et, cv) in zip(axes, PAN):
         ax.axhline(14.0, color="0.5", lw=0.8, ls="--", zorder=1)
     if k == "dt":
         ax.set_ylim(-0.02, 1.05)
-        ax.annotate("punteado = palanca,  lleno = motor (lag de Riley)",
+        ax.annotate("dotted = throttle,  solid = engine (Riley lag)",
                     xy=(0.99, 0.30), xycoords=("axes fraction", "data"),
                     ha="right", fontsize=7.5, color="0.35")
     if k in ("gamma", "h"):
