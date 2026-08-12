@@ -1,0 +1,119 @@
+"""El traslado de momentos al CG, contra la fisica y contra si mismo.
+
+Cuatro cosas, todas repetibles:
+
+  1. Con el CG donde lo toma Riley (0.25 c sobre la linea central del
+     fuselaje, informe pag. 5 y Tabla I) el traslado tiene que ser la
+     IDENTIDAD BIT A BIT sobre las derivadas de la planta. Si no lo es,
+     agregar el traslado movio resultados publicados.
+  2. Con el CG corrido, los tres deltas tienen que coincidir con un producto
+     vectorial calculado APARTE en este mismo archivo -- no llamando a la
+     planta, que es lo que se esta juzgando:
+         M_CG = M_ref + (r_ref - r_CG) x F,  F/qS = (-C_A, C_Y, -C_N)
+  3. El signo, contra la fisica: CG atrasado con sustentacion positiva tiene
+     que dar CABREO (menos estable). La tesis de Poliak (2025) pag. 25 ec.
+     (12) y (16) escribe el traslado con el signo opuesto; este chequeo es lo
+     que hace imposible copiarlo sin darse cuenta.
+  4. DXCG_OVER_CHORD sigue siendo la fraccion de cuerda, que es lo que usan
+     paper_cg_sweep_solve.py y paper_fig_cg_sweep.py.
+
+El CG se puede fijar por entorno (CG_AFT_M / CG_RIGHT_M / CG_BELOW_M, en
+metros), igual que THRUST_MODEL, y de ahi lo toman tambien la config del
+PolicyIteration y verificar_cpu_vs_kernel.py.
+
+    THRUST_MODEL=riley PYTHONPATH=. python verificar_traslado_cg.py
+"""
+
+import importlib, itertools, sys
+import numpy as np
+
+MOD = (("8dof", "aircraft.spin_grumman", "SpinGrumman"),
+       ("6dof", "aircraft.banked_spin_grumman", "BankedSpinGrumman"),
+       ("4dof", "aircraft.symmetric_full_grumman", "SymmetricFullGrumman"))
+
+def carga():
+    for n, m, c in MOD:
+        try:
+            return getattr(importlib.import_module(m), c)(), n
+        except ImportError:
+            pass
+    raise SystemExit("sin modelo")
+
+a, nombre = carga()
+
+# --- estados de prueba ---
+if nombre == "4dof":
+    ESTADOS = [(g, v, al, q, de, dt)
+               for g in (-0.3, 0.0) for v in (0.6, 1.0, 1.6)
+               for al in np.deg2rad((-5., 5., 14., 25., 35.))
+               for q in (-0.5, 0.0, 0.5) for de in (-0.4, 0.0, 0.4)
+               for dt in (0.0, 1.0)]
+    llamar = lambda: [a.derivatives(*s) for s in ESTADOS]
+elif nombre == "6dof":
+    ESTADOS = [(g, v, al, q, mu, p, de, da, dt)
+               for g in (-0.3, 0.0) for v in (0.6, 1.0, 1.6)
+               for al in np.deg2rad((-5., 5., 14., 25., 35.))
+               for q in (-0.5, 0.5) for mu in (-0.5, 0.0, 0.5) for p in (-0.3, 0.3)
+               for de in (-0.4, 0.4) for da in (-0.2, 0.2) for dt in (0.0, 1.0)]
+    llamar = lambda: [a.derivatives(*s) for s in ESTADOS]
+else:
+    ESTADOS = [(g, v, al, be, q, mu, p, r, de, da, dr, dt)
+               for g in (-0.3, 0.0) for v in (0.6, 1.0, 1.6)
+               for al in np.deg2rad((-5., 5., 14., 25., 35.))
+               for be in np.deg2rad((-10., 0., 10.))
+               for q in (-0.5, 0.5) for mu in (-0.5, 0.5) for p in (-0.3, 0.3)
+               for r in (-0.2, 0.2) for de in (-0.4, 0.4) for da in (-0.2, 0.2)
+               for dr in (-0.2, 0.2) for dt in (0.0, 1.0)][:4000]
+    llamar = lambda: [a._derivatives(s[0], s[1], s[2], s[3], s[5], s[6], s[4],
+                                     s[7], s[8], s[9], s[11], s[10],
+                                     a.STALL_AIRSPEED) for s in ESTADOS]
+
+print("modelo %s -- %d estados de prueba" % (nombre, len(ESTADOS)))
+
+# ---- (1) identidad con el CG en la referencia de Riley ----
+base = np.array(llamar(), dtype=np.float64)
+a.CG_AFT = 0.0; a.CG_RIGHT = 0.0; a.CG_BELOW = 0.0
+otra = np.array(llamar(), dtype=np.float64)
+ident = np.array_equal(base, otra)
+print("  (1) CG en la referencia -> identidad bit a bit: %s" % ("SI" if ident else "NO"))
+
+# ---- (2) el traslado contra un producto vectorial explicito ----
+# M_CG = M_ref + (r_ref - r_CG) x F, en ejes de cuerpo (x adelante, y derecha,
+# z abajo). F_x = -C_A, F_y = C_Y, F_z = -C_N (adimensionalizadas por qS).
+rng = np.random.default_rng(0)
+peor = 0.0
+for _ in range(200):
+    dx, dy, dz = rng.uniform(-0.3, 0.3, 3)
+    cl_, cd_, cy_ = rng.uniform(-1.5, 2.0), rng.uniform(0.0, 1.0), rng.uniform(-0.4, 0.4)
+    al = rng.uniform(-0.2, 0.7)
+    a.CG_AFT, a.CG_RIGHT, a.CG_BELOW = dx, dy, dz
+    obt = np.array(a._delta_momentos_cg(cl_, cd_, al, cy=cy_))
+
+    c_n = cl_ * np.cos(al) + cd_ * np.sin(al)
+    c_a = cd_ * np.cos(al) - cl_ * np.sin(al)
+    r_cg = np.array([-dx, dy, dz])          # posicion del CG en ejes de cuerpo
+    F = np.array([-c_a, cy_, -c_n])
+    dM = np.cross(-r_cg, F)                 # (r_ref - r_CG) x F, con r_ref = 0
+    esp = np.array([dM[0] / a.WING_SPAN, dM[1] / a.CHORD, dM[2] / a.WING_SPAN])
+    peor = max(peor, float(np.max(np.abs(obt - esp))))
+print("  (2) contra el producto vectorial explicito: peor %.2e" % peor)
+
+# ---- (3) el CG atrasado tiene que desestabilizar ----
+a.CG_AFT, a.CG_RIGHT, a.CG_BELOW = 0.0, 0.0, 0.0
+al14 = np.deg2rad(14.0)
+_, dcm0, _ = a._delta_momentos_cg(1.26, 0.24, al14)
+a.CG_AFT = 0.05 * a.CHORD
+_, dcm_atras, _ = a._delta_momentos_cg(1.26, 0.24, al14)
+a.CG_AFT = -0.05 * a.CHORD
+_, dcm_adel, _ = a._delta_momentos_cg(1.26, 0.24, al14)
+print("  (3) alpha=14, C_L=1.26: CG 5%% atras dCm=%+.5f (cabreo, menos estable); "
+      "5%% adelante dCm=%+.5f" % (dcm_atras, dcm_adel))
+ok3 = dcm_atras > 0 > dcm_adel
+
+# ---- (4) DXCG_OVER_CHORD sigue funcionando ----
+a.CG_AFT = a.CG_RIGHT = a.CG_BELOW = 0.0
+a.DXCG_OVER_CHORD = 0.05
+ok4 = abs(a.CG_AFT - 0.05 * a.CHORD) < 1e-12 and abs(a.DXCG_OVER_CHORD - 0.05) < 1e-12
+print("  (4) DXCG_OVER_CHORD sigue siendo la fraccion de cuerda: %s" % ("SI" if ok4 else "NO"))
+
+sys.exit(0 if (ident and peor < 1e-15 and ok3 and ok4) else 1)
