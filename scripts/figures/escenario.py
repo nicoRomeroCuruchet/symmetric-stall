@@ -1,19 +1,19 @@
-"""Escenario completo: piloto que no reacciona, detector, y pilotos entrenados.
+"""Full scenario: a pilot who does not react, a detector, and trained pilots.
 
-  t = 0        el avion entra en perdida y el piloto NO reacciona: sigue
-               TIRANDO (delta_e = DE_NOREAC, negativo), lo que profundiza el
+  t = 0        the aircraft stalls and the pilot does NOT react: he keeps
+               PULLING (delta_e = DE_NOREAC, negative), which deepens the
                stall
   t = 0.33 s   el detector de stall dispara y engancha el controlador (DP).
                Desde ahi el DP comanda el elevador de forma continua y sube la
-               palanca con rampa de 0.6 s
-  t = 1.00 s   recien ahi reaccionan los pilotos entrenados. Su elevador es
+               throttle with a 0.6 s ramp
+  t = 1.00 s   only then do the trained pilots react. Their elevator is
                ESCALONADO (heaviside), no modulado:
                    fase 1:  delta_e = +15 deg (picar a tope) hasta alpha < 14
                    fase 2:  delta_e = DE_PULL constante (tirar y sostener)
-               CAA sube la palanca en 2 s desde que reacciona;
-               FAA espera al nose-down para empezar la rampa.
+               CAA brings the throttle up over 2 s from reacting;
+               FAA waits for the nose-down to start the ramp.
 
-El motor tiene el retardo de primer orden de Riley (A4) en los tres brazos.
+The engine carries Riley's first-order lag (A4) in all three arms.
 
 Uso: escenario.py <npz> <V0> [t_dp] [t_pil] [tau_m] [de_noreac] [de_pull]
 """
@@ -41,7 +41,7 @@ T_PIL = float(A[4]) if len(A) > 4 else 1.00
 TAU_M = float(A[5]) if len(A) > 5 else 0.50
 DE_NOREAC = np.deg2rad(float(A[6]) if len(A) > 6 else -25.0)
 DE_PULL = np.deg2rad(float(A[7]) if len(A) > 7 else -15.0)
-# forma del elevador optimo, medida sobre la propia politica:
+# shape of the optimal elevator, measured on the policy itself:
 #   +15 deg durante 0.19 s | pico -14.9 deg, dura 0.30 s | sostiene -6.2 deg
 D_PUSH, D_PULL = 0.19, 0.30
 DE_HOLD = np.deg2rad(-6.2)
@@ -53,9 +53,9 @@ pi = PolicyIterationStall.load(POLICY, env=env)
 v_stall, dt = env.airplane.STALL_AIRSPEED, env.airplane.TIME_STEP
 
 
-def rodar(modo):
-    """modo: 'dp' | 'caa' | 'faa'."""
-    t_det = T_DP if modo == "dp" else T_PIL
+def run(mode):
+    """mode: 'dp' | 'caa' | 'faa'."""
+    t_det = T_DP if mode == "dp" else T_PIL
     obs, _ = env.specific_reset(0.0, V0, np.deg2rad(A0), 0.0)
     t, h, dt_ef, t_uns = 0.0, 0.0, 0.0, None
     stop, hs = RecoveryMonitor(dt), [0.0]
@@ -65,10 +65,10 @@ def rodar(modo):
         act = t >= t_det
         if not act:
             de = float(DE_NOREAC)                    # todavia tirando
-        elif modo == "dp":
+        elif mode == "dp":
             de = float(get_optimal_action(obs, pi)[0][0])
         else:                                        # piloto: dos escalones
-            dtr = t - t_det                      # tres escalones que siguen
+            dtr = t - t_det                      # three steps that follow
             if dtr < D_PUSH:                     # la forma del optimo
                 de = float(DE_PUSH)
             elif dtr < D_PUSH + D_PULL:
@@ -81,9 +81,9 @@ def rodar(modo):
 
         if not act:
             cmd = 0.0
-        elif modo == "dp":
+        elif mode == "dp":
             cmd = float(np.clip((t - T_DP) / 0.6, 0.0, 1.0))
-        elif modo == "caa":
+        elif mode == "caa":
             cmd = float(np.clip((t - T_PIL) / 2.0, 0.0, 1.0))
         else:
             cmd = 0.0 if t_uns is None else float(np.clip((t - t_uns) / 2.0, 0.0, 1.0))
@@ -113,19 +113,19 @@ print("V=%.2f Vs, alpha0=20 deg   |   motor tau=%.2f s" % (V0, TAU_M))
 print("sin reaccionar: de=%.0f deg (TIRANDO)   |   piloto: +15 deg hasta el "
       "nose-down, despues %.0f deg fijo\n"
       % (np.rad2deg(DE_NOREAC), np.rad2deg(DE_PULL)))
-print("%-36s %9s %8s %10s %9s %11s" % ("brazo", "h_min", "dur", "nose-down",
+print("%-36s %9s %8s %10s %9s %11s" % ("arm", "h_min", "dur", "nose-down",
                                        "alpha_max", "estado"))
 print("-" * 88)
 res = {}
-for nom, modo, col in BRAZOS:
-    r = rodar(modo); res[nom] = r
+for name, mode, col in BRAZOS:
+    r = run(mode); res[name] = r
     print("%-36s %+9.3f %7.2fs %9.2fs %8.1f %11s" % (
-        nom, r["hmin"], r["t"], r["t_uns"] if r["t_uns"] else -1,
+        name, r["hmin"], r["t"], r["t_uns"] if r["t_uns"] else -1,
         np.rad2deg(max(r["H"]["alpha"])), r["est"]))
 base = res[BRAZOS[0][0]]["hmin"]
-print("\npenalizacion contra el controlador automatico:")
-for nom, _, _ in BRAZOS[1:]:
-    print("  %-34s %+8.3f m" % (nom, res[nom]["hmin"] - base))
+print("\npenalty against the automatic controller:")
+for name, _, _ in BRAZOS[1:]:
+    print("  %-34s %+8.3f m" % (name, res[name]["hmin"] - base))
 
 # ── figura ──
 PAN = [("gamma", r"$\gamma$ (deg)", np.rad2deg), ("v_norm", r"$V/V_s$", lambda x: x),
@@ -134,13 +134,13 @@ PAN = [("gamma", r"$\gamma$ (deg)", np.rad2deg), ("v_norm", r"$V/V_s$", lambda x
        ("h", "altura (m)", lambda x: x)]
 fig, axes = plt.subplots(len(PAN), 1, figsize=(7.4, 12.2), sharex=True)
 for ax, (k, et, cv) in zip(axes, PAN):
-    for nom, modo, col in BRAZOS:
-        H = res[nom]["H"]
+    for name, mode, col in BRAZOS:
+        H = res[name]["H"]
         if k == "dt":
             ax.plot(H["t"], H["dt_cmd"], lw=1.0, ls=":", color=col, alpha=0.6, zorder=2)
-            ax.plot(H["t"], H["dt_ef"], lw=1.5, color=col, label=nom, zorder=3)
+            ax.plot(H["t"], H["dt_ef"], lw=1.5, color=col, label=name, zorder=3)
         else:
-            ax.plot(H["t"], cv(np.asarray(H[k])), lw=1.5, color=col, label=nom, zorder=3)
+            ax.plot(H["t"], cv(np.asarray(H[k])), lw=1.5, color=col, label=name, zorder=3)
             if k == "h":
                 y = np.asarray(H[k]); i = int(np.argmin(y))
                 ax.plot(H["t"][i], y[i], "o", ms=5, color=col, mec="white", mew=1.0, zorder=4)

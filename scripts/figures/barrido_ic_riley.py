@@ -1,10 +1,10 @@
-"""Familia de trayectorias con la politica de empuje de Riley.
+"""Family of trajectories with the Riley thrust policy.
 
-Corre un abanico de entradas y superpone, para cada una, la rama de Riley
-(politica reentrenada sobre la planta de Riley) contra la del paper 1
-(politica publicada sobre la planta con K_t lineal). Las dos ramas resuelven
-el mismo problema en cada IC, asi que la comparacion es legitima; lo que
-cambia es cuanto empuje tiene el avion y, a traves de C_T, que tablas
+Runs a spread of entries and overlays, for each one, the Riley branch (policy
+retrained on Riley's plant) against the paper-1 branch (published policy on the
+plant with a linear K_t). Both branches solve the same problem at each IC, so
+the comparison is legitimate; what changes is how much thrust the aircraft has
+and, through C_T, which tables
 aerodinamicas ve.
 
 Usage:  PYTHONPATH=. python barrido_ic_riley.py [prefijo]
@@ -60,15 +60,15 @@ for fila, (g0, v0, a0) in enumerate(ICS):
         al = np.rad2deg(h["alpha"])
         H = np.asarray(h["h"])
         dt_c = np.asarray(h["dt_ctrl"])
-        # la corrida termina sola al recuperar; si llega al tope de 15 s es que
-        # nunca pico por debajo de -2 deg, o sea que no hubo divergencia
+        # the run ends by itself on recovery; hitting the 15 s cap means it
+        # never dived below -2 deg, i.e. there was no divergence
         recupera = t[-1] < 14.9
         print("  %+6.1f deg  %.2f Vs  %4.1f deg    %-7s  %+8.3f m  %6.2f s   %s  (throttle medio %.3f)"
               % (g0, v0, a0, modo, H.min(), t[-1],
                  "si" if recupera else "NO PICA", dt_c.mean()))
 
-        # el throttle no se grafica: las dos ramas lo dejan pegado en 1.000 en
-        # todas las entradas, asi que el unico control que decide es el elevador
+        # throttle is not plotted: both branches pin it at 1.000 across every
+        # entry, so the only control that decides anything is the elevator
         de = np.rad2deg(h["de"])
         for col, (y, lab) in enumerate(((g, r"$\gamma$ (deg)"),
                                         (al, r"$\alpha$ (deg)"),

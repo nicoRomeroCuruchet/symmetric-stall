@@ -1,13 +1,13 @@
-"""Cuatro brazos: quien activa el controlador, y cuando.
+"""Four arms: who activates the controller, and when.
 
-  (1) DP disparado por el DETECTOR automatico a 0.33 s
-  (2) DP disparado por el PILOTO a 1.00 s (aprieta el boton cuando se da cuenta)
-  (3) CAA volada por el piloto desde 1.00 s
-  (4) FAA volada por el piloto desde 1.00 s
+  (1) DP triggered by the automatic DETECTOR at 0.33 s
+  (2) DP triggered by the PILOT at 1.00 s (he presses the button when he notices)
+  (3) CAA flown by the pilot from 1.00 s
+  (4) FAA flown by the pilot from 1.00 s
 
 Los cuatro: el piloto TIRA mientras no reacciona, y el motor tiene el retardo
-de primer orden de Riley. (2) aisla cuanto vale el detector automatico: mismo
-controlador, misma planta, solo cambia quien lo engancha y cuando.
+Riley first-order lag. (2) isolates what the automatic detector is worth: same
+controller, same plant, only who engages it and when changes.
 
 Estilo del paper 1. Uso: fig_activacion.py <npz> <V0> [t_det] [t_pil] [tau_m]
 """
@@ -25,15 +25,15 @@ logging.disable(logging.INFO)
 from symmetric_stall import train as main
 import escenario as E
 
-# rodar() de escenario.py usa T_DP para el modo dp; se lo cambiamos al vuelo
-def correr(modo, t_det):
+# escenario.run() uses T_DP for the dp mode; we swap it on the fly
+def correr(mode, t_det):
     orig_dp, orig_pil = E.T_DP, E.T_PIL
-    if modo == "dp":
+    if mode == "dp":
         E.T_DP = t_det
     else:
         E.T_PIL = t_det
     try:
-        return E.rodar(modo)
+        return E.run(mode)
     finally:
         E.T_DP, E.T_PIL = orig_dp, orig_pil
 
@@ -48,16 +48,16 @@ RUNS = [
 
 print("V=%.2f Vs   motor tau=%.2f s   sin reaccionar de=%.0f deg\n"
       % (E.V0, E.TAU_M, np.rad2deg(E.DE_NOREAC)))
-print("%-34s %10s %8s %11s" % ("brazo", "h_min", "dur", "estado"))
+print("%-34s %10s %8s %11s" % ("arm", "h_min", "dur", "status"))
 print("-" * 66)
 for lab, _, _, r in RUNS:
     print("%-34s %+10.3f %7.2fs %11s" % (lab, r["hmin"], r["t"], r["est"]))
 auto, pil = RUNS[0][3]["hmin"], RUNS[1][3]["hmin"]
-print("\n  el DETECTOR automatico vale:  %+.3f m  (mismo controlador, %.2f s antes)"
+print("\n  the automatic DETECTOR is worth:  %+.3f m  (same controller, %.2f s earlier)"
       % (auto - pil, T_PIL - T_DET))
 print("  el CONTROLADOR vale, a igual instante de activacion (%.2f s):" % T_PIL)
-print("      contra CAA  %+.3f m" % (pil - RUNS[2][3]["hmin"]))
-print("      contra FAA  %+.3f m" % (pil - RUNS[3][3]["hmin"]))
+print("      against CAA  %+.3f m" % (pil - RUNS[2][3]["hmin"]))
+print("      against FAA  %+.3f m" % (pil - RUNS[3][3]["hmin"]))
 
 rc = {"font.family": "serif", "mathtext.fontset": "stix",
       "font.size": 12, "axes.labelsize": 13,

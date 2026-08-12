@@ -1,17 +1,17 @@
-"""Optimo del DP contra las maniobras CAA y FAA de Gratton, a la IC pedida.
+"""DP optimum against Gratton's CAA and FAA manoeuvres, at the requested IC.
 
-Reusa las piezas de paper_procedures.py sin tocarlo: mismo rollout, misma
+Reuses the pieces of procedures.py without touching it: same rollout, same
 regla de parada (RecoveryMonitor), mismos controladores.
 
-  CAA : potencia desde t = 0            (power_start = "t0")
-  FAA : potencia al desestancar         (power_start = "unstall")
+  CAA : power from t = 0                (power_start = "t0")
+  FAA : power on unstalling             (power_start = "unstall")
   fase 1: de = +15 deg hasta alpha < 14 deg
   fase 2: alpha_hold  -> proporcional apuntando a alpha = 13 deg
           full_pull   -> de = -25 deg a lazo abierto
 
-Los brazos alpha_hold se acotan a la MISMA autoridad de tirada que alcanza el
-optimo en esa entrada, para que la comparacion aisle CUANDO se aplica potencia
-y no se confunda con CUANTO tira el piloto.
+The alpha_hold arms are capped to the SAME pull authority the optimum reaches
+at that entry, so that the comparison isolates WHEN power is applied and does
+not get confused with HOW HARD the pilot pulls.
 
 Uso: maniobras_086.py <policy.npz> <V0> [alpha0_deg]
 """
@@ -37,13 +37,13 @@ ALPHA0 = float(sys.argv[3]) if len(sys.argv) > 3 else 20.0
 
 env = SymmetricStall()
 pi = PolicyIterationStall.load(POLICY, env=env)
-print("politica: %s" % POLICY.name)
+print("policy: %s" % POLICY.name)
 print("IC: gamma=0, V=%.2f Vs, alpha=%.0f deg, q=0\n" % (V0, ALPHA0))
 
-# el optimo primero: su tirada mas profunda acota los brazos alpha_hold
+# the optimum first: its deepest pull caps the alpha_hold arms
 r_opt = rollout(env, pi, ctrl_optimal, ALPHA0, V0, record=True)
 cap = float(np.min(r_opt["hist"]["de"]))
-print("tirada mas profunda del optimo: %.2f deg  (acota los brazos alpha_hold)\n"
+print("optimum's deepest pull: %.2f deg  (caps the alpha_hold arms)\n"
       % np.rad2deg(cap))
 
 brazos = {
@@ -55,7 +55,7 @@ brazos = {
 }
 
 res = {}
-print("%-16s %10s %8s %11s %12s" % ("maniobra", "dh", "t_rec", "alpha_max", "estado"))
+print("%-16s %10s %8s %11s %12s" % ("manoeuvre", "dh", "t_rec", "alpha_max", "status"))
 print("-" * 62)
 for nom, cfg in brazos.items():
     if cfg is None:
@@ -67,12 +67,12 @@ for nom, cfg in brazos.items():
         nom, r["h"], r["t"], np.rad2deg(np.max(r["hist"]["alpha"])), r["status"]))
 
 base = res["optimo (DP)"]["h"]
-print("\npenalizacion contra el optimo:")
+print("\npenalty against the optimum:")
 for nom in list(brazos)[1:]:
     print("  %-16s %+8.3f m  (%+6.1f %%)" % (
         nom, res[nom]["h"] - base, 100 * (res[nom]["h"] - base) / abs(base)))
 
-# ---- figura: optimo vs CAA vs FAA (los brazos alpha-hold) ----
+# ---- figure: optimum vs CAA vs FAA (the alpha-hold arms) ----
 MOSTRAR = ["optimo (DP)", "CAA alpha-hold", "FAA alpha-hold"]
 COLOR = {"optimo (DP)": "#0072B2", "CAA alpha-hold": "#D55E00",
          "FAA alpha-hold": "#009E73"}

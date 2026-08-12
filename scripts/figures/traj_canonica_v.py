@@ -1,15 +1,15 @@
-"""Trayectoria canonica desde varias velocidades de entrada.
+"""Canonical trajectory from several entry airspeeds.
 
     python traj_canonica_v.py 0.9 0.5
 
-Misma entrada que el paper 1 en todo lo demas -- gamma0 = 0, alpha0 = 20 deg,
-q0 = 0 -- variando solo V0. Se grafica una sola politica, la de empuje de
-Riley: la publicada del paper 1 se entreno sobre la grilla vieja (41 bins
-desde 0.9 Vs) y no se puede evaluar sobre esta sin reindexarla.
+Same entry as paper 1 in everything else -- gamma0 = 0, alpha0 = 20 deg,
+q0 = 0 -- varying only V0. A single policy is plotted, the Riley-thrust one:
+the published paper-1 policy was trained on the old grid (41 bins from 0.9 Vs)
+and cannot be evaluated on this one without reindexing it.
 
-El panel de C_T no es decorativo: por debajo de 0.785 Vs el coeficiente pasa
-de 0.5, las tablas se leen congeladas en su extremo y el sobrante lo toma
-dCD_T. Sirve para saber que parte de cada curva se apoya en eso.
+The C_T panel is not decorative: below 0.785 Vs the coefficient exceeds 0.5,
+the tables read frozen at their endpoint and dCD_T absorbs the excess. It shows
+which part of each curve leans on that.
 """
 import sys
 
@@ -31,7 +31,7 @@ pi = PolicyIterationStall.load(main.RESULTS_DIR / "SymmetricStall_policy.npz",
 _, states, _, _ = main.setup_symmetric_stall_experiment()
 pi.states_space = states
 v_bins = np.unique(states[:, 1])
-print("grilla de V: %d bins de %.3f a %.3f Vs" % (len(v_bins), v_bins.min(),
+print("V grid: %d bins from %.3f to %.3f Vs" % (len(v_bins), v_bins.min(),
                                                   v_bins.max()))
 
 fig, axes = plt.subplots(2, 3, figsize=(13.5, 6.2))
@@ -46,7 +46,7 @@ for k, v0 in enumerate(V0S):
                    for d, v in zip(h["dt_ctrl"], vn)])
     recupera = t[-1] < 14.9
     print("  V0 = %.2f Vs :  h_min %+8.2f m   h_fin %+8.2f m   t %5.2f s  %s"
-          "   gamma_min %+6.2f deg   C_T max %.3f   fuera de tabla %3.0f%%"
+          "   gamma_min %+6.2f deg   C_T max %.3f   out of table %3.0f%%"
           % (v0, H.min(), H[-1], t[-1],
              "recupera" if recupera else "NO PICA ",
              np.rad2deg(h["gamma"]).min(), ct.max(), 100 * np.mean(ct > 0.5)))
@@ -65,15 +65,15 @@ for k, v0 in enumerate(V0S):
 
 axes[0, 1].axhline(14.0, color="grey", lw=0.8, ls="--")
 axes[0, 2].axhline(0.785, color="k", lw=0.8, ls=":")
-axes[0, 2].annotate("C_T pasa 0.5 por debajo", (0.02, 0.785), fontsize=7,
+axes[0, 2].annotate("C_T exceeds 0.5 below this", (0.02, 0.785), fontsize=7,
                     xycoords=("axes fraction", "data"), va="top")
 axes[1, 1].axhline(0.5, color="k", lw=0.8, ls=":")
-axes[1, 1].annotate("fin de tabla", (0.02, 0.5), fontsize=7,
+axes[1, 1].annotate("end of table", (0.02, 0.5), fontsize=7,
                     xycoords=("axes fraction", "data"), va="bottom")
 axes[1, 2].axhline(0.0, color="grey", lw=0.8, ls="--")
 axes[0, 0].legend(fontsize=9)
 fig.suptitle(r"Entrada canonica ($\gamma_0=0$, $\alpha_0=20^\circ$, $q_0=0$), "
-             "empuje de Riley, grilla 0.4-2.0 $V_s$", fontsize=11)
+             "Riley thrust, grid 0.4-2.0 $V_s$", fontsize=11)
 fig.tight_layout()
 out = main.RESULTS_DIR / "riley_v040_canonica_v.png"
 fig.savefig(out, dpi=140)

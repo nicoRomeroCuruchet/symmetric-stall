@@ -1,12 +1,12 @@
-"""Entrada canonica a una velocidad arbitraria, con C_T instrumentado.
+"""Canonical entry at an arbitrary airspeed, with C_T instrumented.
 
-    python traj_v_baja.py 0.50        (por defecto 0.50 Vs)
+    python traj_v_baja.py 0.50        (default 0.50 Vs)
 
-A velocidades muy por debajo de la perdida la presion dinamica se derrumba y
-C_T = T/(q_bar S) se dispara, asi que el recorte a 0.5 de _compute_ct pasa a
-estar activo. Cuando eso ocurre el estado esta fuera de dominio por cuatro
-lados a la vez, y el panel de C_T es justamente el que lo delata; por eso se
-grafica junto a los estados en vez de quedar en el log.
+At airspeeds well below the stall the dynamic pressure collapses and
+C_T = T/(q_bar S) blows up, so _compute_ct's clip at 0.5 becomes active. When
+that happens the state is out of domain on four sides at once, and the C_T
+panel is precisely what gives it away; hence it is plotted alongside the states
+instead of being left in the log.
 """
 import os
 import sys
@@ -25,7 +25,7 @@ RAMAS = [("riley", "SymmetricStall_policy.npz", "-", "tab:blue"),
          ("paper1", "SymmetricStall_paper1_baseline.npz", "--", "tab:red")]
 
 fig, axes = plt.subplots(2, 3, figsize=(13, 6))
-print("entrada canonica del paper 1 pero a %.2f Vs  (grilla: V en [0.90, 2.00] Vs)" % V0)
+print("paper-1 canonical entry but at %.2f Vs  (grid: V in [0.90, 2.00] Vs)" % V0)
 for modo, npz, ls, color in RAMAS:
     os.environ["THRUST_MODEL"] = modo
     env = SymmetricStall()
@@ -37,13 +37,13 @@ for modo, npz, ls, color in RAMAS:
 
     t = np.asarray(h["t"])
     vn = np.asarray(h["v_norm"])
-    # C_T reconstruido a lo largo de la trayectoria, con el mismo codigo que
-    # usa la planta, para ver cuando el recorte de 0.5 esta mordiendo
+    # C_T reconstructed along the trajectory, with the same code the plant
+    # uses, to see when the 0.5 clip is biting
     ct = np.array([env.airplane._compute_ct(d, v * env.airplane.STALL_AIRSPEED)
                    for d, v in zip(h["dt_ctrl"], vn)])
     fuera = 100.0 * np.mean(ct > 0.5)
     print("  %-7s h_min %+8.2f m  t_fin %5.2f s  V_min %.3f Vs  "
-          "C_T max %.4f  fuera de tabla el %.0f%% del tiempo"
+          "C_T max %.4f  out of table %.0f%% of the time"
           % (modo, np.min(h["h"]), t[-1], vn.min(), ct.max(), fuera))
 
     for ax, y, lab in ((axes[0, 0], np.rad2deg(h["gamma"]), r"$\gamma$ (deg)"),
@@ -58,10 +58,10 @@ for modo, npz, ls, color in RAMAS:
         ax.grid(alpha=0.3, ls=":")
 
 axes[0, 2].axhline(0.9, color="k", lw=0.9, ls=":")
-axes[0, 2].annotate("borde de la grilla", (0.02, 0.9), fontsize=7,
+axes[0, 2].annotate("grid edge", (0.02, 0.9), fontsize=7,
                     xycoords=("axes fraction", "data"), va="bottom")
 axes[1, 1].axhline(0.5, color="k", lw=0.9, ls=":")
-axes[1, 1].annotate("fin de tabla (dCD_T actua arriba)", (0.02, 0.5), fontsize=7,
+axes[1, 1].annotate("end of table (dCD_T acts above)", (0.02, 0.5), fontsize=7,
                     xycoords=("axes fraction", "data"), va="top")
 axes[0, 1].axhline(14.0, color="grey", lw=0.7, ls="--")
 axes[0, 0].legend(fontsize=9)
