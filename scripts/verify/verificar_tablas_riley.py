@@ -208,7 +208,7 @@ def numbers(line):
 def main():
     lineas = leer_pdf()
     a = SymmetricFullGrumman()
-    total = failures = ilegibles = confirmados = 0
+    total = failures = illegible_n = confirmed_n = 0
     print("Table III of the PDF against the code arrays\n")
 
     for start, end, ncol, groups in [(a_, b_, 9, c_) for a_, b_, c_ in BLOCKS] + BLOCKS_LAT:
@@ -243,13 +243,13 @@ def main():
                     ref = CONFIRMED.get((attr, i))
                     if ref is not None and abs(ref[0] * esc - cod[i]) <= max(
                             1e-6 * abs(cod[i]), 1e-9):
-                        confirmados += 1
+                        confirmed_n += 1
                         print(f"  {name:<10} alpha[{i:2d}]  OCR illegible, "
                               f"confirmed against the image: {ref[0]:+.6g}"
                               f"  ({ref[1]})")
                         continue
                     if bad[i]:
-                        ilegibles += 1
+                        illegible_n += 1
                         print(f"  {name:<10} alpha[{i:2d}]  ILLEGIBLE and NO "
                               f"confirmar, codigo {cod[i]:+.6g}")
                     else:
@@ -261,9 +261,9 @@ def main():
         print("\nNOTHING WAS COMPARED: the table blocks could not be read")
         return 1
     print(f"\n{total} values compared against Table III: {failures} differ, "
-          f"{ilegibles} unconfirmed illegibles, {confirmados} resueltos "
+          f"{illegible_n} unconfirmed illegibles, {confirmed_n} resolved "
           f"by looking at the page")
-    return 1 if (failures or ilegibles) else 0
+    return 1 if (failures or illegible_n) else 0
 
 
 if __name__ == "__main__":
