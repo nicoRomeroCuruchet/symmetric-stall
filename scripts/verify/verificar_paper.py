@@ -1,25 +1,25 @@
-"""Verifica que todo artefacto que main.tex usa este al dia.
+"""Check that every artefact main.tex uses is up to date.
 
-Dos chequeos, por dos fallas distintas:
+Two checks, for two different failure modes:
 
-  1. ARTEFACTO vs POLITICA. Lee main.tex, extrae cada \\includegraphics y cada
-     \\input, y compara la fecha contra results/SymmetricStall_policy.npz. Lo
-     que aparezca como VIEJO no refleja la politica instalada.
+  1. ARTEFACT vs POLICY. Reads main.tex, extracts every \\includegraphics and
+     every \\input, and compares the timestamp against the trained policy.
+     Anything reported as STALE does not reflect the installed policy.
 
-  2. FIGURA vs SU JSON. El chequeo 1 no alcanza. El pipeline escribe algunos
-     json DESPUES de dibujar las figuras que los consumen: paper_procedures
-     agrega el brazo e3d_held_pull a procedures.json en un paso posterior al
-     que genera fig_pilot_sensitivity. Una figura puede entonces ser mas nueva
-     que la politica -- y pasar el chequeo 1 -- y aun asi haberse dibujado sin
-     datos que su json ya tiene. Eso paso de verdad: la curva de lazo abierto
-     (elevador clavado) desaparecio de la figura 12 sin que nada lo detectara,
-     porque `report.get("e3d_held_pull", {})` devolvio vacio y el bloque se
-     salteo en silencio.
+  2. FIGURE vs ITS JSON. Check 1 is not enough. The pipeline writes some json
+     files AFTER drawing the figures that consume them: procedures.py adds the
+     e3d_held_pull arm to procedures.json in a step later than the one that
+     generates fig_pilot_sensitivity. A figure can therefore be newer than the
+     policy -- and pass check 1 -- and still have been drawn without data its
+     json already contains. That actually happened: the open-loop curve (held
+     elevator) disappeared from figure 12 with nothing detecting it, because
+     `report.get("e3d_held_pull", {})` returned empty and the block was
+     silently skipped.
 
-El mapa de dependencias es explicito y AUTOVERIFICADO: si aparece un json en
-results/paper que nadie declara, o una figura sin entrada, el script lo
-reporta. Un mapa que envejece en silencio es exactamente el modo de falla que
-esto intenta cerrar.
+The dependency map is explicit and SELF-CHECKED: if a json shows up in
+results/paper that nobody declares, or a figure has no entry, the script
+reports it. A map that goes stale in silence is exactly the failure mode this
+is meant to close.
 
     python verificar_paper.py
 """
@@ -30,11 +30,11 @@ from pathlib import Path
 PAPER = Path("stall-paper")
 TEX = PAPER / "main.tex"
 POLICY = Path("results/SymmetricStall_policy.npz")
-GEN = Path("results/paper")          # donde se GENERAN, antes de sync_paper.sh
-TOLERANCIA_S = 10.0                  # ver verificar_figuras_vs_json
+GEN = Path("results/paper")          # where they are GENERATED, before sync_paper.sh
+TOLERANCE_S = 10.0                   # see check_figures_vs_json
 
-# figura/tabla -> json del que se deriva. La figura tiene que ser mas nueva.
-DEPENDE_DE = {
+# figure/table -> the json it derives from. The figure must be newer.
+DERIVES_FROM = {
     "fig_pilot_sensitivity":      "procedures.json",
     "fig_procedures":             "procedures.json",
     "fig_ic_optimum":             "ic_gamma_alpha.json",
@@ -46,21 +46,21 @@ DEPENDE_DE = {
     "table_robustness_cg_gap":    "robustness.json",
 }
 
-# artefactos que no derivan de ningun json (se calculan al vuelo desde la
-# politica y el modelo, o son de otro caso de estudio)
-SIN_JSON = {
-    "fig_trajectories_procedures",   # corre los rollouts en el momento
-    "riley_coefficients",            # sale de las tablas del modelo
+# artefacts that derive from no json (computed on the fly from the policy and
+# the model, or belonging to a different case study)
+NO_JSON = {
+    "fig_trajectories_procedures",   # runs the rollouts on the spot
+    "riley_coefficients",            # comes from the model tables
     "riley_symmetric_stall_heatmaps",
     "banked_glider_", "profiling_table_", "combined_alt_loss_contours",
 }
 
-# json que ningun artefacto del paper consume directamente: alimentan numeros
-# citados en el texto, no figuras ni tablas
-JSON_SOLO_TEXTO = {
-    "robustness_steady_state.json",  # gamma_ss y tasas de hundimiento
+# json files no paper artefact consumes directly: they feed numbers quoted in
+# the text, not figures or tables
+JSON_TEXT_ONLY = {
+    "robustness_steady_state.json",  # gamma_ss and sink rates
     "robustness_feasibility.json",   # V*
-    "normalization_gap.json",        # ahorro monotono 1.97/3.75/5.34
+    "normalization_gap.json",        # monotone saving 1.97/3.75/5.34
     "thrust_sensitivity.json",
     "mca_comparison.json",
     "ic_heatmap_dense.json",
@@ -70,118 +70,117 @@ JSON_SOLO_TEXTO = {
 
 def main():
     if not POLICY.exists():
-        print(f"no existe {POLICY}")
+        print(f"{POLICY} does not exist")
         return 1
     t_pol = POLICY.stat().st_mtime
-    texto = TEX.read_text()
+    text = TEX.read_text()
 
-    figuras = re.findall(r"\\includegraphics(?:\[[^\]]*\])?\{([^}]+)\}", texto)
-    inputs = re.findall(r"\\input\{([^}]+)\}", texto)
+    figures = re.findall(r"\\includegraphics(?:\[[^\]]*\])?\{([^}]+)\}", text)
+    inputs = re.findall(r"\\input\{([^}]+)\}", text)
 
-    objetivos = []
-    for f in figuras:
-        objetivos.append(("figura", PAPER / f))
+    targets = []
+    for f in figures:
+        targets.append(("figura", PAPER / f))
     for i in inputs:
         p = PAPER / i
-        objetivos.append(("tabla", p if p.suffix else p.with_suffix(".tex")))
+        targets.append(("tabla", p if p.suffix else p.with_suffix(".tex")))
 
-    viejos, faltantes, ok = [], [], []
-    for tipo, p in objetivos:
+    stale, missing, ok = [], [], []
+    for kind, p in targets:
         if not p.exists():
-            faltantes.append((tipo, p))
+            missing.append((kind, p))
         elif p.stat().st_mtime < t_pol:
-            viejos.append((tipo, p))
+            stale.append((kind, p))
         else:
-            ok.append((tipo, p))
+            ok.append((kind, p))
 
-    print(f"politica instalada: {POLICY}")
+    print(f"installed policy: {POLICY}")
     print(f"  mtime = {t_pol:.0f}\n")
-    print(f"AL DIA   : {len(ok)}")
-    print(f"VIEJOS   : {len(viejos)}   <- NO reflejan la politica instalada")
-    print(f"FALTANTES: {len(faltantes)}\n")
+    print(f"UP TO DATE: {len(ok)}")
+    print(f"STALE     : {len(stale)}   <- do NOT reflect the installed policy")
+    print(f"MISSING   : {len(missing)}\n")
 
-    for etiqueta, lista in (("VIEJOS", viejos), ("FALTANTES", faltantes)):
-        if lista:
-            print(f"--- {etiqueta} ---")
-            for tipo, p in sorted(lista, key=lambda x: str(x[1])):
-                print(f"  [{tipo}] {p}")
+    for label, group in (("STALE", stale), ("MISSING", missing)):
+        if group:
+            print(f"--- {label} ---")
+            for kind, p in sorted(group, key=lambda x: str(x[1])):
+                print(f"  [{kind}] {p}")
             print()
 
-    # las figuras del banked glider son de otro modelo: no dependen de esta
-    # politica y que aparezcan como viejas es correcto
-    # el banked glider y el contorno combinado son del benchmark 3-DOF de
-    # Bunge2018: otro modelo, no dependen de esta politica
-    AJENOS = ("banked_glider", "profiling_table", "combined_alt_loss_contours")
-    otros = [p for _, p in viejos if any(x in p.name for x in AJENOS)]
-    if otros:
-        print(f"nota: {len(otros)} de los VIEJOS son del banked glider / "
-              f"profiling, que no dependen de esta politica.")
+    # the banked-glider figures belong to a different model: they do not
+    # depend on this policy, and showing up as stale is correct. The banked
+    # glider and the combined contour come from the Bunge2018 3-DOF benchmark.
+    FOREIGN = ("banked_glider", "profiling_table", "combined_alt_loss_contours")
+    foreign = [p for _, p in stale if any(x in p.name for x in FOREIGN)]
+    if foreign:
+        print(f"note: {len(foreign)} of the STALE ones are banked glider / "
+              f"profiling, which do not depend on this policy.")
 
-    pendientes = [p for _, p in viejos
-                  if not any(x in p.name for x in AJENOS)]
+    pending = [p for _, p in stale
+               if not any(x in p.name for x in FOREIGN)]
 
-    rancias, sin_mapear = verificar_figuras_vs_json(objetivos)
+    outdated, unmapped = check_figures_vs_json(targets)
 
-    print(f"\nPENDIENTES REALES: {len(pendientes)}")
+    print(f"\nREAL PENDING: {len(pending)}")
     for p in sorted(pendientes, key=str):
         print(f"  {p}")
-    return 1 if (faltantes or pendientes or rancias or sin_mapear) else 0
+    return 1 if (missing or pendientes or rancias or sin_mapear) else 0
 
 
-def verificar_figuras_vs_json(objetivos):
-    """Chequeo 2: cada figura mas nueva que el json del que se deriva.
+def check_figures_vs_json(targets):
+    """Check 2: every figure newer than the json it derives from.
 
-    Compara en results/paper (donde se generan), no en stall-paper/img: la
-    copia se hace con `cp -p`, asi que conserva el mtime del original, pero el
-    original es el que manda.
+    Compares inside results/paper (where they are generated), not in
+    stall-paper/img: the copy is made with `cp -p`, so it preserves the
+    original mtime, but the original is what counts.
     """
-    stems = {p.stem for _, p in objetivos}
-    rancias, sin_mapear = [], []
+    stems = {p.stem for _, p in targets}
+    outdated, unmapped = [], []
 
     for stem in sorted(stems):
-        if any(stem.startswith(x) or x in stem for x in SIN_JSON):
+        if any(stem.startswith(x) or x in stem for x in NO_JSON):
             continue
-        js = DEPENDE_DE.get(stem)
+        js = DERIVES_FROM.get(stem)
         if js is None:
-            sin_mapear.append(stem)
+            unmapped.append(stem)
             continue
         fig = next((GEN / f"{stem}{e}" for e in (".png", ".pdf", ".tex")
                     if (GEN / f"{stem}{e}").exists()), None)
         j = GEN / js
         if fig is None or not j.exists():
             continue
-        # Tolerancia: varios artefactos se escriben en la MISMA corrida que su
-        # json (main_maneuvers escribe tabla y json seguidos), y el orden
-        # dentro de la corrida da diferencias de milisegundos que no son un
-        # problema. Lo que interesa es haber sido dibujada en una corrida
-        # ANTERIOR, que son minutos u horas.
-        atraso = j.stat().st_mtime - fig.stat().st_mtime
-        if atraso > TOLERANCIA_S:
-            rancias.append((stem, js, atraso))
+        # Tolerance: several artefacts are written in the SAME run as their
+        # json (main_maneuvers writes table and json back to back), and the
+        # ordering within a run gives millisecond differences that are not a
+        # problem. What matters is having been drawn in an EARLIER run, which
+        # means minutes or hours.
+        lag = j.stat().st_mtime - fig.stat().st_mtime
+        if lag > TOLERANCE_S:
+            outdated.append((stem, js, lag))
 
-    # el mapa se autoverifica: un json nuevo que nadie declara es un agujero
-    declarados = set(DEPENDE_DE.values()) | JSON_SOLO_TEXTO
-    huerfanos = sorted(p.name for p in GEN.glob("*.json")
-                       if p.name not in declarados)
+    # the map self-checks: a new json nobody declares is a hole
+    declared = set(DERIVES_FROM.values()) | JSON_TEXT_ONLY
+    orphans = sorted(p.name for p in GEN.glob("*.json")
+                     if p.name not in declared)
 
-    print("\n--- figura vs su json ---")
-    if rancias:
-        print(f"RANCIAS: {len(rancias)}  <- dibujadas ANTES que sus datos")
-        for stem, js, dt in rancias:
-            print(f"  {stem}  es {dt:.0f} s mas vieja que {js}")
+    print("\n--- figure vs its json ---")
+    if outdated:
+        print(f"OUTDATED: {len(outdated)}  <- drawn BEFORE their data")
+        for stem, js, dt in outdated:
+            print(f"  {stem}  is {dt:.0f} s older than {js}")
     else:
-        print("RANCIAS: 0")
-    if sin_mapear:
-        print(f"SIN MAPEAR: {len(sin_mapear)}  <- agregalas a DEPENDE_DE "
-              f"o a SIN_JSON")
-        for s in sin_mapear:
+        print("OUTDATED: 0")
+    if unmapped:
+        print(f"UNMAPPED: {len(unmapped)}  <- add them to DERIVES_FROM "
+              f"or to NO_JSON")
+        for s in unmapped:
             print(f"  {s}")
-    if huerfanos:
-        print(f"JSON NO DECLARADOS: {len(huerfanos)}  <- agregalos a "
-              f"DEPENDE_DE o a JSON_SOLO_TEXTO")
-        for h in huerfanos:
+    if orphans:
+        print(f"UNDECLARED JSON: {len(orphans)}  <- add them to "
+              f"DERIVES_FROM or to JSON_TEXT_ONLY")
+        for h in orphans:
             print(f"  {h}")
-    return rancias, sin_mapear
+    return outdated, unmapped
 
 
 if __name__ == "__main__":

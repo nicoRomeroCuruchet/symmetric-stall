@@ -1,23 +1,23 @@
-"""La planta en ejes viento contra el Apendice B de Riley en ejes cuerpo.
+"""The wind-axes plant against Riley's Appendix B in body axes.
 
-Riley mezcla dos sistemas de ejes a proposito, y es facil equivocarse:
+Riley mixes two axis systems on purpose, and it is easy to get wrong:
 
-    fuerzas   -> ejes de ESTABILIDAD:  C_D,s  C_Y,s  C_L,s   (HAY que rotarlas)
-    momentos  -> ejes CUERPO:          C_l,b  C_m,b  C_n,b   (van directo)
+    forces   -> STABILITY axes:  C_D,s  C_Y,s  C_L,s   (these MUST be rotated)
+    moments  -> BODY axes:       C_l,b  C_m,b  C_n,b   (these go straight in)
 
     "In calculating the external forces, use was made of wind-tunnel
      measurements obtained in the stability-axis system. The transformation
      [Fx,b; Fy,b; Fz,b] = R(alpha) [Fx,s; Fy,s; Fz,s] were employed"
 
-Nuestro modelo 4-DOF no rota nada: escribe las ecuaciones directamente en
-ejes viento. Eso es LEGITIMO solo porque aca beta = 0, y con beta = 0 el eje
-de estabilidad coincide con el de viento. Pero "es legitimo" es un argumento,
-y esto lo mide.
+Our 4-DOF model rotates nothing: it writes the equations directly in wind
+axes. That is LEGITIMATE only because beta = 0 here, and with beta = 0 the
+stability axis coincides with the wind axis. But "it is legitimate" is an
+argument, and this measures it.
 
-El lado de referencia implementa la cadena de Riley entera y es independiente:
-resuelve su PROPIO punto fijo de alpha-punto iterando, sin tomar el valor que
-calcula la planta en forma cerrada. Si los dos coincidieran solo porque uno le
-pasa la respuesta al otro, la comparacion no probaria nada.
+The reference side implements Riley's whole chain and is independent: it solves
+its OWN alpha-dot fixed point by iteration, without taking the value the plant
+computes in closed form. If the two agreed merely because one hands the answer
+to the other, the comparison would prove nothing.
 
 Usage:  THRUST_MODEL=riley PYTHONPATH=. python verificar_ejes_riley.py
 """
@@ -29,15 +29,15 @@ from symmetric_stall.aircraft.symmetric_full_grumman import SymmetricFullGrumman
 
 N = 4000
 SEMILLA = 20260807
-TOL = 1e-8          # las dos ramas son float64; esto es holgura de redondeo
+TOL = 1e-8          # both branches are float64; this is rounding slack
 
 
 def traslado_cg(a, cl, cd, cy, al):
-    """(dC_l, dC_m, dC_n) por producto vectorial EXPLICITO, no llamando a la
+    """(dC_l, dC_m, dC_n) by an EXPLICIT cross product, not by calling the
     planta: si la planta se equivoca en un signo, esto no la acompana.
 
         M_CG = M_ref + (r_ref - r_CG) x F,   ejes de cuerpo (x adelante,
-        y ala derecha, z abajo);  F/qS = (-C_A, C_Y, -C_N).
+       y right wing, z down);  F/qS = (-C_A, C_Y, -C_N).
     """
     if a.CG_AFT == 0.0 and a.CG_RIGHT == 0.0 and a.CG_BELOW == 0.0:
         return 0.0, 0.0, 0.0
@@ -48,8 +48,8 @@ def traslado_cg(a, cl, cd, cy, al):
     return (dM[0] / a.WING_SPAN, dM[1] / a.CHORD, dM[2] / a.WING_SPAN)
 
 
-def coeficientes(a, vt, al, q, de, th, alpha_dot):
-    """C_L, C_D y C_m de Riley en ejes de ESTABILIDAD, para un alpha_dot dado."""
+def coefficients(a, vt, al, q, de, th, alpha_dot):
+    """Riley's C_L, C_D and C_m in STABILITY axes, for a given alpha_dot."""
     q_hat = q * a.CHORD / (2.0 * vt)
     a_hat = alpha_dot * a.CHORD / (2.0 * vt)
     ct = a._compute_ct(th, vt)
@@ -82,7 +82,7 @@ def riley_ejes_cuerpo(a, gam, vn, al, q, de, th):
     # punto fijo propio de alpha_dot: alpha_dot -> C_L -> fuerzas -> alpha_dot
     alpha_dot = 0.0
     for _ in range(200):
-        cl, cd, cm = coeficientes(a, vt, al, q, de, th, alpha_dot)
+        cl, cd, cm = coefficients(a, vt, al, q, de, th, alpha_dot)
         # fuerzas en ejes de estabilidad
         Fxs, Fzs = -cd * qS, -cl * qS
         # LA ROTACION del Apendice B
@@ -97,10 +97,10 @@ def riley_ejes_cuerpo(a, gam, vn, al, q, de, th):
             break
         alpha_dot = nuevo
     else:
-        raise RuntimeError("el punto fijo de alpha_dot no convergio")
+        raise RuntimeError("the alpha_dot fixed point did not converge")
 
     v_dot = (u * u_dot + w * w_dot) / vt
-    # momentos: Riley los da en ejes CUERPO, no se rotan
+    # moments: Riley gives them in BODY axes, they are not rotated
     q_dot = (qS * a.CHORD * cm) / a.I_YY
     return q - alpha_dot, v_dot / vs, alpha_dot, q_dot
 
@@ -108,9 +108,9 @@ def riley_ejes_cuerpo(a, gam, vn, al, q, de, th):
 def main():
     a = SymmetricFullGrumman()
     rng = np.random.default_rng(SEMILLA)
-    nombres = ["gamma_dot", "v_dot", "alpha_dot", "q_dot"]
-    peor = np.zeros(4)
-    peor_caso = [None] * 4
+    names = ["gamma_dot", "v_dot", "alpha_dot", "q_dot"]
+    worst = np.zeros(4)
+    worst_case = [None] * 4
 
     for _ in range(N):
         s = (rng.uniform(-1.5, 0.08), rng.uniform(0.4, 2.0),
@@ -120,24 +120,24 @@ def main():
         r = np.asarray(riley_ejes_cuerpo(a, *s, *ac), dtype=np.float64)
         rel = np.abs(p - r) / np.maximum(np.abs(r), 1e-6)
         for i in range(4):
-            if rel[i] > peor[i]:
-                peor[i] = rel[i]
-                peor_caso[i] = (np.rad2deg(s[0]), s[1], np.rad2deg(s[2]))
+            if rel[i] > worst[i]:
+                worst[i] = rel[i]
+                worst_case[i] = (np.rad2deg(s[0]), s[1], np.rad2deg(s[2]))
 
-    print(f"{N} estados aleatorios sobre toda la grilla "
-          f"(V de 0.4 a 2.0 Vs, alpha de -40 a 20 deg)\n")
-    print("  planta en ejes viento  vs  Apendice B rotando a ejes cuerpo:")
-    for i, nom in enumerate(nombres):
-        g0, v0, a0 = peor_caso[i]
-        print(f"    {nom:10s} peor rel = {peor[i]:.2e}"
+    print(f"{N} random states over the whole grid "
+          f"(V from 0.4 to 2.0 Vs, alpha from -40 to 20 deg)\n")
+    print("  wind-axes plant  vs  Appendix B rotated into body axes:")
+    for i, name in enumerate(names):
+        g0, v0, a0 = worst_case[i]
+        print(f"    {name:10s} worst rel = {worst[i]:.2e}"
               f"   (gamma {g0:+6.1f} deg, V {v0:.2f} Vs, alpha {a0:+6.1f} deg)")
-    ok = peor.max() < TOL
-    print(f"\n{'IDENTICAS' if ok else 'DIFIEREN'} "
-          f"(peor {peor.max():.2e}, tolerancia {TOL:.0e})")
+    ok = worst.max() < TOL
+    print(f"\n{'IDENTICAL' if ok else 'DIFFERENT'} "
+          f"(worst {worst.max():.2e}, tolerance {TOL:.0e})")
     if ok:
-        print("Con beta = 0 el eje de estabilidad ES el eje viento, asi que la "
-              "rotacion de Riley\nya esta contenida en la forma en ejes viento. "
-              "No falta ningun termino.")
+        print("With beta = 0 the stability axis IS the wind axis, so Riley's "
+              "rotation\nis already contained in the wind-axes form. No term "
+              "is missing.")
     return 0 if ok else 1
 
 

@@ -1,15 +1,15 @@
-"""Compara literal por literal las tablas del kernel CUDA contra las del CPU.
+"""Compare the CUDA kernel's tables literal by literal against the CPU's.
 
-El kernel lleva las tablas de Riley DUPLICADAS como literales dentro del
-fuente CUDA, porque un __device__ const float no se puede alimentar desde
-numpy sin pagar una indireccion por lectura. Esa duplicacion ya nos costo dos
-errores: una conversion grado->radian robada de la tabla de al lado, y un
-CM_DE a C_T=0.5 que difiere en la cuarta cifra. Ninguno de los dos aparece en
-verificar_cpu_vs_kernel.py, que compara las derivadas finales con la mediana
-y por lo tanto promedia justo lo que hay que ver.
+The kernel carries Riley's tables DUPLICATED as literals inside the CUDA
+source, because a __device__ const float cannot be fed from numpy without
+paying an indirection per read. That duplication has already cost two bugs: a
+degree-to-radian conversion stolen from the neighbouring table, and a CM_DE at
+C_T=0.5 differing in the fourth digit. Neither shows up in
+verificar_cpu_vs_kernel.py, which compares the final derivatives using the
+median and therefore averages away exactly what needs to be seen.
 
-Esto compara los 26 arreglos entrada por entrada. No mide fisica: mide que
-las dos copias digan lo mismo.
+This compares the 26 arrays entry by entry. It does not measure physics: it
+measures that the two copies say the same thing.
 
 Usage:  PYTHONPATH=. python verificar_tablas_kernel.py
 """
@@ -18,13 +18,13 @@ import sys
 
 import numpy as np
 
-import PolicyIteration as PI
+from symmetric_stall import policy_iteration as PI
 from symmetric_stall.aircraft.symmetric_full_grumman import SymmetricFullGrumman
 
-# nombre en el kernel -> atributo en el CPU. Se declara a mano a proposito:
-# derivarlo por regla (TBL->TABLE) haria que un nombre mal escrito de un lado
-# se empareje con el que no es, que es exactamente el error que se busca.
-PARES = {
+# kernel name -> CPU attribute. Declared by hand on purpose: deriving it by a
+# rule (TBL->TABLE) would make a misspelt name on one side pair up with the
+# wrong one, which is exactly the bug being hunted.
+PAIRS = {
     "CL_O_TBL_CT0": "_CL_O_TABLE",       "CL_O_TBL_CT05": "_CL_O_TABLE_CT05",
     "CL_Q_TBL_CT0": "_CL_Q_TABLE",       "CL_Q_TBL_CT05": "_CL_Q_TABLE_CT05",
     "CD_O_TBL_CT0": "_CD_O_TABLE",       "CD_O_TBL_CT05": "_CD_O_TABLE_CT05",
@@ -40,18 +40,18 @@ PARES = {
     "CM_ADOT_TBL_CT0": "_CM_ADOT_TABLE_CT0",
     "CM_ADOT_TBL_CT05": "_CM_ADOT_TABLE_CT05",
     "THR_DTP": "_THR_DTP", "THR_T0": "_THR_T0", "THR_T1": "_THR_T1",
-    # los quiebres de alpha: si estos se corren, se corren TODAS las tablas
+    # the alpha breakpoints: if these shift, ALL the tables shift
     "CL_A_TBL": "_CL_O_ALPHA_RAD",
 }
 
 
-def tablas_del_kernel(fuente: str) -> dict:
-    """Extrae los __device__ const float NOMBRE[N] = { ... } del fuente CUDA."""
-    patron = re.compile(
+def kernel_tables(source: str) -> dict:
+    """Extract the __device__ const float NAME[N] = { ... } from the CUDA source."""
+    pattern = re.compile(
         r"__device__\s+const\s+float\s+([A-Z_0-9]+)\s*\[\s*(\d+)\s*\]\s*=\s*\{([^}]*)\}",
         re.S)
     fuera = {}
-    for nombre, n, cuerpo in patron.findall(fuente):
+    for nombre, n, cuerpo in pattern.findall(source):
         vals = [float(x) for x in re.findall(r"[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?f?",
                                              cuerpo.replace("f", ""))]
         if len(vals) != int(n):
@@ -61,24 +61,24 @@ def tablas_del_kernel(fuente: str) -> dict:
 
 
 def main() -> int:
-    fuente = PI.PolicyIterationStall.KERNEL_SOURCE if hasattr(
+    source = PI.PolicyIterationStall.KERNEL_SOURCE if hasattr(
         PI.PolicyIterationStall, "KERNEL_SOURCE") else open(
             "PolicyIteration.py").read()
-    K = tablas_del_kernel(fuente)
+    K = kernel_tables(source)
     a = SymmetricFullGrumman()
 
-    print(f"tablas encontradas en el fuente CUDA: {len(K)}")
-    faltan = [k for k in PARES if k not in K]
-    if faltan:
-        print(f"  !! declaradas en el mapeo pero ausentes del kernel: {faltan}")
-    huerfanas = [k for k in K if k not in PARES]
-    if huerfanas:
-        print(f"  nota: en el kernel y sin par declarado: {huerfanas}")
+    print(f"tables found in the CUDA source: {len(K)}")
+    missing = [k for k in PAIRS if k not in K]
+    if missing:
+        print(f"  !! declared in the map but absent from the kernel: {missing}")
+    orphans = [k for k in K if k not in PAIRS]
+    if orphans:
+        print(f"  note: in the kernel with no declared pair: {orphans}")
     print()
 
     peor_nombre, peor = None, 0.0
     fallos = 0
-    for kn, cn in sorted(PARES.items()):
+    for kn, cn in sorted(PAIRS.items()):
         if kn not in K:
             continue
         kv = K[kn]
@@ -90,18 +90,18 @@ def main() -> int:
         denom = np.maximum(np.abs(cv), 1e-9)
         rel = np.abs(kv - cv) / denom
         i = int(rel.argmax())
-        # float32 redondea a ~1e-7; por encima de 1e-6 es transcripcion, no formato
-        estado = "ok" if rel[i] <= 1e-6 else "DIFIERE"
+        # float32 rounds to ~1e-7; above 1e-6 it is transcription, not format
+        status = "ok" if rel[i] <= 1e-6 else "DIFIERE"
         if rel[i] > 1e-6:
             fallos += 1
-            print(f"  {estado:<8}{kn:<20} entrada {i:2d}: kernel {kv[i]:+.6f} "
+            print(f"  {status:<8}{kn:<20} entrada {i:2d}: kernel {kv[i]:+.6f} "
                   f"vs CPU {cv[i]:+.6f}  rel {rel[i]:.2e}")
         if rel[i] > peor:
             peor, peor_nombre = rel[i], kn
 
     print()
     if fallos == 0:
-        print(f"LAS {len(PARES)} TABLAS COINCIDEN (peor {peor:.2e} en {peor_nombre})")
+        print(f"LAS {len(PAIRS)} TABLAS COINCIDEN (peor {peor:.2e} en {peor_nombre})")
         return 0
     print(f"{fallos} TABLA(S) NO COINCIDEN (peor {peor:.2e} en {peor_nombre})")
     return 1
