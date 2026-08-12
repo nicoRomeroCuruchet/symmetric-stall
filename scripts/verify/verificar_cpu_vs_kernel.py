@@ -1,14 +1,14 @@
-"""Comprueba que el modelo CPU y el kernel CUDA calculan la MISMA dinamica.
+"""Check that the CPU model and the CUDA kernel compute the SAME dynamics.
 
 Las tablas aerodinamicas estan duplicadas -- en aircraft/grumman.py y en el
-.cu embebido en PolicyIteration.py -- y las formulas tambien. Nada garantiza
-que se mantengan sincronizadas: el kernel entrena la politica y el CPU la
-evalua, asi que si divergen, la politica se optimiza para un avion levemente
-distinto del que despues se simula.
+.cu embedded in policy_iteration.py -- and so are the formulas. Nothing keeps
+them in sync: the kernel trains the policy and the CPU evaluates it, so if they
+diverge, the policy is optimised for an aircraft slightly different from the one
+later simulated.
 
-Comparar las tablas no alcanza: dos tablas iguales con formulas distintas dan
-resultados distintos. Esto compara las DERIVADAS evaluadas sobre estados
-aleatorios de toda la grilla, que es donde se manifiesta cualquier diferencia.
+Comparing the tables is not enough: two identical tables with different formulas
+give different results. This compares the DERIVATIVES evaluated over random
+states across the whole grid, which is where any difference shows up.
 
 Correr despues de tocar cualquier cosa aerodinamica:
 
@@ -24,7 +24,7 @@ import numpy as np
 
 logging.disable(logging.INFO)
 
-TOL_REL = 1e-4          # holgado para float32 acumulado en ~20 operaciones
+TOL_REL = 1e-4          # generous, for float32 accumulated over ~20 operations
 N_ESTADOS = 4000
 SEMILLA = 3
 
@@ -35,15 +35,16 @@ DEFINES = "\n".join(
         ("W_CONTROL_EFFORT", "0.0"), ("W_THROTTLE_BONUS", "0.0"),
         ("DXCG_OVER_CHORD", "0.0"),
     ])
-# THRUST_RILEY no lleva sufijo f: es un flag entero para el preprocesador. Y
-# tiene que salir de la MISMA variable de entorno que el modelo CPU, o este
-# script compara el kernel en un modo contra el CPU en el otro -- que fue
-# exactamente lo que reporto la primera vez que se corrio con riley.
+# THRUST_RILEY carries no f suffix: it is an integer flag for the
+# preprocessor. And it must come from the SAME environment variable as the CPU
+# model, or this script compares the kernel in one mode against the CPU in the
+# other -- which is exactly what it reported the first time it was run with
+# riley.
 DEFINES += f"\n#define THRUST_RILEY {1 if os.environ.get('THRUST_MODEL','paper1').lower()=='riley' else 0}\n"
 
-# El CG sale de las MISMAS variables de entorno que la planta. Fijarlo en cero
-# aca compararia el kernel con el CG de Riley contra un CPU con el CG corrido
-# -- el mismo error que ya se cometio una vez con THRUST_MODEL.
+# The CG comes from the SAME environment variables as the plant. Pinning it to
+# zero here would compare the kernel at Riley's CG against a CPU with the CG
+# shifted -- the same mistake already made once with THRUST_MODEL.
 DEFINES += (
     "\n#define CG_AFT_M " + repr(float(os.environ.get("CG_AFT_M", 0.0))) + "f"
     + "\n#define CG_RIGHT_M " + repr(float(os.environ.get("CG_RIGHT_M", 0.0))) + "f"
@@ -72,8 +73,8 @@ def cuda_body():
 
 
 def derivs_cpu(ap, g, v, a, q, de, th, vs):
-    """Llama a LA PLANTA. Antes esto era una copia a mano de sus expresiones,
-    y una copia a mano solo verifica que el kernel coincida con la copia."""
+    """Calls THE PLANT. This used to be a hand copy of its expressions, and a
+    hand copy only verifies that the kernel agrees with the copy."""
     return ap.derivatives(g, v, a, q, de, th)
 
 
@@ -88,7 +89,7 @@ def main():
 
     rng = np.random.default_rng(SEMILLA)
     n = N_ESTADOS
-    # el piso de velocidad acompana al de la grilla: por debajo de 0.785 Vs se
+    # the airspeed floor follows the grid's: below 0.785 Vs
     # activa dCD_T, y si el muestreo no baja hasta ahi el termino no se prueba
     S = np.stack([rng.uniform(-1.5, 0.08, n), rng.uniform(0.4, 2.0, n),
                   rng.uniform(-0.69, 0.34, n),
@@ -106,10 +107,10 @@ def main():
                     for i in range(n)])
 
     rel = np.abs(gpu - cpu) / np.maximum(np.abs(cpu), 1e-6)
-    # el veredicto sale del MAXIMO, no de la mediana: un termino que solo
-    # aparece en una esquina del dominio -- una tabla mal transcripta cerca de
-    # 40 grados, dCD_T por debajo de 0.785 Vs -- no mueve la mediana de 4000
-    # muestras, y era exactamente lo que habia que detectar
+    # the verdict comes from the MAXIMUM, not the median: a term that only
+    # appears in one corner of the domain -- a mistranscribed table near 40
+    # degrees, dCD_T below 0.785 Vs -- does not move the median of 4000
+    # samples, and that was exactly what had to be detected
     peor = 0.0
     print(f"{n} estados aleatorios, CPU vs kernel CUDA:")
     for i, nom in enumerate(["gamma_dot", "v_dot", "alpha_dot", "q_dot"]):
@@ -121,10 +122,10 @@ def main():
         print(f"  {nom:10s} mediana {med:.2e}   p99 {p99:.2e}   MAX {mx:.2e}"
               f"   (peor caso: V={S[j,1]:.2f} Vs, alpha={np.rad2deg(S[j,2]):+.1f} deg,"
               f" dt={Ac[j,1]:.2f})")
-    # v_dot cruza cero (la resistencia neta cambia de signo con C_T), asi que
-    # ahi el error relativo se dispara sin que nada este mal. El veredicto usa
-    # un criterio mixto: relativo donde la derivada tiene magnitud, absoluto
-    # donde se cancela. La escala es la desviacion tipica de cada canal.
+    # v_dot crosses zero (net drag changes sign with C_T), so the relative
+    # error blows up there with nothing being wrong. The verdict uses a mixed
+    # criterion: relative where the derivative has magnitude, absolute where it
+    # cancels. The scale is each channel's standard deviation.
     escala = np.maximum(cpu.std(axis=0), 1e-9)
     mixto = np.abs(gpu - cpu) / np.maximum(np.abs(cpu), 0.01 * escala)
     print()

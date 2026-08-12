@@ -1,24 +1,25 @@
-"""El traslado de momentos al CG, contra la fisica y contra si mismo.
+"""The transfer of moments to the CG, against physics and against itself.
 
 Cuatro cosas, todas repetibles:
 
-  1. Con el CG donde lo toma Riley (0.25 c sobre la linea central del
-     fuselaje, informe pag. 5 y Tabla I) el traslado tiene que ser la
-     IDENTIDAD BIT A BIT sobre las derivadas de la planta. Si no lo es,
+  1. With the CG where Riley takes it (0.25 c on the fuselage centreline,
+     report p. 5 and Table I) the transfer must be the BIT-FOR-BIT IDENTITY
+     on the plant derivatives. If it is not,
      agregar el traslado movio resultados publicados.
-  2. Con el CG corrido, los tres deltas tienen que coincidir con un producto
+  2. With the CG shifted, the three deltas must agree with a cross
      vectorial calculado APARTE en este mismo archivo -- no llamando a la
-     planta, que es lo que se esta juzgando:
+     plant, which is what is under test:
          M_CG = M_ref + (r_ref - r_CG) x F,  F/qS = (-C_A, C_Y, -C_N)
-  3. El signo, contra la fisica: CG atrasado con sustentacion positiva tiene
-     que dar CABREO (menos estable). La tesis de Poliak (2025) pag. 25 ec.
-     (12) y (16) escribe el traslado con el signo opuesto; este chequeo es lo
-     que hace imposible copiarlo sin darse cuenta.
-  4. DXCG_OVER_CHORD sigue siendo la fraccion de cuerda, que es lo que usan
+  3. The sign, against physics: an aft CG with positive lift must give
+     NOSE-UP (less stable). Poliak's thesis (2025) p. 25 eqs. (12) and (16)
+     writes the transfer with the opposite sign; this check is what makes it
+     impossible to copy that without noticing.
+  4. DXCG_OVER_CHORD is still the chord fraction, which is what
      paper_cg_sweep_solve.py y paper_fig_cg_sweep.py.
 
-El CG se puede fijar por entorno (CG_AFT_M / CG_RIGHT_M / CG_BELOW_M, en
-metros), igual que THRUST_MODEL, y de ahi lo toman tambien la config del
+The CG can be set through the environment (CG_AFT_M / CG_RIGHT_M /
+CG_BELOW_M, in metres), just like THRUST_MODEL, and from there it is also
+picked up by the config of
 PolicyIteration y verificar_cpu_vs_kernel.py.
 
     THRUST_MODEL=riley PYTHONPATH=. python verificar_traslado_cg.py
@@ -70,18 +71,18 @@ else:
 
 print("modelo %s -- %d estados de prueba" % (nombre, len(ESTADOS)))
 
-# ---- (1) identidad con el CG en la referencia de Riley ----
+# ---- (1) identity with the CG at Riley's reference ----
 base = np.array(llamar(), dtype=np.float64)
 a.CG_AFT = 0.0; a.CG_RIGHT = 0.0; a.CG_BELOW = 0.0
 otra = np.array(llamar(), dtype=np.float64)
 ident = np.array_equal(base, otra)
 print("  (1) CG en la referencia -> identidad bit a bit: %s" % ("SI" if ident else "NO"))
 
-# ---- (2) el traslado contra un producto vectorial explicito ----
+# ---- (2) the transfer against an explicit cross product ----
 # M_CG = M_ref + (r_ref - r_CG) x F, en ejes de cuerpo (x adelante, y derecha,
-# z abajo). F_x = -C_A, F_y = C_Y, F_z = -C_N (adimensionalizadas por qS).
+# z down). F_x = -C_A, F_y = C_Y, F_z = -C_N (non-dimensionalised by qS).
 rng = np.random.default_rng(0)
-peor = 0.0
+worst = 0.0
 for _ in range(200):
     dx, dy, dz = rng.uniform(-0.3, 0.3, 3)
     cl_, cd_, cy_ = rng.uniform(-1.5, 2.0), rng.uniform(0.0, 1.0), rng.uniform(-0.4, 0.4)
@@ -93,12 +94,12 @@ for _ in range(200):
     c_a = cd_ * np.cos(al) - cl_ * np.sin(al)
     r_cg = np.array([-dx, dy, dz])          # posicion del CG en ejes de cuerpo
     F = np.array([-c_a, cy_, -c_n])
-    dM = np.cross(-r_cg, F)                 # (r_ref - r_CG) x F, con r_ref = 0
+    dM = np.cross(-r_cg, F)                 # (r_ref - r_CG) x F, with r_ref = 0
     esp = np.array([dM[0] / a.WING_SPAN, dM[1] / a.CHORD, dM[2] / a.WING_SPAN])
-    peor = max(peor, float(np.max(np.abs(obt - esp))))
-print("  (2) contra el producto vectorial explicito: peor %.2e" % peor)
+    worst = max(worst, float(np.max(np.abs(obt - esp))))
+print("  (2) against the explicit cross product: worst %.2e" % worst)
 
-# ---- (3) el CG atrasado tiene que desestabilizar ----
+# ---- (3) an aft CG must destabilise ----
 a.CG_AFT, a.CG_RIGHT, a.CG_BELOW = 0.0, 0.0, 0.0
 al14 = np.deg2rad(14.0)
 _, dcm0, _ = a._delta_momentos_cg(1.26, 0.24, al14)
@@ -116,4 +117,4 @@ a.DXCG_OVER_CHORD = 0.05
 ok4 = abs(a.CG_AFT - 0.05 * a.CHORD) < 1e-12 and abs(a.DXCG_OVER_CHORD - 0.05) < 1e-12
 print("  (4) DXCG_OVER_CHORD sigue siendo la fraccion de cuerda: %s" % ("SI" if ok4 else "NO"))
 
-sys.exit(0 if (ident and peor < 1e-15 and ok3 and ok4) else 1)
+sys.exit(0 if (ident and worst < 1e-15 and ok3 and ok4) else 1)
