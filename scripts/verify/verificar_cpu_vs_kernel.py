@@ -18,6 +18,7 @@ Sale 0 si coinciden a precision de float32, 1 si no.
 """
 import logging
 import os
+import pathlib
 import sys
 
 import numpy as np
@@ -66,7 +67,8 @@ extern "C" __global__ void test_derivs(
 
 
 def cuda_body():
-    txt = open("PolicyIteration.py").read()
+    import symmetric_stall.policy_iteration as _pi
+    txt = pathlib.Path(_pi.__file__).read_text()
     marker = "cuda_source = reward_defines + r'''"
     i = txt.index(marker) + len(marker)
     return txt[i:txt.index("'''", i)]
@@ -120,24 +122,24 @@ def main():
         p99 = float(np.percentile(rel[:, i], 99))
         worst = max(worst, mx)
         j = int(rel[:, i].argmax())
-        print(f"  {nom:10s} mediana {med:.2e}   p99 {p99:.2e}   MAX {mx:.2e}"
+        print(f"  {nom:10s} median {med:.2e}   p99 {p99:.2e}   MAX {mx:.2e}"
               f"   (worst case: V={S[j,1]:.2f} Vs, alpha={np.rad2deg(S[j,2]):+.1f} deg,"
               f" dt={Ac[j,1]:.2f})")
     # v_dot crosses zero (net drag changes sign with C_T), so the relative
     # error blows up there with nothing being wrong. The verdict uses a mixed
     # criterion: relative where the derivative has magnitude, absolute where it
     # cancels. The scale is each channel's standard deviation.
-    escala = np.maximum(cpu.std(axis=0), 1e-9)
-    mixed = np.abs(gpu - cpu) / np.maximum(np.abs(cpu), 0.01 * escala)
+    scale = np.maximum(cpu.std(axis=0), 1e-9)
+    mixed = np.abs(gpu - cpu) / np.maximum(np.abs(cpu), 0.01 * scale)
     print()
     for i, nom in enumerate(["gamma_dot", "v_dot", "alpha_dot", "q_dot"]):
         j = int(mixed[:, i].argmax())
-        print(f"  {nom:10s} escala {escala[i]:.3e}   abs MAX {np.abs(gpu-cpu)[:, i].max():.3e}"
+        print(f"  {nom:10s} scale {scale[i]:.3e}   abs MAX {np.abs(gpu-cpu)[:, i].max():.3e}"
               f"   mixed MAX {mixed[:, i].max():.2e}"
               f"   (cpu={cpu[j, i]:+.3e} gpu={gpu[j, i]:+.3e})")
     worst = float(mixed.max())
     ok = worst < TOL_REL
-    print(f"\n{'COINCIDEN' if ok else 'DIFIEREN'} "
+    print(f"\n{'MATCH' if ok else 'DIFFER'} "
           f"(worst MAXIMUM {worst:.2e}, tolerance {TOL_REL:.0e})")
     return 0 if ok else 1
 

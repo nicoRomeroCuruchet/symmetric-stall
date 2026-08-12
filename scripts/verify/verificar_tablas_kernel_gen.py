@@ -37,9 +37,9 @@ ESCALA_ALTERNATIVA = {"THR_T0": _LBF, "THR_T1": _LBF * _FTS}
 
 
 def carga_avion():
-    for mod, cls in (("aircraft.spin_grumman", "SpinGrumman"),
-                     ("aircraft.banked_spin_grumman", "BankedSpinGrumman"),
-                     ("aircraft.symmetric_full_grumman", "SymmetricFullGrumman")):
+    for mod, cls in (("symmetric_stall.aircraft.spin_grumman", "SpinGrumman"),
+                     ("symmetric_stall.aircraft.banked_spin_grumman", "BankedSpinGrumman"),
+                     ("symmetric_stall.aircraft.symmetric_full_grumman", "SymmetricFullGrumman")):
         try:
             m = __import__(mod, fromlist=[cls])
             return getattr(m, cls)()

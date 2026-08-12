@@ -1,3 +1,64 @@
+"""The 4-DOF symmetric reduction of Riley's 6-DOF model.
+
+Riley (1985), Appendix B, writes nonlinear six-degree-of-freedom rigid-body
+equations in body axes. This module carries the longitudinal reduction used
+throughout the paper, with state
+
+    x = (gamma, V/Vs, alpha, q)
+
+and control u = (delta_e, delta_t). The reduction is EXACT, not approximate,
+under the following declared constraints:
+
+    v = p = r = 0,  phi = 0,  beta = 0,  delta_a = delta_r = delta_f = 0
+
+Every term Riley carries that this model does not is killed by those
+constraints, not dropped by hand:
+
+  - the lateral-directional equations (v-dot, p-dot, r-dot) decouple entirely;
+  - the inertia cross terms (Iz-Ix)pr and Ixz(r^2 - p^2) in q-dot vanish, so
+    Riley's pitch equation collapses to q-dot = M_b / Iyy;
+  - the propeller gyroscopic term in q-dot is proportional to r and vanishes
+    too (Riley keeps it "for completeness"; it is small even when it does not);
+  - the sideslip increments dC_L,beta, dC_m,beta and dC_D,beta are zero by
+    construction, since Riley tabulates them as zero at beta = 0;
+  - C_D,dyn is identically zero in Riley's model, so drag carries no rate
+    terms.
+
+With beta = 0 the stability axis coincides with the wind axis, so Riley's
+rotation R(alpha) from stability to body axes is already contained in the
+wind-axes form used here. That is not assumed: scripts/verify/
+verificar_ejes_riley.py implements Riley's chain independently and compares,
+agreeing to 2e-12 over 4000 random states.
+
+What this model deliberately does NOT reproduce from Riley:
+
+  - the first-order engine lag of eq. (A4), delta_t = 1/(tau_e s + 1)
+    delta_t,c. Riley never publishes a value for tau_e, and the sensitivity to
+    it is reported separately (scripts/figures/potencia_riley.py). Thrust is
+    otherwise commanded directly.
+  - altitude: rho is fixed at sea level. This is consistent rather than
+    contradictory, because C_T = T/(q_bar S) is independent of density --
+    thrust scales with sigma by eq. (A10) and so does q_bar.
+
+Equations, as implemented in `derivatives`:
+
+    gamma_dot = [A C_L + A C_Lalpha_dot k q - (g/V) cos(gamma)]
+                / (1 + A C_Lalpha_dot k)          A = q_bar S/(m V), k = c/2V
+    alpha_dot = q - gamma_dot
+    V_dot     = (-g sin(gamma) - D/m) / Vs
+    q_dot     = M_y / Iyy
+
+There is no explicit thrust term in the force equations, and that is Riley's
+formulation, not an omission -- Appendix B, p. 17: "Note that in this model
+there are no thrust terms directly input into the equations. Thrust effects
+are contained in the basic aerodynamic terms and are input through the tables
+using the parameter CT."
+
+The same four equations appear as eq. (4.9) of Robbie's thesis, with the state
+written as (V, alpha, theta, q) instead of (gamma, V, alpha, q); the two are
+related by theta = gamma + alpha. This model additionally carries Riley's
+alpha-dot aerodynamic terms, which that reference omits.
+"""
 import numpy as np
 
 from symmetric_stall.aircraft.extended_grumman import ExtendedGrumman

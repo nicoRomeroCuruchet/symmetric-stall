@@ -41,9 +41,9 @@ POINTS = [(np.deg2rad(a), ct) for a in (-5.0, 5.0, 14.0, 25.0)
 
 def load():
     for mod, cls, name in (
-            ("aircraft.spin_grumman", "SpinGrumman", "8dof"),
-            ("aircraft.banked_spin_grumman", "BankedSpinGrumman", "6dof"),
-            ("aircraft.symmetric_full_grumman", "SymmetricFullGrumman", "4dof")):
+            ("symmetric_stall.aircraft.spin_grumman", "SpinGrumman", "8dof"),
+            ("symmetric_stall.aircraft.banked_spin_grumman", "BankedSpinGrumman", "6dof"),
+            ("symmetric_stall.aircraft.symmetric_full_grumman", "SymmetricFullGrumman", "4dof")):
         try:
             return getattr(__import__(mod, fromlist=[cls]), cls)(), name
         except ImportError:

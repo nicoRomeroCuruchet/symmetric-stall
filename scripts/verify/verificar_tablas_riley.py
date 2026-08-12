@@ -21,7 +21,7 @@ import numpy as np
 
 from symmetric_stall.aircraft.symmetric_full_grumman import SymmetricFullGrumman
 
-PDF = "papers/riley.pdf"
+PDF = "papers/Riley.pdf"
 DEG_TO_RAD = 57.2958  # the code stores control derivatives per radian
 
 # Table III block -> (first line, last line) in the pdftotext -layout dump,
@@ -249,7 +249,7 @@ def main():
         print("\nNOTHING WAS COMPARED: the table blocks could not be read")
         return 1
     print(f"\n{total} values compared against Table III: {failures} differ, "
-          f"{ilegibles} ilegibles sin confirmar, {confirmados} resueltos "
+          f"{ilegibles} unconfirmed illegibles, {confirmados} resueltos "
           f"by looking at the page")
     return 1 if (failures or ilegibles) else 0
 

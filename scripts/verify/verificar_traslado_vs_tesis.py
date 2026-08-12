@@ -14,9 +14,9 @@ So delta_ours == -delta_thesis is expected, exactly.
 import importlib, sys
 import numpy as np
 
-for m, c in (("aircraft.spin_grumman", "SpinGrumman"),
-             ("aircraft.banked_spin_grumman", "BankedSpinGrumman"),
-             ("aircraft.symmetric_full_grumman", "SymmetricFullGrumman")):
+for m, c in (("symmetric_stall.aircraft.spin_grumman", "SpinGrumman"),
+             ("symmetric_stall.aircraft.banked_spin_grumman", "BankedSpinGrumman"),
+             ("symmetric_stall.aircraft.symmetric_full_grumman", "SymmetricFullGrumman")):
     try:
         a = getattr(importlib.import_module(m), c)(); name = m.split(".")[-1]; break
     except ImportError:

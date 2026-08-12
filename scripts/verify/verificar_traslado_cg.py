@@ -28,9 +28,9 @@ PolicyIteration y verificar_cpu_vs_kernel.py.
 import importlib, itertools, sys
 import numpy as np
 
-MOD = (("8dof", "aircraft.spin_grumman", "SpinGrumman"),
-       ("6dof", "aircraft.banked_spin_grumman", "BankedSpinGrumman"),
-       ("4dof", "aircraft.symmetric_full_grumman", "SymmetricFullGrumman"))
+MOD = (("8dof", "symmetric_stall.aircraft.spin_grumman", "SpinGrumman"),
+       ("6dof", "symmetric_stall.aircraft.banked_spin_grumman", "BankedSpinGrumman"),
+       ("4dof", "symmetric_stall.aircraft.symmetric_full_grumman", "SymmetricFullGrumman"))
 
 def load():
     for n, m, c in MOD:
@@ -76,7 +76,7 @@ base = np.array(call_plant(), dtype=np.float64)
 a.CG_AFT = 0.0; a.CG_RIGHT = 0.0; a.CG_BELOW = 0.0
 other = np.array(call_plant(), dtype=np.float64)
 ident = np.array_equal(base, other)
-print("  (1) CG en la referencia -> identidad bit a bit: %s" % ("SI" if ident else "NO"))
+print("  (1) CG at the reference -> bit-for-bit identity: %s" % ("YES" if ident else "NO"))
 
 # ---- (2) the transfer against an explicit cross product ----
 # M_CG = M_ref + (r_ref - r_CG) x F, in body axes (x forward, y right,

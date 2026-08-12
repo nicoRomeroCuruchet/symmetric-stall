@@ -19,6 +19,9 @@ import sys
 import numpy as np
 
 from symmetric_stall import policy_iteration as PI
+
+#: the kernel lives inside the package now, not in the CWD
+_KERNEL_SRC = PI.__file__
 from symmetric_stall.aircraft.symmetric_full_grumman import SymmetricFullGrumman
 
 # kernel name -> CPU attribute. Declared by hand on purpose: deriving it by a
@@ -63,7 +66,7 @@ def kernel_tables(source: str) -> dict:
 def main() -> int:
     source = PI.PolicyIterationStall.KERNEL_SOURCE if hasattr(
         PI.PolicyIterationStall, "KERNEL_SOURCE") else open(
-            "PolicyIteration.py").read()
+            _KERNEL_SRC).read()
     K = kernel_tables(source)
     a = SymmetricFullGrumman()
 

@@ -29,9 +29,9 @@ TOL_ACC = 0.05          # m/s2; the test is in stabilised flight
 
 
 def load():
-    for mod, cls in (("aircraft.spin_grumman", "SpinGrumman"),
-                     ("aircraft.banked_spin_grumman", "BankedSpinGrumman"),
-                     ("aircraft.symmetric_full_grumman", "SymmetricFullGrumman")):
+    for mod, cls in (("symmetric_stall.aircraft.spin_grumman", "SpinGrumman"),
+                     ("symmetric_stall.aircraft.banked_spin_grumman", "BankedSpinGrumman"),
+                     ("symmetric_stall.aircraft.symmetric_full_grumman", "SymmetricFullGrumman")):
         try:
             m = __import__(mod, fromlist=[cls])
             return getattr(m, cls)()
