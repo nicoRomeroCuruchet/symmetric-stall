@@ -72,10 +72,17 @@ else:
 print("model %s -- %d test states" % (name, len(STATES)))
 
 # ---- (1) identity with the CG at Riley's reference ----
+# The CG is forced to the reference here regardless of what the environment
+# set, and restored afterwards. Comparing "whatever the environment gave" with
+# "zero" is only an identity test when the environment already held zero, so
+# running this script with CG_AFT_M set used to report a spurious failure.
+_saved = (a.CG_AFT, a.CG_RIGHT, a.CG_BELOW)
+a.CG_AFT = a.CG_RIGHT = a.CG_BELOW = 0.0
 base = np.array(call_plant(), dtype=np.float64)
-a.CG_AFT = 0.0; a.CG_RIGHT = 0.0; a.CG_BELOW = 0.0
+assert a._delta_momentos_cg(1.0, 0.1, 0.2) == (0.0, 0.0, 0.0)
 other = np.array(call_plant(), dtype=np.float64)
 ident = np.array_equal(base, other)
+a.CG_AFT, a.CG_RIGHT, a.CG_BELOW = _saved
 print("  (1) CG at the reference -> bit-for-bit identity: %s" % ("YES" if ident else "NO"))
 
 # ---- (2) the transfer against an explicit cross product ----
