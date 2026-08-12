@@ -69,7 +69,7 @@ def run(mode):
             de = float(get_optimal_action(obs, pi)[0][0])
         else:                                        # piloto: dos escalones
             dtr = t - t_det                      # three steps that follow
-            if dtr < D_PUSH:                     # la forma del optimo
+            if dtr < D_PUSH:                     # the optimum's shape
                 de = float(DE_PUSH)
             elif dtr < D_PUSH + D_PULL:
                 de = float(DE_PULL)

@@ -31,14 +31,14 @@ def main():
         raise SystemExit("hace falta el volcado del 4-DOF: es la referencia")
 
     print("=== CONSTANTES DE LA CELULA ===")
-    malas = 0
+    bad = 0
     claves = sorted(set().union(*[set(v["constantes"]) for v in V.values()]))
     orden = [k for k in ("4dof", "6dof", "8dof") if k in V]
     print("  %-26s %s" % ("", "".join("%15s" % k for k in orden)))
     for k in claves:
         vals = [V[n]["constantes"].get(k) for n in orden]
         igual = len({None if x is None else round(x, 9) for x in vals}) == 1
-        malas += 0 if igual else 1
+        bad += 0 if igual else 1
         print("  %-26s %s   %s"
               % (k, "".join("%15.6g" % (x if x is not None else float("nan"))
                             for x in vals),
@@ -48,28 +48,28 @@ def main():
     ref = np.array(V["4dof"]["ct"])
     for n in orden[1:]:
         d = np.abs(np.array(V[n]["ct"]) - ref).max()
-        malas += 0 if d < 1e-9 else 1
+        bad += 0 if d < 1e-9 else 1
         print("  %-6s worst difference against the 4-DOF: %.2e %s"
               % (n, d, "" if d < 1e-9 else "<-- DIFIERE"))
 
     print("\n=== DERIVATIVES IN THE SYMMETRIC LIMIT, against the 4-DOF ===")
     A = np.array(V["4dof"]["derivadas"])
-    peor = 0.0
+    worst = 0.0
     for n in orden[1:]:
         B = np.array(V[n]["derivadas"])
         if B.shape != A.shape:
             print("  %-6s FORMA distinta: %s vs %s" % (n, B.shape, A.shape))
-            malas += 1
+            bad += 1
             continue
         rel = np.abs(B - A) / np.maximum(np.abs(A), 1e-4)
-        peor = max(peor, rel.max())
+        worst = max(worst, rel.max())
         print("  %-6s " % n + "  ".join("%s %.2e" % (NOM[i], rel[:, i].max())
                                         for i in range(4)))
 
-    ok = malas == 0 and peor < TOL
+    ok = bad == 0 and worst < TOL
     print("\n%s (worst %.2e over %d states, tolerance %.0e)"
           % ("LOS MODELOS SON CONSISTENTES" if ok else "LOS MODELOS DIFIEREN",
-             peor, A.shape[0], TOL))
+             worst, A.shape[0], TOL))
     return 0 if ok else 1
 
 

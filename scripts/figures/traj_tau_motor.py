@@ -1,4 +1,4 @@
-"""Cuanto de la ventaja del optimo sobrevive si el motor no puede dar un escalon.
+"""How much of the optimum's advantage survives if the engine cannot step.
 
 The policy commands maximum power from t=0 and the plant delivers it
 instantly. A piston engine with a fixed-pitch propeller does not do that, and
@@ -63,23 +63,23 @@ _, states, _, _ = main.setup_symmetric_stall_experiment()
 pi.states_space = states
 
 BRAZOS = [
-    ("DP optimo", lambda: pp.ctrl_optimal, "tab:blue", "-"),
+    ("DP optimum", lambda: pp.ctrl_optimal, "tab:blue", "-"),
     ("CAA de-opt", lambda: pp.make_power_delay(0.0, ramp=True), "tab:green", "--"),
     ("FAA de-opt", lambda: pp.make_power_gated(ramp=True), "tab:purple", "-."),
 ]
 
 print("entrada: alpha0 = %.0f deg, V0 = %.2f Vs, gamma0 = 0, q0 = 0" % (ALPHA0, V0))
 print("retardo de motor de la ec. (A4), tau_e en segundos\n")
-print("  tau_e      DP optimo        CAA de-opt       FAA de-opt     brecha opt->CAA")
+print("  tau_e      DP optimum       CAA de-opt       FAA de-opt     gap opt->CAA")
 table = {}
 for tau in TAUS:
-    fila = []
+    row = []
     for name, mk, _, _ in BRAZOS:
         r = pp.rollout(env, pi, con_retardo(mk(), tau, DT), ALPHA0, V0,
                        record=True)
-        fila.append(r)
+        row.append(r)
         table[(tau, name)] = r
-    hs = [np.asarray(r["hist"]["h"]).min() for r in fila]
+    hs = [np.asarray(r["hist"]["h"]).min() for r in row]
     print("  %4.2f s   %+8.2f m       %+8.2f m       %+8.2f m       %6.2f m (x%.2f)"
           % (tau, hs[0], hs[1], hs[2], hs[1] - hs[0], hs[1] / hs[0]))
 

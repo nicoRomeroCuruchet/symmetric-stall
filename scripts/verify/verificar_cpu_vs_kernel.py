@@ -90,7 +90,8 @@ def main():
     rng = np.random.default_rng(SEMILLA)
     n = N_ESTADOS
     # the airspeed floor follows the grid's: below 0.785 Vs
-    # activa dCD_T, y si el muestreo no baja hasta ahi el termino no se prueba
+    # activates dCD_T, and if the sampling does not reach down there the term
+    # is never exercised
     S = np.stack([rng.uniform(-1.5, 0.08, n), rng.uniform(0.4, 2.0, n),
                   rng.uniform(-0.69, 0.34, n),
                   rng.uniform(-0.87, 0.87, n)], 1).astype(np.float32)
@@ -111,33 +112,33 @@ def main():
     # appears in one corner of the domain -- a mistranscribed table near 40
     # degrees, dCD_T below 0.785 Vs -- does not move the median of 4000
     # samples, and that was exactly what had to be detected
-    peor = 0.0
-    print(f"{n} estados aleatorios, CPU vs kernel CUDA:")
+    worst = 0.0
+    print(f"{n} random states, CPU vs CUDA kernel:")
     for i, nom in enumerate(["gamma_dot", "v_dot", "alpha_dot", "q_dot"]):
         med = float(np.median(rel[:, i]))
         mx = float(rel[:, i].max())
         p99 = float(np.percentile(rel[:, i], 99))
-        peor = max(peor, mx)
+        worst = max(worst, mx)
         j = int(rel[:, i].argmax())
         print(f"  {nom:10s} mediana {med:.2e}   p99 {p99:.2e}   MAX {mx:.2e}"
-              f"   (peor caso: V={S[j,1]:.2f} Vs, alpha={np.rad2deg(S[j,2]):+.1f} deg,"
+              f"   (worst case: V={S[j,1]:.2f} Vs, alpha={np.rad2deg(S[j,2]):+.1f} deg,"
               f" dt={Ac[j,1]:.2f})")
     # v_dot crosses zero (net drag changes sign with C_T), so the relative
     # error blows up there with nothing being wrong. The verdict uses a mixed
     # criterion: relative where the derivative has magnitude, absolute where it
     # cancels. The scale is each channel's standard deviation.
     escala = np.maximum(cpu.std(axis=0), 1e-9)
-    mixto = np.abs(gpu - cpu) / np.maximum(np.abs(cpu), 0.01 * escala)
+    mixed = np.abs(gpu - cpu) / np.maximum(np.abs(cpu), 0.01 * escala)
     print()
     for i, nom in enumerate(["gamma_dot", "v_dot", "alpha_dot", "q_dot"]):
-        j = int(mixto[:, i].argmax())
+        j = int(mixed[:, i].argmax())
         print(f"  {nom:10s} escala {escala[i]:.3e}   abs MAX {np.abs(gpu-cpu)[:, i].max():.3e}"
-              f"   mixto MAX {mixto[:, i].max():.2e}"
+              f"   mixed MAX {mixed[:, i].max():.2e}"
               f"   (cpu={cpu[j, i]:+.3e} gpu={gpu[j, i]:+.3e})")
-    peor = float(mixto.max())
-    ok = peor < TOL_REL
+    worst = float(mixed.max())
+    ok = worst < TOL_REL
     print(f"\n{'COINCIDEN' if ok else 'DIFIEREN'} "
-          f"(peor MAXIMO {peor:.2e}, tolerancia {TOL_REL:.0e})")
+          f"(worst MAXIMUM {worst:.2e}, tolerance {TOL_REL:.0e})")
     return 0 if ok else 1
 
 

@@ -24,9 +24,9 @@ pi.states_space = states
 
 hist = main.run_dp_simulation(pi, gamma_0_deg=0.0, v_norm_0=0.95,
                               alpha_0_deg=20.0, q_0_deg=0.0)
-for nombre in ("plot_time_response", "plot_results", "plot_trajectory"):
-    if hasattr(main, nombre):
-        getattr(main, nombre)(hist, PREF); break
+for name in ("plot_time_response", "plot_results", "plot_trajectory"):
+    if hasattr(main, name):
+        getattr(main, name)(hist, PREF); break
 
 g = np.rad2deg(hist["gamma"]); a = np.rad2deg(hist["alpha"])
 de = np.rad2deg(hist["de"]); d = np.asarray(hist["dt_ctrl"]); h = np.asarray(hist["h"])

@@ -7,7 +7,7 @@ Cuatro cosas, todas repetibles:
      on the plant derivatives. If it is not,
      agregar el traslado movio resultados publicados.
   2. With the CG shifted, the three deltas must agree with a cross
-     vectorial calculado APARTE en este mismo archivo -- no llamando a la
+     product computed SEPARATELY in this same file -- not by calling the
      plant, which is what is under test:
          M_CG = M_ref + (r_ref - r_CG) x F,  F/qS = (-C_A, C_Y, -C_N)
   3. The sign, against physics: an aft CG with positive lift must give
@@ -32,7 +32,7 @@ MOD = (("8dof", "aircraft.spin_grumman", "SpinGrumman"),
        ("6dof", "aircraft.banked_spin_grumman", "BankedSpinGrumman"),
        ("4dof", "aircraft.symmetric_full_grumman", "SymmetricFullGrumman"))
 
-def carga():
+def load():
     for n, m, c in MOD:
         try:
             return getattr(importlib.import_module(m), c)(), n
@@ -40,25 +40,25 @@ def carga():
             pass
     raise SystemExit("sin modelo")
 
-a, nombre = carga()
+a, name = load()
 
-# --- estados de prueba ---
-if nombre == "4dof":
-    ESTADOS = [(g, v, al, q, de, dt)
+# --- test states ---
+if name == "4dof":
+    STATES = [(g, v, al, q, de, dt)
                for g in (-0.3, 0.0) for v in (0.6, 1.0, 1.6)
                for al in np.deg2rad((-5., 5., 14., 25., 35.))
                for q in (-0.5, 0.0, 0.5) for de in (-0.4, 0.0, 0.4)
                for dt in (0.0, 1.0)]
-    llamar = lambda: [a.derivatives(*s) for s in ESTADOS]
-elif nombre == "6dof":
-    ESTADOS = [(g, v, al, q, mu, p, de, da, dt)
+    llamar = lambda: [a.derivatives(*s) for s in STATES]
+elif name == "6dof":
+    STATES = [(g, v, al, q, mu, p, de, da, dt)
                for g in (-0.3, 0.0) for v in (0.6, 1.0, 1.6)
                for al in np.deg2rad((-5., 5., 14., 25., 35.))
                for q in (-0.5, 0.5) for mu in (-0.5, 0.0, 0.5) for p in (-0.3, 0.3)
                for de in (-0.4, 0.4) for da in (-0.2, 0.2) for dt in (0.0, 1.0)]
-    llamar = lambda: [a.derivatives(*s) for s in ESTADOS]
+    llamar = lambda: [a.derivatives(*s) for s in STATES]
 else:
-    ESTADOS = [(g, v, al, be, q, mu, p, r, de, da, dr, dt)
+    STATES = [(g, v, al, be, q, mu, p, r, de, da, dr, dt)
                for g in (-0.3, 0.0) for v in (0.6, 1.0, 1.6)
                for al in np.deg2rad((-5., 5., 14., 25., 35.))
                for be in np.deg2rad((-10., 0., 10.))
@@ -67,9 +67,9 @@ else:
                for dr in (-0.2, 0.2) for dt in (0.0, 1.0)][:4000]
     llamar = lambda: [a._derivatives(s[0], s[1], s[2], s[3], s[5], s[6], s[4],
                                      s[7], s[8], s[9], s[11], s[10],
-                                     a.STALL_AIRSPEED) for s in ESTADOS]
+                                     a.STALL_AIRSPEED) for s in STATES]
 
-print("modelo %s -- %d estados de prueba" % (nombre, len(ESTADOS)))
+print("model %s -- %d test states" % (name, len(STATES)))
 
 # ---- (1) identity with the CG at Riley's reference ----
 base = np.array(llamar(), dtype=np.float64)

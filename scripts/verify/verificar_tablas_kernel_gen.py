@@ -58,8 +58,8 @@ def tablas_del_kernel(fuente):
     patron = re.compile(
         r"__device__\s+const\s+float\s+([A-Z_0-9]+)\s*\[\s*(\d+)\s*\]\s*=\s*\{([^}]*)\}",
         re.S)
-    fuera = {}
-    for nombre, n, cuerpo in patron.findall(fuente):
+    out = {}
+    for name, n, cuerpo in patron.findall(fuente):
         # Entries can be products: "-0.00116f*57.2958f". Each element has to
         # be evaluated, not the loose numbers collected: otherwise the
         # conversion factor enters as if it were a table value and
@@ -74,9 +74,9 @@ def tablas_del_kernel(fuente):
                 x *= float(s)
             vals.append(x)
         if len(vals) != int(n):
-            print(f"  !! {nombre}: lei {len(vals)} entradas y declara {n}")
-        fuera[nombre] = np.array(vals[:int(n)], dtype=np.float64)
-    return fuera
+            print(f"  !! {name}: lei {len(vals)} entradas y declara {n}")
+        out[name] = np.array(vals[:int(n)], dtype=np.float64)
+    return out
 
 
 def candidatos(kn):
@@ -85,7 +85,7 @@ def candidatos(kn):
     The branches do not share a convention -- TBL vs nothing, ROLL vs R,
     ADOT vs AD -- so several are tried and the one that stuck is reported.
     """
-    # Abreviaturas del kernel -> nombre largo del CPU. Se declaran a mano
+    # Abreviaturas del kernel -> name largo del CPU. Se declaran a mano
     # because guessing them would pair wrongly in silence; whatever finds no pair
     # se reporta.
     ALIAS = {"CL_RB": "CL_ROLL_BETA", "CL_RP": "CL_ROLL_PHAT",
@@ -127,7 +127,7 @@ def main():
              isinstance(getattr(a, n, None), np.ndarray)}
 
     print(f"{len(K)} tablas en {ruta}, {len(attrs)} arreglos en el modelo CPU\n")
-    emparejadas, sin_par, fallos, peor, peor_n = 0, [], 0, 0.0, None
+    paired, unpaired, failures, worst, worst_n = 0, [], 0, 0.0, None
     convenciones = []
     usados = set()
     for kn in sorted(K):
@@ -135,9 +135,9 @@ def main():
         cn = next((c for c in candidatos(kn)
                    if c in attrs and attrs[c].shape == kv.shape), None)
         if cn is None:
-            sin_par.append(kn)
+            unpaired.append(kn)
             continue
-        emparejadas += 1
+        paired += 1
         usados.add(cn)
         cv = attrs[cn]
         rel = np.abs(kv - cv) / np.maximum(np.abs(cv), 1e-9)
@@ -151,25 +151,25 @@ def main():
             else:
                 convenciones.append("%s: el kernel la guarda cruda" % kn)
         i = int(rel.argmax())
-        if rel[i] > peor:
-            peor, peor_n = rel[i], kn
+        if rel[i] > worst:
+            worst, worst_n = rel[i], kn
         if rel[i] > TOL:
-            fallos += 1
+            failures += 1
             print(f"  DIFIERE  {kn:<22} <-> {cn:<26} entrada {i:2d}: "
                   f"kernel {kv[i]:+.7g}  CPU {cv[i]:+.7g}  rel {rel[i]:.2e}")
 
     for c in convenciones:
         print("  convencion detectada -- " + c)
-    if sin_par:
-        print(f"\n  SIN PAR en el CPU ({len(sin_par)}): {', '.join(sin_par)}")
+    if unpaired:
+        print(f"\n  SIN PAR en el CPU ({len(unpaired)}): {', '.join(unpaired)}")
     huerfanas = [n for n in attrs if n not in usados and attrs[n].size == 14]
     if huerfanas:
         print(f"  arreglos del CPU de 14 entradas sin usar ({len(huerfanas)}): "
               f"{', '.join(sorted(huerfanas))}")
 
-    print(f"\n{emparejadas} tablas emparejadas, {fallos} difieren, "
-          f"{len(sin_par)} sin par  (peor {peor:.2e} en {peor_n})")
-    return 1 if (fallos or sin_par) else 0
+    print(f"\n{paired} tablas paired, {failures} difieren, "
+          f"{len(unpaired)} unpaired  (worst {worst:.2e} in {worst_n})")
+    return 1 if (failures or unpaired) else 0
 
 
 if __name__ == "__main__":

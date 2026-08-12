@@ -6,8 +6,8 @@ s += '''
 
 # ───────────────────────── figura ─────────────────────────
 SEL = [
-    ("optimo, motor ideal",            (0.0, "optimo"), "#0072B2", "-"),
-    ("optimo, motor tau=1.0 s",        (1.0, "optimo"), "#0072B2", "--"),
+    ("optimum, ideal engine",         (0.0, "optimal"), "#0072B2", "-"),
+    ("optimum, engine tau=1.0 s",     (1.0, "optimal"), "#0072B2", "--"),
     ("CAA: de del DP + 1 s, motor ideal", (0.0, "caa"),  "#D55E00", "-"),
     ("FAA: de del DP + 1 s, motor ideal", (0.0, "faa"),  "#009E73", "-"),
 ]

@@ -11,19 +11,19 @@ PUB = Path("/tmp/claude-1000/-home-nromero-dev-research-stall-spin-recovery-dp/p
 NEW = Path("results/paper")
 
 
-def carga(nombre):
-    p, n = PUB / nombre, NEW / nombre
+def load(name):
+    p, n = PUB / name, NEW / name
     a = json.loads(p.read_text()) if p.exists() else None
     b = json.loads(n.read_text()) if n.exists() else None
     return a, b
 
 
-def fila(etiqueta, a, b, unidad="m"):
+def row(label, a, b, unit="m"):
     if a is None or b is None:
-        return f"{etiqueta:<42s}{'—':>11}{'—':>11}{'(falta)':>11}"
+        return f"{label:<42s}{'—':>11}{'—':>11}{'(falta)':>11}"
     d = b - a
     pct = (d / abs(a) * 100) if a else float("nan")
-    return f"{etiqueta:<42s}{a:11.3f}{b:11.3f}{d:+9.3f} {pct:+6.1f}%"
+    return f"{label:<42s}{a:11.3f}{b:11.3f}{d:+9.3f} {pct:+6.1f}%"
 
 
 def walk(pa, pb, path, out, depth=0):
@@ -41,16 +41,16 @@ def walk(pa, pb, path, out, depth=0):
             out.append(((f"{path}.{k}" if path else k), va, vb))
 
 
-def seccion(titulo, nombre, filtro=None):
-    a, b = carga(nombre)
-    print(f"\n{'='*80}\n{titulo}  ({nombre})\n{'='*80}")
+def section(title, name, filt=None):
+    a, b = load(name)
+    print(f"\n{'='*80}\n{title}  ({name})\n{'='*80}")
     if a is None or b is None:
         print(f"  (falta: publicado={a is not None} nuevo={b is not None})")
         return
     hojas = []
     walk(a, b, "", hojas)
-    if filtro:
-        hojas = [h for h in hojas if filtro(h[0])]
+    if filt:
+        hojas = [h for h in hojas if filt(h[0])]
     if not hojas:
         print("  (sin hojas numericas comparables)")
         return
@@ -59,14 +59,14 @@ def seccion(titulo, nombre, filtro=None):
     for path, va, vb in hojas:
         if abs(vb - va) > 1e-9:
             cambiados += 1
-            print(fila(path, va, vb))
+            print(row(path, va, vb))
     print(f"\n  {cambiados} de {len(hojas)} valores cambiaron")
 
 
 if __name__ == "__main__":
     print("DIFF: published paper  vs  regenerated with MCA + drag fix + filled")
-    seccion("Procedimientos y sensibilidad del piloto", "procedures.json")
-    seccion("Maniobras CAA / FAA", "maneuvers.json")
-    seccion("Comparacion de esquemas", "mca_comparison.json")
-    seccion("Robustez", "robustness.json")
-    seccion("Barrido de IC (gamma, alpha)", "ic_gamma_alpha.json")
+    section("Procedimientos y sensibilidad del piloto", "procedures.json")
+    section("Maniobras CAA / FAA", "maneuvers.json")
+    section("Comparacion de esquemas", "mca_comparison.json")
+    section("Robustez", "robustness.json")
+    section("Barrido de IC (gamma, alpha)", "ic_gamma_alpha.json")

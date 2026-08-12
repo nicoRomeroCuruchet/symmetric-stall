@@ -1137,10 +1137,10 @@ def make_ic_gamma_alpha_figure(data=None):
     V = data["vnorms"]
     opt = [_ga_masked(p) for p in data["arms"]["optimal"]]
     # h is negative, so caa - gated > 0 means the FAA arm lost that much more.
-    dif = [_ga_masked(c) - _ga_masked(g)
+    diff = [_ga_masked(c) - _ga_masked(g)
            for c, g in zip(data["arms"]["caa_ramp"], data["arms"]["gated"])]
 
-    n_masked = sum(int(np.isnan(g).sum()) for g in opt + dif)
+    n_masked = sum(int(np.isnan(g).sum()) for g in opt + diff)
     if n_masked:
         logger.info(f"[ga] {n_masked} node(s) masked (no recovery)")
 
@@ -1149,12 +1149,12 @@ def make_ic_gamma_alpha_figure(data=None):
     cmap_opt.set_bad("0.5")
     neg = plt.cm.Reds_r(np.linspace(0.25, 1.0, 128))
     pos = plt.cm.Purples(np.linspace(0.0, 1.0, 128))
-    cmap_dif = ListedColormap(np.vstack([neg, pos]))
-    cmap_dif.set_bad("0.75")
+    cmap_diff = ListedColormap(np.vstack([neg, pos]))
+    cmap_diff.set_bad("0.75")
     lo_o = min(np.nanmin(g) for g in opt)
     hi_o = max(np.nanmax(g) for g in opt)
-    hi_d = max(np.nanmax(g) for g in dif)
-    lo_d = min(-0.5, min(np.nanmin(g) for g in dif))
+    hi_d = max(np.nanmax(g) for g in diff)
+    lo_d = min(-0.5, min(np.nanmin(g) for g in diff))
     norm_d = TwoSlopeNorm(vmin=lo_d, vcenter=0.0, vmax=hi_d)
     Am, Gm = np.meshgrid(A, G, indexing="xy")
 
@@ -1170,9 +1170,9 @@ def make_ic_gamma_alpha_figure(data=None):
         ax.set_title(rf"$V_0/V_s = {v:.2f}$", fontsize=11)
 
         ax = axes[1, j]
-        pcm_d = ax.pcolormesh(Am, Gm, dif[j], cmap=cmap_dif, norm=norm_d,
+        pcm_d = ax.pcolormesh(Am, Gm, diff[j], cmap=cmap_diff, norm=norm_d,
                               shading="gouraud")
-        cs = ax.contour(Am, Gm, dif[j], levels=[1, 2, 3, 4],
+        cs = ax.contour(Am, Gm, diff[j], levels=[1, 2, 3, 4],
                         colors="white", linewidths=1.3)
         ax.clabel(cs, fmt=lambda x: f"+{x:.0f} m", fontsize=9)
         ax.set_xlabel(r"$\alpha_0$ (deg)")

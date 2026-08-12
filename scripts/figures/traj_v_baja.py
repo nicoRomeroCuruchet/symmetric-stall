@@ -21,13 +21,13 @@ from symmetric_stall.policy_iteration import PolicyIterationStall
 from symmetric_stall.aircraft.symmetric_stall import SymmetricStall
 
 V0 = float(sys.argv[1]) if len(sys.argv) > 1 else 0.50
-RAMAS = [("riley", "SymmetricStall_policy.npz", "-", "tab:blue"),
+BRANCHES = [("riley", "SymmetricStall_policy.npz", "-", "tab:blue"),
          ("paper1", "SymmetricStall_paper1_baseline.npz", "--", "tab:red")]
 
 fig, axes = plt.subplots(2, 3, figsize=(13, 6))
 print("paper-1 canonical entry but at %.2f Vs  (grid: V in [0.90, 2.00] Vs)" % V0)
-for modo, npz, ls, color in RAMAS:
-    os.environ["THRUST_MODEL"] = modo
+for mode, npz, ls, color in BRANCHES:
+    os.environ["THRUST_MODEL"] = mode
     env = SymmetricStall()
     pi = PolicyIterationStall.load(main.RESULTS_DIR / npz, env=env)
     _, states, _, _ = main.setup_symmetric_stall_experiment()
@@ -41,10 +41,10 @@ for modo, npz, ls, color in RAMAS:
     # uses, to see when the 0.5 clip is biting
     ct = np.array([env.airplane._compute_ct(d, v * env.airplane.STALL_AIRSPEED)
                    for d, v in zip(h["dt_ctrl"], vn)])
-    fuera = 100.0 * np.mean(ct > 0.5)
+    out_frac = 100.0 * np.mean(ct > 0.5)
     print("  %-7s h_min %+8.2f m  t_fin %5.2f s  V_min %.3f Vs  "
           "C_T max %.4f  out of table %.0f%% of the time"
-          % (modo, np.min(h["h"]), t[-1], vn.min(), ct.max(), fuera))
+          % (mode, np.min(h["h"]), t[-1], vn.min(), ct.max(), out_frac))
 
     for ax, y, lab in ((axes[0, 0], np.rad2deg(h["gamma"]), r"$\gamma$ (deg)"),
                        (axes[0, 1], np.rad2deg(h["alpha"]), r"$\alpha$ (deg)"),
@@ -52,7 +52,7 @@ for modo, npz, ls, color in RAMAS:
                        (axes[1, 0], np.rad2deg(h["de"]), r"$\delta_e$ (deg)"),
                        (axes[1, 1], ct, r"$C_T$ (--)"),
                        (axes[1, 2], np.asarray(h["h"]), r"$\Delta h$ (m)")):
-        ax.plot(t, y, ls, color=color, lw=1.7, label=modo)
+        ax.plot(t, y, ls, color=color, lw=1.7, label=mode)
         ax.set_title(lab, fontsize=10)
         ax.set_xlabel("t (s)")
         ax.grid(alpha=0.3, ls=":")

@@ -37,7 +37,7 @@ print("%6s | %9s %8s %7s %5s | %9s %8s %7s %5s" % (
     "V0/Vs", "h_min", "gamma_min", "dur", "cerro", "h_min", "gamma_min", "dur", "cerro"))
 print("-" * 78)
 for v0 in V0S:
-    fila = "%6.2f |" % v0
+    row = "%6.2f |" % v0
     for k, pi in pis.items():
         h = main.run_dp_simulation(pi, GAMMA0, float(v0), ALPHA0, Q0)
         hh = np.asarray(h["h"]); gg = np.rad2deg(np.asarray(h["gamma"]))
@@ -46,9 +46,9 @@ for v0 in V0S:
         res[k]["gmin"].append(gg.min())
         res[k]["dur"].append(h["t"][-1])
         res[k]["cerro"].append(cerro)
-        fila += " %9.3f %8.2f %7.2f %5s |" % (hh.min(), gg.min(), h["t"][-1],
+        row += " %9.3f %8.2f %7.2f %5s |" % (hh.min(), gg.min(), h["t"][-1],
                                               "si" if cerro else "NO")
-    print(fila)
+    print(row)
 
 # ---- figura ----
 fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(7.0, 6.4), sharex=True,

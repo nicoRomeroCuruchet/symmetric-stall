@@ -51,8 +51,8 @@ print("optimum's deepest pull: %.2f deg (used as the cap for CAA and FAA)"
 # The "optimal delta_e" ones take the elevator from the optimum itself and
 # only change the timing of the power. They isolate the decision CAA and FAA
 # actually disagree about, which is that one and not the pitching.
-BRAZOS = [
-    ("DP optimo", r_opt, "tab:blue", "-"),
+ARMS = [
+    ("DP optimum", r_opt, "tab:blue", "-"),
     ("CAA de-opt", pp.rollout(env, pi, pp.make_power_delay(0.0, ramp=True),
                               ALPHA0, V0, record=True), "tab:green", "--"),
     ("FAA de-opt", pp.rollout(env, pi, pp.make_power_gated(ramp=True),
@@ -66,24 +66,24 @@ BRAZOS = [
 fig, axes = plt.subplots(2, 3, figsize=(13.5, 6.2))
 print()
 base = None
-for nombre, r, color, ls in BRAZOS:
+for name, r, color, ls in ARMS:
     h = r["hist"]
     t = np.asarray(h["t"])
     H = np.asarray(h["h"])
     if base is None:
         base = H.min()
     print("  %-13s h_min %+8.2f m   t %5.2f s   %-10s   gamma_min %+6.2f deg"
-          "   %s" % (nombre, H.min(), r["t"], r["status"],
+          "   %s" % (name, H.min(), r["t"], r["status"],
                      np.rad2deg(h["gamma"]).min(),
-                     "" if nombre == "DP optimo"
-                     else "x%.2f del optimo" % (H.min() / base)))
+                     "" if name == "DP optimum"
+                     else "x%.2f of the optimum" % (H.min() / base)))
     for ax, y, lab in ((axes[0, 0], np.rad2deg(h["gamma"]), r"$\gamma$ (deg)"),
                        (axes[0, 1], np.rad2deg(h["alpha"]), r"$\alpha$ (deg)"),
                        (axes[0, 2], np.asarray(h["v_norm"]), r"$V/V_s$ (--)"),
                        (axes[1, 0], np.rad2deg(h["de"]), r"$\delta_e$ (deg)"),
                        (axes[1, 1], np.asarray(h["dt_ctrl"]), r"$\delta_t$ (--)"),
                        (axes[1, 2], H, r"$\Delta h$ (m)")):
-        ax.plot(t, y, ls, color=color, lw=1.7, label=nombre)
+        ax.plot(t, y, ls, color=color, lw=1.7, label=name)
         ax.set_title(lab, fontsize=10)
         ax.set_xlabel("t (s)")
         ax.grid(alpha=0.3, ls=":")

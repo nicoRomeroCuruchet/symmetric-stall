@@ -53,21 +53,22 @@ MASS_FACTORS = [0.85, 0.90, 0.95, 1.00, 1.05, 1.10, 1.15]
 DXCG_LIST = [-0.07, -0.05, -0.03, 0.00, 0.03, 0.05, 0.07]  # aft-positive, chord frac
 CANONICAL = (20.0, 0.95)
 
-# RETIRADO 2026-07-29. Era un dict hardcodeado con re-solves en GPU de una
-# campania vieja (uno por CG), usado para tabular la "brecha de subóptimalidad"
-# contra la politica nominal. Dos problemas:
+# WITHDRAWN 2026-07-29. It was a hardcoded dict of GPU re-solves from an old
+# campaign (one per CG), used to tabulate the "suboptimality gap" against the
+# nominal policy. Two problems:
 #
-#   1. Nada lo regeneraba. Al corregir el modelo aerodinamico, la columna
-#      nominal se actualizo y esta no, asi que la tabla comparaba dos aviones
-#      distintos. Se notaba en que la fila dxcg=0 daba una brecha de -1.29 m
-#      donde por definicion tiene que dar CERO: mismo avion, misma politica.
+#   1. Nothing regenerated it. When the aerodynamic model was corrected, the
+#      nominal column was updated and this one was not, so the table compared
+#      two different aircraft. It showed up as the dxcg=0 row giving a gap of
+#      -1.29 m where by definition it must give ZERO: same aircraft, same
+#      policy.
 #
-#   2. La pregunta estaba mal planteada. Un piloto no vuela una politica
-#      re-optimizada para el CG real de ese dia; vuela la nominal. La
-#      distancia a un oraculo que re-resuelve no es la magnitud de interes.
+#   2. The question was badly posed. A pilot does not fly a policy
+#      re-optimised for that day's actual CG; he flies the nominal one. The
+#      distance to an oracle that re-solves is not the quantity of interest.
 #
-# Lo que sí importa -- la degradacion de la politica NOMINAL al correrse el
-# CG -- ya lo mide run_matrix, y de ahi sale la tabla ahora.
+# What does matter -- the degradation of the NOMINAL policy as the CG shifts --
+# is already measured by run_matrix, and that is where the table comes from now.
 
 plt.rcParams.update({
     "font.family": "serif", "mathtext.fontset": "stix", "font.size": 10,
@@ -104,13 +105,13 @@ def run_matrix(pi):
                                 record=True)
                     amax = float(np.rad2deg(np.max(r["hist"]["alpha"])))
                     gmax = float(np.rad2deg(np.max(r["hist"]["gamma"])))
-                    # alpha AL CERRAR el episodio. La regla de parada corta en
-                    # el primer regreso a gamma = 0 tras una picada, y el
-                    # conjunto terminal del DP es {gamma >= 0} sin condicion
-                    # sobre alpha: una trayectoria que oscila puede cruzar
-                    # nivel todavia estancada y quedar declarada recuperada.
-                    # Guardarlo permite marcar esas celdas en vez de leerlas
-                    # como recuperaciones rapidas.
+                    # alpha AT EPISODE CLOSE. The stopping rule cuts at the
+                    # first return to gamma = 0 after a dive, and the DP's
+                    # terminal set is {gamma >= 0} with no condition on alpha:
+                    # an oscillating trajectory can cross level while still
+                    # stalled and be declared recovered. Recording it allows
+                    # those cells to be flagged instead of read as fast
+                    # recoveries.
                     afin = float(np.rad2deg(r["hist"]["alpha"][-1]))
                     cell[f"a{a0:.0f}_v{v0f:.2f}"] = {
                         "h": r["h"], "t": r["t"], "status": r["status"],
@@ -129,24 +130,25 @@ def run_matrix(pi):
 
 
 def normalization_gap(long_horizon_s: float = 60.0):
-    """Aisla el desajuste de normalizacion en el eje de masa.
+    """Isolate the normalisation mismatch on the mass axis.
 
-    `perturbed_env` cambia MASS pero NO STALL_AIRSPEED, que grumman.py calcula
-    en __init__ a partir de la masa. La observacion vnorm que ve la politica
-    queda entonces dividida por el Vs NOMINAL, no por el real. El brazo
-    "corregido" recalcula Vs para la masa real y no toca nada mas.
+    `perturbed_env` changes MASS but NOT STALL_AIRSPEED, which grumman.py
+    computes in __init__ from the mass. The vnorm observation the policy sees is
+    therefore divided by the NOMINAL Vs, not the real one. The "corrected" arm
+    recomputes Vs for the real mass and touches nothing else.
 
-    Ademas de la altura que mide la metrica, integra `long_horizon_s` sin regla
-    de parada, porque la metrica corta en el primer cruce de gamma >= 0 tras una
-    picada y eso no distingue una recuperacion que se asienta de una que sigue
-    oscilando. En el brazo mal normalizado el avion liviano entra en fugoide
-    sostenido: el estado mal escalado cae bajo el piso vnorm = 0.9 de la grilla,
-    utils.get_barycentric_weights_and_indices CLAMPEA (no extrapola), y la
-    politica deja de responder a la velocidad. Corregida la normalizacion, la
-    misma politica se asienta y trepa.
+    Besides the altitude the metric measures, it integrates `long_horizon_s`
+    with no stopping rule, because the metric cuts at the first crossing of
+    gamma >= 0 after a dive and that does not distinguish a recovery that
+    settles from one that keeps oscillating. In the badly normalised arm the
+    light aircraft enters a sustained phugoid: the mis-scaled state falls below
+    the grid's vnorm = 0.9 floor, utils.get_barycentric_weights_and_indices
+    CLAMPS (it does not extrapolate), and the policy stops responding to
+    airspeed. With the normalisation corrected, the same policy settles and
+    climbs.
 
-    Los tres numeros del ahorro monotono citados en la Sec. de robustez salen de
-    aca. Antes se calculaban a mano, fuera de todo script.
+    The three monotone-saving numbers quoted in the robustness section come from
+    here. They used to be computed by hand, outside any script.
     """
     pi = PolicyIterationStall.load(POLICY_PATH, env=SymmetricStall())
     a0, v0f = CANONICAL
@@ -172,7 +174,7 @@ def normalization_gap(long_horizon_s: float = 60.0):
     h_nom = rollout(perturbed_env(1.0, 0.0), pi, ctrl_optimal, a0, v0f)["h"]
     rows = []
     for mf in [0.95, 0.90, 0.85]:
-        # mal normalizado: Vs nominal, IC al 0.95 del Vs REAL -> vnorm fuera de escala
+        # badly normalised: nominal Vs, IC at 0.95 of the REAL Vs -> vnorm off scale
         env_bad = perturbed_env(mf, 0.0)
         v_bad = v0f * float(np.sqrt(mf))
         r_bad = rollout(env_bad, pi, ctrl_optimal, a0, v_bad)
@@ -241,12 +243,12 @@ def make_matrix_figure(data=None):
     for i, mf in enumerate(M):
         for j, dx in enumerate(DX):
             cellinfo = data["cells"][f"m{mf:.2f}_dx{dx:+.2f}"][ck]
-            # dos marcas distintas, por dos fallas distintas de la metrica:
-            #   *  no vuelve a nivel dentro del horizonte
-            #   #  vuelve a nivel TODAVIA ESTANCADO (alpha > alpha_s al cerrar):
-            #      la trayectoria oscila y el cruce de gamma = 0 la sorprende
-            #      en pleno segundo intento, asi que su perdida no es
-            #      comparable con una recuperacion completa
+            # two different marks, for two different failures of the metric:
+            #   *  does not return to level within the horizon
+            #   #  returns to level STILL STALLED (alpha > alpha_s at close):
+            #      the trajectory oscillates and the gamma = 0 crossing catches
+            #      it mid second attempt, so its loss is not comparable with a
+            #      complete recovery
             afin = cellinfo.get("alpha_final_deg")
             if cellinfo["status"] != "recovered":
                 mark = "*"
@@ -275,10 +277,10 @@ def make_matrix_figure(data=None):
 
 
 def write_cg_gap_table(data=None):
-    """Degradacion de la politica nominal al correrse el CG, IC canonica y
-    masa nominal. El exceso se referencia al CG nominal, asi que la fila de
-    dxcg=0 da cero por construccion -- verificacion gratis de que la columna
-    y la referencia salen de la misma corrida."""
+    """Degradation of the nominal policy as the CG shifts, canonical IC and
+    nominal mass. The excess is referenced to the nominal CG, so the dxcg=0 row
+    gives zero by construction -- a free check that the column and the
+    reference come from the same run."""
     if data is None:
         data = json.loads((OUT_DIR / "robustness.json").read_text())
     ck = f"a{CANONICAL[0]:.0f}_v{CANONICAL[1]:.2f}"
@@ -322,14 +324,14 @@ def characterize_steady_state(horizon_s: float = 120.0):
     physical, not a grid artifact. Source of the numbers quoted in the
     robustness subsection of the paper.
 
-    Integra SIN la regla de parada, a proposito. Antes usaba `rollout`, que la
-    lleva puesta, y eso rompia el caso +5%: su descenso estacionario es de
-    -0.44 deg, dentro de la banda de +-0.5 deg de la clausula de convergencia
-    de utils/recovery.py, asi que el rollout se cortaba a los 12.4 s y el
-    "estacionario" salia del promedio de los ultimos 2 s ANTES del corte
-    (-0.17 deg), no del equilibrio real. Las tres filas pesadas comparten el
-    mismo modo de falla; lo unico que distingue al +5% es que su descenso es
-    lo bastante somero como para que la regla lo lea como nivelado.
+    Integrates WITHOUT the stopping rule, on purpose. It used to use
+    `rollout`, which carries it, and that broke the +5% case: its steady
+    descent is -0.44 deg, inside the +-0.5 deg band of the convergence clause
+    in utils/recovery.py, so the rollout cut at 12.4 s and the "steady" value
+    came from the average of the last 2 s BEFORE the cut (-0.17 deg), not from
+    the real equilibrium. The three heavy rows share the same failure mode; the
+    only thing that sets +5% apart is that its descent is shallow enough for
+    the rule to read it as level.
     """
     try:
         pi = PolicyIterationStall.load(POLICY_PATH, env=SymmetricStall())
@@ -368,13 +370,13 @@ def characterize_steady_state(horizon_s: float = 120.0):
             vt = v_ss * ap.STALL_AIRSPEED
             ct = ap._compute_ct(1.0, vt)
             de_ss = float(np.mean(r["hist"]["de"][-200:]))
-            # C_D COMPLETO. Hasta 2026-07-29 esto usaba solo _CD_O_TABLE: se
-            # escribio antes de que el modelo tuviera los dos terminos de drag
-            # de elevador de Riley, asi que comparaba un balance algebraico sin
-            # ellos contra una simulacion que si los integra, y el paper
-            # reportaba un acuerdo "a dos decimales" que en realidad era de
-            # ~0.5 grados. Los terminos valen: en el descenso estacionario el
-            # elevador queda en -4 a -7 deg y su drag NO es despreciable.
+            # FULL C_D. Until 2026-07-29 this used only _CD_O_TABLE: it was
+            # written before the model carried Riley's two elevator drag
+            # terms, so it compared an algebraic balance without them against a
+            # simulation that does integrate them, and the paper reported an
+            # agreement "to two decimals" that was really about 0.5 degrees.
+            # The terms matter: in the steady descent the elevator sits at -4
+            # to -7 deg and its drag is NOT negligible.
             cd = (float(ap._bilinear_interp(a_ss, ct, ap._CD_O_TABLE,
                                             ap._CD_O_TABLE_CT05))
                   + float(ap._bilinear_interp(a_ss, ct, ap._CD_DE_TABLE_CT0,
@@ -436,11 +438,11 @@ def level_flight_feasibility():
                                             ap._CL_O_TABLE_CT05))
                   + float(ap._bilinear_interp(a, ct, ap._CL_DE_TABLE_CT0,
                                               ap._CL_DE_TABLE_CT05)) * de)
-            # C_D COMPLETO, coherente con el C_L de arriba: esta rutina ya
-            # calcula el elevador de trim y lo usa para la sustentacion, asi
-            # que ignorarlo en el drag era inconsistente consigo misma. Mismo
-            # origen que el bug de gamma_balance: se escribio antes de que el
-            # modelo tuviera los terminos de drag de elevador de Riley.
+            # FULL C_D, consistent with the C_L above: this routine already
+            # computes the trim elevator and uses it for lift, so ignoring it
+            # in the drag was inconsistent with itself. Same origin as the
+            # gamma_balance bug: written before the model carried Riley's
+            # elevator drag terms.
             cd = (float(ap._bilinear_interp(a, ct, ap._CD_O_TABLE,
                                             ap._CD_O_TABLE_CT05))
                   + float(ap._bilinear_interp(a, ct, ap._CD_DE_TABLE_CT0,
@@ -451,11 +453,11 @@ def level_flight_feasibility():
                 return True
         return False
 
-    # V_ss se LEE de la caracterizacion, no se hardcodea. Estaba fijo en
-    # (1.013, 1.028, 1.043) -- valores de una corrida vieja que ademas incluia
-    # el +5% truncado por la regla de parada. Un hardcode aca se desincroniza
-    # en silencio cada vez que cambia el modelo o la politica, que es
-    # exactamente lo que paso.
+    # V_ss is READ from the characterisation, not hardcoded. It used to be
+    # fixed at (1.013, 1.028, 1.043) -- values from an old run that also
+    # included the +5% case truncated by the stopping rule. A hardcode here
+    # goes silently out of sync every time the model or the policy changes,
+    # which is exactly what happened.
     ss = json.loads((OUT_DIR / "robustness_steady_state.json").read_text())
     out = {}
     for mf in (1.05, 1.10, 1.15):
@@ -494,20 +496,20 @@ ETA_LIST = [0.75, 0.80, 0.85, 0.90, 0.95]
 
 
 def thrust_sensitivity():
-    """Cuanto cuesta la hipotesis del modelo de empuje.
+    """What the thrust-model assumption costs.
 
-    `THROTTLE_LINEAR_MAPPING` no sale de Riley: se calibra suponiendo que a
-    full throttle el avion se equilibra a 2*Vs. Contra los 108 hp continuos de
-    la Tabla I eso implica un rendimiento de helice de 0.903, alto para una
-    helice de paso fijo (lo tipico es 0.75-0.85).
+    `THROTTLE_LINEAR_MAPPING` does not come from Riley: it is calibrated by
+    assuming the aircraft trims at 2*Vs at full throttle. Against the 108
+    continuous hp of Table I that implies a propeller efficiency of 0.903, high
+    for a fixed-pitch propeller (0.75-0.85 is typical).
 
-    En vez de recalibrar a ciegas -- cambiar una hipotesis por otra -- se mide
-    cuanto importa: la politica NOMINAL se vuela sobre plantas cuyo motor
-    entrega menos de lo modelado. El piloto comanda la misma fraccion de
-    acelerador; el empuje que recibe es menor.
+    Rather than recalibrating blindly -- swapping one assumption for another --
+    what it costs is measured: the NOMINAL policy is flown on plants whose
+    engine delivers less than modelled. The pilot commands the same throttle
+    fraction; the thrust he gets is smaller.
 
-    Mismo patron que la matriz de masa y CG: se perturba la planta, no el
-    controlador.
+    Same pattern as the mass and CG matrix: the plant is perturbed, not the
+    controller.
     """
     pi = PolicyIterationStall.load(POLICY_PATH, env=SymmetricStall())
     data = {"eta_nominal": ETA_NOMINAL, "eta": ETA_LIST,
@@ -530,7 +532,7 @@ def thrust_sensitivity():
             base = can
         logger.info(f"eta={eta:.2f}: canonico h={can:.3f} m")
     if base is not None:
-        logger.info("--- exceso contra eta=0.90 ---")
+        logger.info("--- excess against eta=0.90 ---")
         for eta in ETA_LIST:
             can = data["cells"][f"eta{eta:.2f}"][
                 f"a{ALPHA_GRID_DEG[-1]:.0f}_v0.95"]["h"]

@@ -28,7 +28,7 @@ LBF, FTS = 4.4482216, 0.3048
 TOL_ACC = 0.05          # m/s2; the test is in stabilised flight
 
 
-def carga():
+def load():
     for mod, cls in (("aircraft.spin_grumman", "SpinGrumman"),
                      ("aircraft.banked_spin_grumman", "BankedSpinGrumman"),
                      ("aircraft.symmetric_full_grumman", "SymmetricFullGrumman")):
@@ -41,7 +41,7 @@ def carga():
 
 
 def main():
-    a = carga()
+    a = load()
     W = W_LB * 0.453592 * a.GRAVITY
     V = V_FTS * FTS
     sigma = (1.0 - 6.87535e-6 * H_FT) ** 4.2561      # atmosfera estandar

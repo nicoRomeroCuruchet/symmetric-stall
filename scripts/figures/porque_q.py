@@ -21,7 +21,7 @@ for v0 in (0.85, 0.90):
             t[i], np.rad2deg(g[i]), np.rad2deg(a[i]), np.rad2deg(q[i]),
             np.rad2deg(gd[i]), np.rad2deg(ad[i]), np.rad2deg(gd[i]+ad[i])))
     err = np.max(np.abs(q - (gd + ad))[5:-5])
-    print("  peor |q - (gamma_dot + alpha_dot)| en el interior: %.3e deg/s"
+    print("  worst |q - (gamma_dot + alpha_dot)| in the interior: %.3e deg/s"
           % np.rad2deg(err))
     print("  q FINAL = %+.3f deg/s   gamma_dot FINAL = %+.3f deg/s"
           % (np.rad2deg(q[-1]), np.rad2deg(gd[-1])))

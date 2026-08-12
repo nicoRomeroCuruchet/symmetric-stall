@@ -51,9 +51,9 @@ def vuela(npz, g0, v0, a0):
 fig, axes = plt.subplots(len(ICS), 4, figsize=(15, 2.5 * len(ICS)),
                          sharex="col")
 print("  IC (gamma0, V0, alpha0)        modelo    h_min      t_fin   recupera?")
-for fila, (g0, v0, a0) in enumerate(ICS):
-    for modo, npz, ls, color in RAMAS:
-        os.environ["THRUST_MODEL"] = modo
+for row, (g0, v0, a0) in enumerate(ICS):
+    for mode, npz, ls, color in RAMAS:
+        os.environ["THRUST_MODEL"] = mode
         h = vuela(npz, g0, v0, a0)
         t = np.asarray(h["t"])
         g = np.rad2deg(h["gamma"])
@@ -64,7 +64,7 @@ for fila, (g0, v0, a0) in enumerate(ICS):
         # never dived below -2 deg, i.e. there was no divergence
         recupera = t[-1] < 14.9
         print("  %+6.1f deg  %.2f Vs  %4.1f deg    %-7s  %+8.3f m  %6.2f s   %s  (throttle medio %.3f)"
-              % (g0, v0, a0, modo, H.min(), t[-1],
+              % (g0, v0, a0, mode, H.min(), t[-1],
                  "si" if recupera else "NO PICA", dt_c.mean()))
 
         # throttle is not plotted: both branches pin it at 1.000 across every
@@ -74,20 +74,20 @@ for fila, (g0, v0, a0) in enumerate(ICS):
                                         (al, r"$\alpha$ (deg)"),
                                         (de, r"$\delta_e$ (deg)"),
                                         (H, r"$\Delta h$ (m)"))):
-            ax = axes[fila, col]
+            ax = axes[row, col]
             ax.plot(t, y, ls, color=color, lw=1.6,
-                    label=modo if (fila == 0 and col == 0) else None)
-            if fila == len(ICS) - 1:
+                    label=mode if (row == 0 and col == 0) else None)
+            if row == len(ICS) - 1:
                 ax.set_xlabel("t (s)")
-            if fila == 0:
+            if row == 0:
                 ax.set_title(lab, fontsize=10)
-    axes[fila, 0].set_ylabel(r"$\gamma_0=%+.0f^\circ$" % g0 + "\n"
+    axes[row, 0].set_ylabel(r"$\gamma_0=%+.0f^\circ$" % g0 + "\n"
                              + r"$%.2f V_s,\ \alpha_0=%.0f^\circ$" % (v0, a0),
                              fontsize=8)
     for col in range(4):
-        axes[fila, col].grid(alpha=0.3, ls=":")
-    axes[fila, 0].axhline(0.0, color="grey", lw=0.7, ls="--")
-    axes[fila, 1].axhline(14.0, color="grey", lw=0.7, ls="--")
+        axes[row, col].grid(alpha=0.3, ls=":")
+    axes[row, 0].axhline(0.0, color="grey", lw=0.7, ls="--")
+    axes[row, 1].axhline(14.0, color="grey", lw=0.7, ls="--")
 
 axes[0, 0].legend(fontsize=9, loc="best")
 fig.tight_layout()

@@ -1,15 +1,15 @@
-"""Compara las tablas del codigo contra la Tabla III del PDF de Riley.
+"""Compare the code's tables against Table III of Riley's PDF.
 
-Hasta ahora se verificaba que el kernel CUDA coincidiera con el modelo de
-Python. Eso no dice nada sobre si alguno de los dos dice lo que dice el
-informe: las dos copias pueden coincidir y estar las dos mal, que es
-exactamente lo que pasaba.
+Until now the checks verified that the CUDA kernel agreed with the Python
+model. That says nothing about whether either of them says what the report
+says: the two copies can agree and both be wrong, which is exactly what was
+happening.
 
-Esto lee papers/riley.pdf, extrae la Tabla III y compara valor por valor
-contra los arreglos del codigo. El texto sale de un escaneo de 1985 y el OCR
-confunde caracteres de forma sistematica -- comas por puntos, O por cero, Z
-por dos, q por cuatro -- asi que se normaliza antes de comparar y todo lo que
-no se puede leer se reporta como ILEGIBLE en vez de adivinarse.
+This reads papers/riley.pdf, extracts Table III and compares value by value
+against the code's arrays. The text comes from a 1985 scan and the OCR confuses
+characters systematically -- commas for periods, O for zero, Z for two, q for
+four -- so it is normalised before comparing, and anything unreadable is
+reported as ILLEGIBLE rather than guessed.
 
 Usage:  PYTHONPATH=. python verificar_tablas_riley.py
 """
@@ -22,12 +22,12 @@ import numpy as np
 from symmetric_stall.aircraft.symmetric_full_grumman import SymmetricFullGrumman
 
 PDF = "papers/riley.pdf"
-GRADO_A_RAD = 57.2958  # el codigo guarda las derivadas de control por radian
+DEG_TO_RAD = 57.2958  # the code stores control derivatives per radian
 
-# Bloque de la Tabla III -> (primera linea, ultima linea) en el volcado de
-# pdftotext -layout, y que columna es cada grupo de tres.
-BLOQUES = [
-    # (linea inicio, linea fin, [(nombre_grupo, atributo_ct0, atributo_ct05)])
+# Table III block -> (first line, last line) in the pdftotext -layout dump,
+# and which column each group of three is.
+BLOCKS = [
+    # (start line, end line, [(group_name, attr_ct0, attr_ct05)])
     (1424, 1441, [("CL_o", "_CL_O_TABLE", "_CL_O_TABLE_CT05"),
                   ("CL_de", "_CL_DE_TABLE_CT0", "_CL_DE_TABLE_CT05"),
                   ("CL_df", None, None)]),
@@ -45,26 +45,27 @@ BLOQUES = [
                   ("Cm_adot", "_CM_ADOT_TABLE_CT0", "_CM_ADOT_TABLE_CT05")]),
 ]
 
-# Las derivadas de control estan tabuladas POR GRADO y el codigo las guarda
-# por radian; las de q y alpha-punto multiplican una cantidad ya adimensional
-# y van tal cual. CD_de2 lleva ademas el 1e-2 del encabezado de su columna.
+# Control derivatives are tabulated PER DEGREE and the code stores them per
+# radian; the q and alpha-dot ones multiply an already dimensionless quantity
+# and go as they are. CD_de2 additionally carries the 1e-2 from its column
+# header.
 ESCALA = {
-    "_CL_DE_TABLE_CT0": GRADO_A_RAD, "_CL_DE_TABLE_CT05": GRADO_A_RAD,
-    "_CM_DE_TABLE_CT0": GRADO_A_RAD, "_CM_DE_TABLE_CT05": GRADO_A_RAD,
-    "_CD_DE_TABLE_CT0": GRADO_A_RAD, "_CD_DE_TABLE_CT05": GRADO_A_RAD,
-    "_CD_DE2_TABLE_CT0": 1e-2 * GRADO_A_RAD ** 2,
-    "_CD_DE2_TABLE_CT05": 1e-2 * GRADO_A_RAD ** 2,
+    "_CL_DE_TABLE_CT0": DEG_TO_RAD, "_CL_DE_TABLE_CT05": DEG_TO_RAD,
+    "_CM_DE_TABLE_CT0": DEG_TO_RAD, "_CM_DE_TABLE_CT05": DEG_TO_RAD,
+    "_CD_DE_TABLE_CT0": DEG_TO_RAD, "_CD_DE_TABLE_CT05": DEG_TO_RAD,
+    "_CD_DE2_TABLE_CT0": 1e-2 * DEG_TO_RAD ** 2,
+    "_CD_DE2_TABLE_CT05": 1e-2 * DEG_TO_RAD ** 2,
 }
 
 
 # ---------------------------------------------------------------------------
 # Tablas LATERALES, III(d) fuerza lateral, III(e) guiniada, III(f) alabeo.
-# Solo existen en las ramas de 6 y 8 DOF; en el 4-DOF se saltean.
+# They only exist on the 6- and 8-DOF branches; on the 4-DOF they are skipped.
 #
-# La forma se repite en las tres: dos bloques de tres grupos. En el primer
-# bloque el tercer grupo (la derivada de aleron) NO tiene desdoble por C_T y
-# ocupa una sola columna, asi que esa fila trae 8 tokens y no 9.
-BLOQUES_LAT = [
+# The shape repeats in all three: two blocks of three groups. In the first
+# block the third group (the aileron derivative) has NO C_T split and occupies
+# a single column, so that row carries 8 tokens and not 9.
+BLOCKS_LAT = [
     (1565, 1580, 8, [("CY_o", "_CY_O_TABLE", "_CY_O_TABLE_CT05"),
                      ("CY_beta", "_CY_BETA_TABLE_CT0", "_CY_BETA_TABLE_CT05"),
                      ("CY_da", "_CY_DA_TABLE", None)]),
@@ -85,24 +86,24 @@ BLOQUES_LAT = [
                      ("Cl_p", "_CL_ROLL_PHAT_TABLE_CT0", "_CL_ROLL_PHAT_TABLE_CT05")]),
 ]
 
-# Las derivadas de CONTROL y de BETA estan tabuladas por grado; las de p y r
-# multiplican una cantidad ya adimensional y van tal cual.
+# The CONTROL and BETA derivatives are tabulated per degree; the p and r ones
+# multiply an already dimensionless quantity and go as they are.
 for _n in ("_CY_BETA_TABLE_CT0", "_CY_BETA_TABLE_CT05", "_CY_DA_TABLE",
            "_CY_DR_TABLE_CT0", "_CY_DR_TABLE_CT05",
            "_CN_BETA_TABLE_CT0", "_CN_BETA_TABLE_CT05", "_CN_DA_TABLE",
            "_CN_DR_TABLE_CT0", "_CN_DR_TABLE_CT05",
            "_CL_ROLL_BETA_TABLE_CT0", "_CL_ROLL_BETA_TABLE_CT05",
            "_CL_ROLL_DA_TABLE", "_CL_ROLL_DR_TABLE"):
-    ESCALA[_n] = GRADO_A_RAD
+    ESCALA[_n] = DEG_TO_RAD
 
 
-# Entradas donde el OCR es irrecuperable y se resolvieron mirando la PAGINA
-# del PDF como imagen. El valor es el que se lee ahi; el script las reporta
-# como confirmadas en vez de como diferencias, con la pagina al lado para que
+# Entries where the OCR is unrecoverable and which were resolved by looking at
+# the PDF PAGE as an image. The value is what is read there; the script reports
+# them as confirmed rather than as differences, with the page alongside so that
 # cualquiera pueda repetir la lectura.
 #
 # El patron es siempre el mismo: la "q" del escaneo es un 9 (-,349q = -.3499,
-# -*Olq3 = -.0193), y los ceros iniciales se comen el punto decimal.
+# -*Olq3 = -.0193), and leading zeros swallow the decimal point.
 CONFIRMADOS = {
     ("_CL_DE_TABLE_CT05", 1): (0.0134, "pag. 32, CL_de CT=0.5, alpha=-5"),
     ("_CD_O_TABLE_CT05", 1): (-0.3499, "pag. 33, CD_o CT=0.5, alpha=-5"),
@@ -112,7 +113,7 @@ CONFIRMADOS = {
     ("_CM_DE_TABLE_CT05", 13): (-0.0153, "pag. 34, Cm_de CT=0.5, alpha=40"),
     ("_CM_Q_TABLE_CT05", 10): (-19.0600, "pag. 34, Cm_q CT=0.5, alpha=25"),
     ("_CM_ADOT_TABLE_CT05", 9): (0.0000, "pag. 34, Cm_adot CT=0.5, alpha=20"),
-    # --- laterales, resueltas contra las paginas 35, 36 y 37 ---
+    # --- lateral ones, resolved against pages 35, 36 and 37 ---
     ("_CY_O_TABLE_CT05", 11): (-0.0540, "pag. 35, CY_o CT=0.5, alpha=30"),
     ("_CY_BETA_TABLE_CT0", 11): (-0.00600, "pag. 35, CY_beta CT=0.0, alpha=30"),
     ("_CY_BETA_TABLE_CT05", 11): (-0.02020, "pag. 35, CY_beta CT=0.5, alpha=30"),
@@ -137,7 +138,7 @@ CONFIRMADOS = {
     ("_CY_PHAT_TABLE", 13): (0.0, "pag. 35, CY_p, alpha=40"),
 }
 
-# confusiones sistematicas del OCR sobre digitos
+# systematic OCR confusions over digits
 OCR = str.maketrans({"O": "0", "o": "0", "C": "0", "c": "0", "Q": "0",
                      "l": "1", "I": "1", "i": "1", "|": "1",
                      "Z": "2", "z": "2", "S": "5", "s": "5", "§": "5",
@@ -150,31 +151,32 @@ def leer_pdf():
                        capture_output=True, text=True)
     if r.returncode != 0 or len(r.stdout) < 10000:
         raise SystemExit(
-            f"NO SE PUDO LEER {PDF}. Sin el informe no hay nada contra que "
-            f"comparar, y salir en verde seria peor que fallar.")
+            f"COULD NOT READ {PDF}. Without the report there is nothing to "
+            f"compare against, and passing green would be worse than failing.")
     return r.stdout.split("\n")
 
 
-def numeros(linea):
-    """Devuelve los tokens numericos de una fila, o None donde no se puede leer.
+def numbers(line):
+    """Return a row's numeric tokens, or None where it cannot be read.
 
-    El punto decimal inicial es lo que mas se degrada: ".0051" sale como
-    "o0051", "*0350" o ",0062". Se normaliza aparte, porque mapearlo como
+    The leading decimal point is what degrades most: ".0051" comes out as
+    "o0051", "*0350" or ",0062". It is normalised separately, because mapping
+    it as
     digito convierte 0.0051 en 51 y eso parece un error de transcripcion
-    cuando es un error de lectura.
+    when it is a reading error.
     """
-    # la columna CD(de)2 lleva el "x10-2" del encabezado repetido en la fila de
-    # alpha=-10 y pegado a los valores, que ademas quedan sin separador
-    linea = re.sub(r"x[lI1][oO0]-?2?", " ", linea)
-    fuera = []
-    for tok in linea.split():
-        # el escaneo deja marcas de pagina sueltas ("I", "0") al margen; si se
-        # las toma por numeros corren TODAS las columnas de esa fila un lugar.
-        # Pero un valor ilegible tambien puede quedar sin ningun digito
-        # ("-.nl_"), y ese SI ocupa columna: se distingue por largo.
+    # the CD(de)2 column repeats the header's "x10-2" on the alpha=-10 row,
+    # glued to the values, which are additionally left without a separator
+    line = re.sub(r"x[lI1][oO0]-?2?", " ", line)
+    out = []
+    for tok in line.split():
+        # the scan leaves stray page marks ("I", "0") in the margin; taking
+        # them for numbers shifts ALL the columns of that row by one. But an
+        # illegible value can also end up with no digits at all ("-.nl_"), and
+        # that one DOES occupy a column: they are told apart by length.
         if not any(ch.isdigit() for ch in tok):
             if len(tok) >= 3 and any(c in "._" for c in tok):
-                fuera.append(None)
+                out.append(None)
             continue
         signo = ""
         cuerpo = tok
@@ -185,34 +187,34 @@ def numeros(linea):
         t = (signo + cuerpo).translate(OCR)
         # un token legible es signo opcional, digitos y a lo sumo un punto
         if re.fullmatch(r"[-+]?\d*\.?\d+", t) and any(ch.isdigit() for ch in t):
-            fuera.append(float(t))
+            out.append(float(t))
         elif re.search(r"[\d._]", tok):
-            fuera.append(None)          # habia algo numerico pero ilegible
-    return fuera
+            out.append(None)            # something numeric but illegible
+    return out
 
 
 def main():
     lineas = leer_pdf()
     a = SymmetricFullGrumman()
-    total = fallos = ilegibles = confirmados = 0
-    print("Tabla III del PDF contra los arreglos del codigo\n")
+    total = failures = ilegibles = confirmados = 0
+    print("Table III of the PDF against the code arrays\n")
 
-    for ini, fin, ncol, grupos in [(a_, b_, 9, c_) for a_, b_, c_ in BLOQUES] + BLOQUES_LAT:
-        filas = []
-        for l in lineas[ini - 1:fin]:
+    for start, end, ncol, groups in [(a_, b_, 9, c_) for a_, b_, c_ in BLOCKS] + BLOCKS_LAT:
+        rows = []
+        for l in lineas[start - 1:end]:
             if not l.strip():
                 continue
-            v = numeros(l)
+            v = numbers(l)
             if len(v) >= ncol:
-                filas.append(v[:ncol])
-        if len(filas) != 14:
-            print(f"  !! bloque {ini}-{fin}: lei {len(filas)} filas, esperaba 14")
+                rows.append(v[:ncol])
+        if len(rows) != 14:
+            print(f"  !! block {start}-{end}: read {len(rows)} rows, expected 14")
             continue
 
-        M = np.array([[np.nan if x is None else x for x in f] for f in filas])
-        # con 8 columnas el ultimo grupo trae una sola, asi que el indice del
-        # tercer grupo no es 3*gi sino el que quede
-        for gi, (nombre, at0, at05) in enumerate(grupos):
+        M = np.array([[np.nan if x is None else x for x in f] for f in rows])
+        # with 8 columns the last group carries only one, so the index of the
+        # third group is not 3*gi but whatever is left
+        for gi, (name, at0, at05) in enumerate(groups):
             base = 3 * gi + 1
             for col, attr in ((base, at0), (base + 1, at05)):
                 if attr is None or not hasattr(a, attr) or col >= M.shape[1]:
@@ -221,35 +223,35 @@ def main():
                 cod = np.asarray(getattr(a, attr), dtype=np.float64)
                 esc = ESCALA.get(attr, 1.0)
                 pdf_esc = pdf * esc
-                malas = np.isnan(pdf)
-                dif = np.abs(pdf_esc - cod) > np.maximum(1e-4 * np.abs(cod), 1e-7)
-                dif &= ~malas
+                bad = np.isnan(pdf)
+                diff = np.abs(pdf_esc - cod) > np.maximum(1e-4 * np.abs(cod), 1e-7)
+                diff &= ~bad
                 total += 14
-                for i in np.where(malas | dif)[0]:
+                for i in np.where(bad | diff)[0]:
                     ref = CONFIRMADOS.get((attr, i))
                     if ref is not None and abs(ref[0] * esc - cod[i]) <= max(
                             1e-6 * abs(cod[i]), 1e-9):
                         confirmados += 1
-                        print(f"  {nombre:<10} alpha[{i:2d}]  OCR ilegible, "
-                              f"confirmado contra la imagen: {ref[0]:+.6g}"
+                        print(f"  {name:<10} alpha[{i:2d}]  OCR illegible, "
+                              f"confirmed against the image: {ref[0]:+.6g}"
                               f"  ({ref[1]})")
                         continue
-                    if malas[i]:
+                    if bad[i]:
                         ilegibles += 1
-                        print(f"  {nombre:<10} alpha[{i:2d}]  ILEGIBLE y SIN "
+                        print(f"  {name:<10} alpha[{i:2d}]  ILLEGIBLE and NO "
                               f"confirmar, codigo {cod[i]:+.6g}")
                     else:
-                        fallos += 1
-                        print(f"  {nombre:<10} alpha[{i:2d}]  PDF {pdf[i]:+.6g}"
+                        failures += 1
+                        print(f"  {name:<10} alpha[{i:2d}]  PDF {pdf[i]:+.6g}"
                               f"{'' if esc == 1 else f' x{esc:.5g} = {pdf_esc[i]:+.6g}'}"
                               f"   codigo {cod[i]:+.6g}   <-- DIFIERE")
     if total == 0:
-        print("\nNO SE COMPARO NADA: los bloques de la tabla no se pudieron leer")
+        print("\nNOTHING WAS COMPARED: the table blocks could not be read")
         return 1
-    print(f"\n{total} valores comparados contra la Tabla III: {fallos} difieren, "
+    print(f"\n{total} values compared against Table III: {failures} differ, "
           f"{ilegibles} ilegibles sin confirmar, {confirmados} resueltos "
-          f"mirando la pagina")
-    return 1 if (fallos or ilegibles) else 0
+          f"by looking at the page")
+    return 1 if (failures or ilegibles) else 0
 
 
 if __name__ == "__main__":

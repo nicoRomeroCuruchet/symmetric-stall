@@ -84,11 +84,11 @@ print("%8s | %9s %6s %5s | %9s %6s %5s | %9s %6s %5s" % (
 print("-" * 84)
 G = {}
 for tau in sorted(TAUS):
-    fila = "%8.2f |" % tau
+    row = "%8.2f |" % tau
     for name, ramp, start, _ in ARMS:
         r = run_arm(ramp, start, tau); G[(tau, name)] = r
-        fila += " %9.3f %5.2fs %5s |" % (r["hmin"], r["t"], r["est"][:5])
-    print(fila)
+        row += " %9.3f %5.2fs %5s |" % (r["hmin"], r["t"], r["est"][:5])
+    print(row)
 
 print("\npenalty against the DP, for each engine:")
 for tau in sorted(TAUS):

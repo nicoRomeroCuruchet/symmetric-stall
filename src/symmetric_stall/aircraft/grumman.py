@@ -316,8 +316,8 @@ class Grumman:
         return self.CG_AFT / self.CHORD
 
     @DXCG_OVER_CHORD.setter
-    def DXCG_OVER_CHORD(self, valor):
-        self.CG_AFT = float(valor) * self.CHORD
+    def DXCG_OVER_CHORD(self, value):
+        self.CG_AFT = float(value) * self.CHORD
 
     def _delta_momentos_cg(self, cl, cd, alpha, cy=0.0):
         """(dC_l, dC_m, dC_n) from having the CG off Riley's reference."""

@@ -50,14 +50,14 @@ def kernel_tables(source: str) -> dict:
     pattern = re.compile(
         r"__device__\s+const\s+float\s+([A-Z_0-9]+)\s*\[\s*(\d+)\s*\]\s*=\s*\{([^}]*)\}",
         re.S)
-    fuera = {}
-    for nombre, n, cuerpo in pattern.findall(source):
+    out = {}
+    for name, n, cuerpo in pattern.findall(source):
         vals = [float(x) for x in re.findall(r"[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?f?",
                                              cuerpo.replace("f", ""))]
         if len(vals) != int(n):
-            print(f"  !! {nombre}: declara {n} entradas y tiene {len(vals)}")
-        fuera[nombre] = np.array(vals, dtype=np.float64)
-    return fuera
+            print(f"  !! {name}: declara {n} entradas y tiene {len(vals)}")
+        out[name] = np.array(vals, dtype=np.float64)
+    return out
 
 
 def main() -> int:
@@ -76,8 +76,8 @@ def main() -> int:
         print(f"  note: in the kernel with no declared pair: {orphans}")
     print()
 
-    peor_nombre, peor = None, 0.0
-    fallos = 0
+    worst_name, worst = None, 0.0
+    failures = 0
     for kn, cn in sorted(PAIRS.items()):
         if kn not in K:
             continue
@@ -85,7 +85,7 @@ def main() -> int:
         cv = np.asarray(getattr(a, cn), dtype=np.float64)
         if kv.shape != cv.shape:
             print(f"  FORMA  {kn:<20} kernel {kv.shape} vs CPU {cv.shape}")
-            fallos += 1
+            failures += 1
             continue
         denom = np.maximum(np.abs(cv), 1e-9)
         rel = np.abs(kv - cv) / denom
@@ -93,17 +93,17 @@ def main() -> int:
         # float32 rounds to ~1e-7; above 1e-6 it is transcription, not format
         status = "ok" if rel[i] <= 1e-6 else "DIFIERE"
         if rel[i] > 1e-6:
-            fallos += 1
+            failures += 1
             print(f"  {status:<8}{kn:<20} entrada {i:2d}: kernel {kv[i]:+.6f} "
                   f"vs CPU {cv[i]:+.6f}  rel {rel[i]:.2e}")
-        if rel[i] > peor:
-            peor, peor_nombre = rel[i], kn
+        if rel[i] > worst:
+            worst, worst_name = rel[i], kn
 
     print()
-    if fallos == 0:
-        print(f"LAS {len(PAIRS)} TABLAS COINCIDEN (peor {peor:.2e} en {peor_nombre})")
+    if failures == 0:
+        print(f"ALL {len(PAIRS)} TABLES MATCH (worst {worst:.2e} in {worst_name})")
         return 0
-    print(f"{fallos} TABLA(S) NO COINCIDEN (peor {peor:.2e} en {peor_nombre})")
+    print(f"{failures} TABLE(S) DO NOT MATCH (worst {worst:.2e} in {worst_name})")
     return 1
 
 

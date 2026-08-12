@@ -47,7 +47,7 @@ print("optimum's deepest pull: %.2f deg  (caps the alpha_hold arms)\n"
       % np.rad2deg(cap))
 
 brazos = {
-    "optimo (DP)":     None,
+    "optimum (DP)":     None,
     "CAA alpha-hold":  ("t0", "alpha_hold", cap),
     "FAA alpha-hold":  ("unstall", "alpha_hold", cap),
     "CAA full-pull":   ("t0", "full", None),
@@ -66,15 +66,15 @@ for nom, cfg in brazos.items():
     print("%-16s %+10.3f %7.2fs %10.2f %12s" % (
         nom, r["h"], r["t"], np.rad2deg(np.max(r["hist"]["alpha"])), r["status"]))
 
-base = res["optimo (DP)"]["h"]
+base = res["optimum (DP)"]["h"]
 print("\npenalty against the optimum:")
 for nom in list(brazos)[1:]:
     print("  %-16s %+8.3f m  (%+6.1f %%)" % (
         nom, res[nom]["h"] - base, 100 * (res[nom]["h"] - base) / abs(base)))
 
 # ---- figure: optimum vs CAA vs FAA (the alpha-hold arms) ----
-MOSTRAR = ["optimo (DP)", "CAA alpha-hold", "FAA alpha-hold"]
-COLOR = {"optimo (DP)": "#0072B2", "CAA alpha-hold": "#D55E00",
+MOSTRAR = ["optimum (DP)", "CAA alpha-hold", "FAA alpha-hold"]
+COLOR = {"optimum (DP)": "#0072B2", "CAA alpha-hold": "#D55E00",
          "FAA alpha-hold": "#009E73"}
 PAN = [("gamma", r"$\gamma$ (deg)", np.rad2deg), ("v_norm", r"$V/V_s$", lambda x: x),
        ("alpha", r"$\alpha$ (deg)", np.rad2deg), ("q", r"$q$ (deg/s)", np.rad2deg),
@@ -111,7 +111,7 @@ for ax, (k, et, cv) in zip(axes, PAN):
 axes[-1].set_xlabel("tiempo (s)", fontsize=9)
 axes[0].legend(loc="lower left", fontsize=8, frameon=False, ncol=3,
                bbox_to_anchor=(0.0, 1.02))
-fig.suptitle(r"DP optimo vs CAA vs FAA — $V_0=%.2f\,V_s$, $\alpha_0=%.0f^\circ$"
+fig.suptitle(r"DP optimum vs CAA vs FAA — $V_0=%.2f\,V_s$, $\alpha_0=%.0f^\circ$"
              % (V0, ALPHA0), fontsize=10, y=0.985)
 fig.tight_layout(rect=[0, 0, 1, 0.965])
 out = main.RESULTS_DIR / ("maniobras_v%03d.png" % round(V0 * 100))
