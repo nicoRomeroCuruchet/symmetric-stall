@@ -100,42 +100,54 @@ for _n in ("_CY_BETA_TABLE_CT0", "_CY_BETA_TABLE_CT05", "_CY_DA_TABLE",
 # Entries where the OCR is unrecoverable and which were resolved by looking at
 # the PDF PAGE as an image. The value is what is read there; the script reports
 # them as confirmed rather than as differences, with the page alongside so that
-# cualquiera pueda repetir la lectura.
+# anyone can repeat the reading.
+#
+# The page numbers below are PDF PAGE INDICES, not the printed page numbers of
+# the report. The offset is 4 (PDF 34 carries printed page 30), and Table IV
+# sits exactly four pages after Table III, so reading a "page 34" annotation as
+# a printed number lands on TABLE IV -- the MODIFIED configuration -- instead of
+# Table III, the baseline this model uses. That mistake is silent for Cm_de,
+# Cm_q, Cm_adot and dCm_beta, which are identical in both configurations, and
+# would only show up in Cm_o (baseline .2700/.1580/.0760 vs modified
+# .2650/.1650/.0910). Read them as PDF indices.
 #
 # The pattern is always the same: the scan's "q" is a 9 (-,349q = -.3499,
 # -*Olq3 = -.0193), and leading zeros swallow the decimal point.
-CONFIRMADOS = {
-    ("_CL_DE_TABLE_CT05", 1): (0.0134, "pag. 32, CL_de CT=0.5, alpha=-5"),
-    ("_CD_O_TABLE_CT05", 1): (-0.3499, "pag. 33, CD_o CT=0.5, alpha=-5"),
-    ("_CD_DE2_TABLE_CT05", 0): (0.0000, "pag. 33, CD_(de)2 CT=0.5, alpha=-10"),
-    ("_CM_O_TABLE", 0): (0.2700, "pag. 34, Cm_o CT=0.0, alpha=-10"),
-    ("_CM_DE_TABLE_CT0", 2): (-0.0193, "pag. 34, Cm_de CT=0.0, alpha=0"),
-    ("_CM_DE_TABLE_CT05", 13): (-0.0153, "pag. 34, Cm_de CT=0.5, alpha=40"),
-    ("_CM_Q_TABLE_CT05", 10): (-19.0600, "pag. 34, Cm_q CT=0.5, alpha=25"),
-    ("_CM_ADOT_TABLE_CT05", 9): (0.0000, "pag. 34, Cm_adot CT=0.5, alpha=20"),
+#
+# Cm_q(alpha=25, CT=0.5) = -19.0600 and Cm_de(alpha=0, CT=0.0) = -0.0193 were
+# independently confirmed against the page by the author, 2026-08-12.
+CONFIRMED = {
+    ("_CL_DE_TABLE_CT05", 1): (0.0134, "PDF p. 32, CL_de CT=0.5, alpha=-5"),
+    ("_CD_O_TABLE_CT05", 1): (-0.3499, "PDF p. 33, CD_o CT=0.5, alpha=-5"),
+    ("_CD_DE2_TABLE_CT05", 0): (0.0000, "PDF p. 33, CD_(de)2 CT=0.5, alpha=-10"),
+    ("_CM_O_TABLE", 0): (0.2700, "PDF p. 34, Cm_o CT=0.0, alpha=-10"),
+    ("_CM_DE_TABLE_CT0", 2): (-0.0193, "PDF p. 34, Cm_de CT=0.0, alpha=0"),
+    ("_CM_DE_TABLE_CT05", 13): (-0.0153, "PDF p. 34, Cm_de CT=0.5, alpha=40"),
+    ("_CM_Q_TABLE_CT05", 10): (-19.0600, "PDF p. 34, Cm_q CT=0.5, alpha=25"),
+    ("_CM_ADOT_TABLE_CT05", 9): (0.0000, "PDF p. 34, Cm_adot CT=0.5, alpha=20"),
     # --- lateral ones, resolved against pages 35, 36 and 37 ---
-    ("_CY_O_TABLE_CT05", 11): (-0.0540, "pag. 35, CY_o CT=0.5, alpha=30"),
-    ("_CY_BETA_TABLE_CT0", 11): (-0.00600, "pag. 35, CY_beta CT=0.0, alpha=30"),
-    ("_CY_BETA_TABLE_CT05", 11): (-0.02020, "pag. 35, CY_beta CT=0.5, alpha=30"),
-    ("_CY_DA_TABLE", 4): (-0.000140, "pag. 35, CY_da, alpha=10"),
-    ("_CY_DA_TABLE", 12): (0.0, "pag. 35, CY_da, alpha=35"),
-    ("_CY_DA_TABLE", 13): (0.0, "pag. 35, CY_da, alpha=40"),
-    ("_CN_BETA_TABLE_CT0", 0): (0.00250, "pag. 36, Cn_beta CT=0.0, alpha=-10"),
-    ("_CN_DA_TABLE", 5): (0.0, "pag. 36, Cn_da, alpha=12"),
-    ("_CN_DR_TABLE_CT05", 1): (-0.00299, "pag. 36, Cn_dr CT=0.5, alpha=-5"),
-    ("_CN_DR_TABLE_CT05", 6): (-0.00369, "pag. 36, Cn_dr CT=0.5, alpha=14"),
-    ("_CN_RHAT_TABLE_CT05", 0): (-0.2900, "pag. 36, Cn_r CT=0.5, alpha=-10"),
-    ("_CN_RHAT_TABLE_CT05", 3): (-0.2900, "pag. 36, Cn_r CT=0.5, alpha=5"),
-    ("_CN_PHAT_TABLE_CT0", 9): (0.0400, "pag. 36, Cn_p CT=0.0, alpha=20"),
-    ("_CL_ROLL_BETA_TABLE_CT0", 12): (-0.00400, "pag. 37, Cl_beta CT=0.0, alpha=35"),
-    ("_CL_ROLL_DR_TABLE", 13): (0.0, "pag. 37, Cl_dr, alpha=40"),
-    ("_CL_ROLL_PHAT_TABLE_CT0", 6): (-0.2200, "pag. 37, Cl_p CT=0.0, alpha=14"),
-    ("_CY_DR_TABLE_CT0", 3): (0.00295, "pag. 35, CY_dr CT=0.0, alpha=5"),
-    ("_CY_DR_TABLE_CT05", 0): (0.00589, "pag. 35, CY_dr CT=0.5, alpha=-10"),
-    ("_CY_RHAT_TABLE_CT0", 10): (-0.2500, "pag. 35, CY_r CT=0.0, alpha=25"),
-    ("_CY_RHAT_TABLE_CT0", 13): (0.0, "pag. 35, CY_r CT=0.0, alpha=40"),
-    ("_CY_PHAT_TABLE", 7): (0.0380, "pag. 35, CY_p, alpha=16"),
-    ("_CY_PHAT_TABLE", 13): (0.0, "pag. 35, CY_p, alpha=40"),
+    ("_CY_O_TABLE_CT05", 11): (-0.0540, "PDF p. 35, CY_o CT=0.5, alpha=30"),
+    ("_CY_BETA_TABLE_CT0", 11): (-0.00600, "PDF p. 35, CY_beta CT=0.0, alpha=30"),
+    ("_CY_BETA_TABLE_CT05", 11): (-0.02020, "PDF p. 35, CY_beta CT=0.5, alpha=30"),
+    ("_CY_DA_TABLE", 4): (-0.000140, "PDF p. 35, CY_da, alpha=10"),
+    ("_CY_DA_TABLE", 12): (0.0, "PDF p. 35, CY_da, alpha=35"),
+    ("_CY_DA_TABLE", 13): (0.0, "PDF p. 35, CY_da, alpha=40"),
+    ("_CN_BETA_TABLE_CT0", 0): (0.00250, "PDF p. 36, Cn_beta CT=0.0, alpha=-10"),
+    ("_CN_DA_TABLE", 5): (0.0, "PDF p. 36, Cn_da, alpha=12"),
+    ("_CN_DR_TABLE_CT05", 1): (-0.00299, "PDF p. 36, Cn_dr CT=0.5, alpha=-5"),
+    ("_CN_DR_TABLE_CT05", 6): (-0.00369, "PDF p. 36, Cn_dr CT=0.5, alpha=14"),
+    ("_CN_RHAT_TABLE_CT05", 0): (-0.2900, "PDF p. 36, Cn_r CT=0.5, alpha=-10"),
+    ("_CN_RHAT_TABLE_CT05", 3): (-0.2900, "PDF p. 36, Cn_r CT=0.5, alpha=5"),
+    ("_CN_PHAT_TABLE_CT0", 9): (0.0400, "PDF p. 36, Cn_p CT=0.0, alpha=20"),
+    ("_CL_ROLL_BETA_TABLE_CT0", 12): (-0.00400, "PDF p. 37, Cl_beta CT=0.0, alpha=35"),
+    ("_CL_ROLL_DR_TABLE", 13): (0.0, "PDF p. 37, Cl_dr, alpha=40"),
+    ("_CL_ROLL_PHAT_TABLE_CT0", 6): (-0.2200, "PDF p. 37, Cl_p CT=0.0, alpha=14"),
+    ("_CY_DR_TABLE_CT0", 3): (0.00295, "PDF p. 35, CY_dr CT=0.0, alpha=5"),
+    ("_CY_DR_TABLE_CT05", 0): (0.00589, "PDF p. 35, CY_dr CT=0.5, alpha=-10"),
+    ("_CY_RHAT_TABLE_CT0", 10): (-0.2500, "PDF p. 35, CY_r CT=0.0, alpha=25"),
+    ("_CY_RHAT_TABLE_CT0", 13): (0.0, "PDF p. 35, CY_r CT=0.0, alpha=40"),
+    ("_CY_PHAT_TABLE", 7): (0.0380, "PDF p. 35, CY_p, alpha=16"),
+    ("_CY_PHAT_TABLE", 13): (0.0, "PDF p. 35, CY_p, alpha=40"),
 }
 
 # systematic OCR confusions over digits
@@ -228,7 +240,7 @@ def main():
                 diff &= ~bad
                 total += 14
                 for i in np.where(bad | diff)[0]:
-                    ref = CONFIRMADOS.get((attr, i))
+                    ref = CONFIRMED.get((attr, i))
                     if ref is not None and abs(ref[0] * esc - cod[i]) <= max(
                             1e-6 * abs(cod[i]), 1e-9):
                         confirmados += 1
