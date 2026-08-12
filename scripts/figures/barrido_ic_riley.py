@@ -63,7 +63,7 @@ for row, (g0, v0, a0) in enumerate(ICS):
         # the run ends by itself on recovery; hitting the 15 s cap means it
         # never dived below -2 deg, i.e. there was no divergence
         recupera = t[-1] < 14.9
-        print("  %+6.1f deg  %.2f Vs  %4.1f deg    %-7s  %+8.3f m  %6.2f s   %s  (throttle medio %.3f)"
+        print("  %+6.1f deg  %.2f Vs  %4.1f deg    %-7s  %+8.3f m  %6.2f s   %s  (mean throttle %.3f)"
               % (g0, v0, a0, mode, H.min(), t[-1],
                  "si" if recupera else "NO PICA", dt_c.mean()))
 

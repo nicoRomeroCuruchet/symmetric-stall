@@ -30,7 +30,7 @@ for ax, (k, et, cv) in zip(axes, PAN):
         h = hs[v0]; y = cv(np.asarray(h[k]))
         ax.plot(h["t"], y, lw=1.4, color=col, zorder=3,
                 label=r"$V_0=%.2f\,V_s$" % v0)
-        if k == "h":                      # etiqueta directa en la excursion minima
+        if k == "h":                      # label directly at the minimum excursion
             i = int(np.argmin(y))
             ax.plot(h["t"][i], y[i], "o", ms=4.5, color=col, mec="white", mew=1.0, zorder=4)
             ax.annotate("%.2f" % y[i], xy=(h["t"][i], y[i]), xytext=(5, -9 - 11 * V0S.index(v0)),
@@ -52,7 +52,7 @@ for ax, (k, et, cv) in zip(axes, PAN):
     for s in ("top", "right"): ax.spines[s].set_visible(False)
     for s in ("left", "bottom"): ax.spines[s].set_color("0.6")
     ax.tick_params(labelsize=8, color="0.6")
-axes[-1].set_xlabel("tiempo (s)", fontsize=9)
+axes[-1].set_xlabel("time (s)", fontsize=9)
 axes[0].legend(loc="lower left", fontsize=8, frameon=False, ncol=4,
                bbox_to_anchor=(0.0, 1.02))
 fig.suptitle(r"Marginal entries: $\alpha_0=20^\circ$, filled policy",

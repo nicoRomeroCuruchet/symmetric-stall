@@ -45,7 +45,7 @@ for ax, (k, et, cv) in zip(axes, PAN):
     for sp in ("top", "right"): ax.spines[sp].set_visible(False)
     for sp in ("left", "bottom"): ax.spines[sp].set_color("0.6")
     ax.tick_params(labelsize=8, color="0.6")
-axes[-1].set_xlabel("tiempo (s)", fontsize=9)
+axes[-1].set_xlabel("time (s)", fontsize=9)
 axes[0].legend(loc="lower left", fontsize=7.5, frameon=False, ncol=2,
                bbox_to_anchor=(0.0, 1.02))
 fig.suptitle(r"Trigger vs power ablation — $V_0=%.2f\\,V_s$, $\\alpha_0=%.0f^\\circ$"

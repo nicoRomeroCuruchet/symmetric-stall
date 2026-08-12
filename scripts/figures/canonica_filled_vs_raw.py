@@ -51,7 +51,7 @@ for v0 in VS:
         hists[etiqueta] = h
         hh = np.asarray(h["h"])
         print("  %-13s dur %6.2f s   dh %+8.3f m   h_min %+8.3f m   "
-              "alpha_fin %6.2f deg   thr medio %.3f"
+              "alpha_end %6.2f deg   mean thr %.3f"
               % (etiqueta, h["t"][-1], h["h"][-1], hh.min(),
                  np.rad2deg(h["alpha"][-1]), np.mean(h["dt_ctrl"])))
         main.plot_time_response(h, "canonica_%s_v%03d"
@@ -86,7 +86,7 @@ for v0 in VS:
         for lado in ("left", "bottom"):
             ax.spines[lado].set_color("0.6")
         ax.tick_params(labelsize=8, color="0.6")
-    axes[-1].set_xlabel("tiempo (s)", fontsize=9)
+    axes[-1].set_xlabel("time (s)", fontsize=9)
     axes[0].legend(loc="lower left", fontsize=8, frameon=False, ncol=2,
                    bbox_to_anchor=(0.0, 1.02))
     fig.suptitle(r"IC canonica $V_0=%.2f\,V_s$, $\alpha_0=20^\circ$: "

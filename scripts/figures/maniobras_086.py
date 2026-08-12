@@ -108,7 +108,7 @@ for ax, (k, et, cv) in zip(axes, PAN):
     for s in ("top", "right"): ax.spines[s].set_visible(False)
     for s in ("left", "bottom"): ax.spines[s].set_color("0.6")
     ax.tick_params(labelsize=8, color="0.6")
-axes[-1].set_xlabel("tiempo (s)", fontsize=9)
+axes[-1].set_xlabel("time (s)", fontsize=9)
 axes[0].legend(loc="lower left", fontsize=8, frameon=False, ncol=3,
                bbox_to_anchor=(0.0, 1.02))
 fig.suptitle(r"DP optimum vs CAA vs FAA — $V_0=%.2f\,V_s$, $\alpha_0=%.0f^\circ$"
