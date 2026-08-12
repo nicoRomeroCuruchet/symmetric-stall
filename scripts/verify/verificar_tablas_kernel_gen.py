@@ -1,19 +1,20 @@
-"""Compara literal por literal las tablas del kernel CUDA contra las del CPU.
+"""Compare the CUDA kernel's tables literal by literal against the CPU's.
 
-El kernel lleva las tablas de Riley DUPLICADAS como literales dentro del
-fuente CUDA, porque un __device__ const float no se puede alimentar desde
-numpy sin pagar una indireccion por lectura. Esa duplicacion ya costo dos
-errores en este proyecto: una conversion grado->radian robada de la tabla de
-al lado, y cinco tablas escritas con cinco cifras cuando el CPU las calcula
-con quince. Ninguno de los dos aparece en el chequeo de derivadas, que compara
-resultados finales y promedia justo lo que hay que ver.
+The kernel carries Riley's tables DUPLICATED as literals inside the CUDA
+source, because a __device__ const float cannot be fed from numpy without
+paying an indirection per read. That duplication has already cost two bugs in
+this project: a degree-to-radian conversion stolen from the neighbouring table,
+and five tables written to five digits when the CPU computes them to fifteen.
+Neither shows up in the derivatives check, which compares final results and
+averages away exactly what needs to be seen.
 
-Esto no mide fisica: mide que las dos copias digan lo mismo.
+This does not measure physics: it measures that the two copies say the same
+thing.
 
-El emparejamiento de nombres es automatico, con varias reglas candidatas, y
-SE REPORTA: una tabla del kernel sin par, o una del CPU sin usar, se lista en
-vez de ignorarse. Si una regla emparejara mal, los valores no coincidirian y
-saldria como diferencia, que es el resultado que se quiere.
+Name pairing is automatic, with several candidate rules, and IS REPORTED: a
+kernel table with no pair, or a CPU one left unused, gets listed rather than
+ignored. If a rule paired things wrongly the values would not match and it
+would come out as a difference, which is the desired outcome.
 
 Usage:  PYTHONPATH=. python verificar_tablas_kernel.py <fuente_kernel.py>
 """
@@ -22,15 +23,15 @@ import sys
 
 import numpy as np
 
-TOL = 1e-6      # float32 redondea a ~1e-7; por encima de esto es transcripcion
+TOL = 1e-6      # float32 rounds to ~1e-7; above this it is transcription
 
-# Las tablas de empuje admiten DOS convenciones, y las ramas no coinciden:
-# el 6-DOF las guarda crudas, en lbf y ft/s como el informe, y convierte
-# dentro de compute_ct; el 8-DOF las guarda ya en N y N/(m/s) porque su
+# The thrust tables admit TWO conventions, and the branches disagree: the
+# 6-DOF stores them raw, in lbf and ft/s as the report does, and converts
+# inside compute_ct; the 8-DOF stores them already in N and N/(m/s) because its
 # compute_ct usa vt en m/s directamente. Las dos son correctas. El chequeo
-# prueba las dos y REPORTA cual encontro, en vez de suponer una: suponerla
-# marcaria como error una rama sana, y -- peor -- taparia el caso en que la
-# tabla este de verdad mal por un factor parecido.
+# tries both and REPORTS which one it found, instead of assuming: assuming
+# would flag a healthy branch as broken and -- worse -- would mask the case
+# where the table really is wrong by a similar factor.
 _LBF, _FTS = 4.4482216, 1.0 / 0.3048
 ESCALA_ALTERNATIVA = {"THR_T0": _LBF, "THR_T1": _LBF * _FTS}
 
@@ -44,13 +45,13 @@ def carga_avion():
             return getattr(m, cls)()
         except ImportError:
             continue
-    raise SystemExit("no encontre la clase del avion en esta rama")
+    raise SystemExit("could not find the aircraft class on this branch")
 
 
 def tablas_del_kernel(fuente):
-    # Los comentarios adentro de las llaves traen numeros -- factores de
+    # The comments inside the braces carry numbers -- conversion factors
     # conversion, rangos de alpha -- y si se cuelan al extraer, corren TODAS
-    # las entradas de esa tabla y la diferencia que sale despues es del parser,
+    # the entries of that table, and the difference that follows is the parser's,
     # no del kernel. Se sacan antes de mirar nada.
     fuente = re.sub(r"/\*.*?\*/", " ", fuente, flags=re.S)
     fuente = re.sub(r"//[^\n]*", " ", fuente)
@@ -59,9 +60,9 @@ def tablas_del_kernel(fuente):
         re.S)
     fuera = {}
     for nombre, n, cuerpo in patron.findall(fuente):
-        # Las entradas pueden ser productos: "-0.00116f*57.2958f". Hay que
-        # evaluar cada elemento, no juntar los numeros sueltos: si no, el
-        # factor de conversion entra como si fuera un valor de la tabla y
+        # Entries can be products: "-0.00116f*57.2958f". Each element has to
+        # be evaluated, not the loose numbers collected: otherwise the
+        # conversion factor enters as if it were a table value and
         # corre todo un lugar.
         vals = []
         for elem in cuerpo.split(","):
@@ -79,13 +80,13 @@ def tablas_del_kernel(fuente):
 
 
 def candidatos(kn):
-    """Nombres de atributo plausibles para una tabla del kernel.
+    """Plausible attribute names for a kernel table.
 
-    Las ramas no usan la misma convencion -- TBL contra nada, ROLL contra R,
-    ADOT contra AD -- asi que se prueban varias y se reporta cual pego.
+    The branches do not share a convention -- TBL vs nothing, ROLL vs R,
+    ADOT vs AD -- so several are tried and the one that stuck is reported.
     """
     # Abreviaturas del kernel -> nombre largo del CPU. Se declaran a mano
-    # porque adivinarlas emparejaria mal en silencio; lo que no encuentre par
+    # because guessing them would pair wrongly in silence; whatever finds no pair
     # se reporta.
     ALIAS = {"CL_RB": "CL_ROLL_BETA", "CL_RP": "CL_ROLL_PHAT",
              "CL_RR": "CL_ROLL_RHAT", "CL_RDA": "CL_ROLL_DA",
@@ -104,15 +105,15 @@ def candidatos(kn):
                  ("_CT0", "_TABLE_CT0"), ("_CT05", "_TABLE_CT05")):
         for f in list(formas):
             formas.add(f.replace(a, b))
-    salida = set()
+    out = set()
     for f in formas:
-        salida |= {"_" + f, "_" + f + "_TABLE", "_" + f.replace("_CT0", "_TABLE_CT0")}
+        out |= {"_" + f, "_" + f + "_TABLE", "_" + f.replace("_CT0", "_TABLE_CT0")}
         if f.endswith("_CT0"):
-            salida.add("_" + f[:-4] + "_TABLE")           # CT0 -> sin sufijo
+            out.add("_" + f[:-4] + "_TABLE")             # CT0 -> no suffix
         if f.endswith("_CT05"):
-            salida.add("_" + f[:-5] + "_TABLE_CT05")
-    salida.add("_" + base.replace("_TBL", "") + "_TABLE")
-    return salida
+            out.add("_" + f[:-5] + "_TABLE_CT05")
+    out.add("_" + base.replace("_TBL", "") + "_TABLE")
+    return out
 
 
 def main():

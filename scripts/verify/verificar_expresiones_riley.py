@@ -1,9 +1,9 @@
-"""Las EXPRESIONES de los coeficientes, contra el Apendice B de Riley.
+"""The coefficient EXPRESSIONS, against Riley's Appendix B.
 
-Los otros chequeos miran los VALORES de las tablas. Este mira como se arman
-los coeficientes a partir de ellas, que es una cosa distinta y puede estar mal
-sin que ninguna tabla lo este: un termino omitido, uno de mas, uno multiplicado
-por la variable equivocada o con el signo cambiado.
+The other checks look at the VALUES in the tables. This one looks at how the
+coefficients are assembled from them, which is a different thing and can be
+wrong with every table right: a term omitted, one too many, one multiplied by
+the wrong variable or with the sign flipped.
 
 Riley, Apendice B:
 
@@ -16,17 +16,17 @@ Riley, Apendice B:
     C_D,dyn = 0
     C_Y,st  = C_Y,o + C_Y,beta*beta + C_Y,dr*dr + C_Y,da*da
     C_Y,dyn = C_Y,p*(p b/2V) + C_Y,r*(r b/2V)
-    C_l,st, C_n,st y sus dinamicas, con la misma forma que C_Y.
+    C_l,st, C_n,st and their dynamics, in the same form as C_Y.
 
-El metodo es de RESPUESTA, no de lectura: se evalua el coeficiente con todas
-las entradas en cero, despues con una sola distinta de cero, y se exige que la
-diferencia dividida por esa entrada de EXACTAMENTE el valor de la tabla en ese
-(alpha, C_T). Si el termino falta, la respuesta es cero; si esta multiplicado
-por otra cosa, no coincide; si sobra un termino, aparece en el caso base.
+The method is by RESPONSE, not by reading: the coefficient is evaluated with
+every input at zero, then with a single one non-zero, and the difference divided
+by that input is required to give EXACTLY the table value at that (alpha, C_T).
+If the term is missing, the response is zero; if it multiplies something else,
+it does not match; if there is a spurious term, it shows up in the base case.
 
-Los terminos que el modelo no puede tener por su propia reduccion --- flaps
-siempre retraidos, o derrape en un modelo simetrico --- se declaran y se
-informan como AUSENTE POR REDUCCION, que no es lo mismo que faltante.
+Terms the model cannot have by its own reduction --- flaps
+siempre retraidos, o derrape en un model simetrico --- se declaran y se
+are reported as ABSENT BY REDUCTION, which is not the same as missing.
 
     THRUST_MODEL=riley PYTHONPATH=. python verificar_expresiones_riley.py
 """
@@ -52,14 +52,14 @@ def carga():
 
 
 def main():
-    a, modelo = carga()
+    a, model = carga()
     bi = lambda al, ct, t0, t5: float(a._bilinear_interp(al, ct, t0, t5))
-    tabla = lambda n: getattr(a, n, None)
+    table = lambda n: getattr(a, n, None)
 
-    # (coeficiente, termino, evaluador, tabla esperada, presente en el modelo)
+    # (coefficient, term, evaluator, expected table, present in the model)
     #
-    # El evaluador recibe (alpha, ct, h) y devuelve el coeficiente con SOLO esa
-    # entrada valiendo h. La derivada respecto de h es lo que se compara.
+    # The evaluator receives (alpha, ct, h) and returns the coefficient with
+    # ONLY that input set to h. The derivative w.r.t. h is what gets compared.
     pruebas = []
 
     if hasattr(a, "_drag_coefficient_full"):        # 8-DOF
@@ -71,8 +71,8 @@ def main():
             ("C_D", "de^2",    lambda al, ct, h: cd(al, ct, de=h),
              None, 2),
             ("C_D", "|dr|^3",  lambda al, ct, h: cd(al, ct, dr=h),
-             # la tabla del timon quedo POR GRADO^3 y el modelo pasa dr a
-             # grados antes de aplicarla, asi que derivando respecto de dr en
+             # the rudder table is PER DEGREE^3 and the model converts dr to
+             # degrees before applying it, so differentiating w.r.t. dr in
              # radianes el factor es 57.2958^3
              lambda al, ct: bi(al, ct, a._CD_DR3_TABLE_CT0,
                                a._CD_DR3_TABLE_CT05) * 57.2958 ** 3, 3),
@@ -125,29 +125,29 @@ def main():
                                a._CL_ROLL_RHAT_TABLE_CT05), 1),
         ]
 
-    print("modelo %s -- respuesta de cada coeficiente a cada entrada, contra "
-          "la tabla que Riley le asigna\n" % modelo)
+    print("model %s -- response of each coefficient to each input, against "
+          "the table Riley assigns it\n" % model)
     if not pruebas:
-        print("  este modelo no expone los coeficientes por separado; su "
-              "ensamblado se verifica\n  por el chequeo de ejes y el cruzado "
-              "entre modelos.")
+        print("  this model does not expose the coefficients separately; its "
+              "assembly is verified\n  by the axes check and the cross-model "
+              "comparison.")
         return 0
 
-    fallos, peor, peor_n = 0, 0.0, None
+    fallos, worst, worst_n = 0, 0.0, None
     for coef, term, ev, esperado, orden in pruebas:
         malo = 0
         for al, ct in PUNTOS:
             base = ev(al, ct, 0.0)
             if orden == 1:
                 # CENTRADA: la hacia adelante arrastraria el termino cuadratico
-                # que comparte variable, y eso se ve como un error del modelo
+                # that shares a variable, and that reads as a model error
                 h = 1e-4
                 obt = (ev(al, ct, h) - ev(al, ct, -h)) / (2 * h)
             elif orden == 2:                       # cuadratico: (f(h)+f(-h)-2f0)/h^2
                 h = 1e-4
                 obt = (ev(al, ct, h) + ev(al, ct, -h) - 2 * base) / h ** 2 / 2
             else:
-                # cubico: con h chico, dividir por h^3 amplifica el ruido de
+                # cubic: with small h, dividing by h^3 amplifies the noise of
                 # float hasta taparlo todo. Hace falta un paso grande.
                 h = 0.3
                 obt = (ev(al, ct, h) - base) / h ** 3
@@ -155,17 +155,17 @@ def main():
                 continue
             esp = esperado(al, ct)
             rel = abs(obt - esp) / max(abs(esp), 1e-9)
-            if rel > peor:
-                peor, peor_n = rel, "%s por %s" % (coef, term)
+            if rel > worst:
+                worst, worst_n = rel, "%s por %s" % (coef, term)
             if rel > TOL:
                 malo += 1
                 if malo == 1:
                     print("  DIFIERE  %s por %-6s  alpha %+5.1f C_T %.2f: "
-                          "modelo %+.6g  tabla %+.6g  rel %.1e"
+                          "model %+.6g  table %+.6g  rel %.1e"
                           % (coef, term, np.rad2deg(al), ct, obt, esp, rel))
         fallos += 1 if malo else 0
     print("\n%d terminos probados en %d puntos (alpha, C_T), %d difieren "
-          "(peor %.2e en %s)" % (len(pruebas), len(PUNTOS), fallos, peor, peor_n))
+          "(worst %.2e en %s)" % (len(pruebas), len(PUNTOS), fallos, worst, worst_n))
     return 1 if fallos else 0
 
 
