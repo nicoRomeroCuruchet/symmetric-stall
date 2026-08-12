@@ -34,7 +34,7 @@ TOL = 1e-8          # both branches are float64; this is rounding slack
 
 def traslado_cg(a, cl, cd, cy, al):
     """(dC_l, dC_m, dC_n) by an EXPLICIT cross product, not by calling the
-    planta: si la planta se equivoca en un signo, esto no la acompana.
+    plant: if the plant gets a sign wrong, this does not follow it.
 
         M_CG = M_ref + (r_ref - r_CG) x F,   body axes (x forward,
        y right wing, z down);  F/qS = (-C_A, C_Y, -C_N).
@@ -79,7 +79,7 @@ def riley_ejes_cuerpo(a, gam, vn, al, q, de, th):
     theta = gam + al                    # simetrico: theta = gamma + alpha
     u, w = vt * np.cos(al), vt * np.sin(al)
 
-    # punto fijo propio de alpha_dot: alpha_dot -> C_L -> fuerzas -> alpha_dot
+    # its own alpha_dot fixed point: alpha_dot -> C_L -> forces -> alpha_dot
     alpha_dot = 0.0
     for _ in range(200):
         cl, cd, cm = coefficients(a, vt, al, q, de, th, alpha_dot)

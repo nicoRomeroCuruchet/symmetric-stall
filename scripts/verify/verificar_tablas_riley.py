@@ -102,7 +102,7 @@ for _n in ("_CY_BETA_TABLE_CT0", "_CY_BETA_TABLE_CT05", "_CY_DA_TABLE",
 # them as confirmed rather than as differences, with the page alongside so that
 # cualquiera pueda repetir la lectura.
 #
-# El patron es siempre el mismo: la "q" del escaneo es un 9 (-,349q = -.3499,
+# The pattern is always the same: the scan's "q" is a 9 (-,349q = -.3499,
 # -*Olq3 = -.0193), and leading zeros swallow the decimal point.
 CONFIRMADOS = {
     ("_CL_DE_TABLE_CT05", 1): (0.0134, "pag. 32, CL_de CT=0.5, alpha=-5"),
