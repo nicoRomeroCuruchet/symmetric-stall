@@ -3,10 +3,12 @@
     python traj_v_baja.py 0.50        (default 0.50 Vs)
 
 At airspeeds well below the stall the dynamic pressure collapses and
-C_T = T/(q_bar S) blows up, so _compute_ct's clip at 0.5 becomes active. When
-that happens the state is out of domain on four sides at once, and the C_T
-panel is precisely what gives it away; hence it is plotted alongside the states
-instead of being left in the log.
+C_T = T/(q_bar S) blows up. Nothing clips C_T itself -- Riley computes it and
+uses it as is, and so does _compute_ct -- what saturates is the TABLE lookup,
+which only has columns at C_T = 0 and 0.5, with the excess absorbed by the
+Appendix B dCD_T term. When that happens the state is out of domain on several
+sides at once, and the C_T panel is precisely what gives it away; hence it is
+plotted alongside the states instead of being left in the log.
 """
 import os
 import sys

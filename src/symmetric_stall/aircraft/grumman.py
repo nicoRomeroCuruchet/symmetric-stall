@@ -359,6 +359,22 @@ class Grumman:
 
         This is an experiment, not a correction: it exists so the difference
         can be measured. Nothing published changes unless THRUST_MODEL is set.
+
+        VALIDITY FLOOR. Riley fits (A9) as a linear T(V) and states it is
+        "particularly appropriate for the velocities greater than about
+        60 ft/sec. At lower speeds and large throttle settings, the linear
+        model appears to underestimate the thrust that can be developed"
+        (Appendix A, p. 13). 60 ft/s is 0.579 Vs, while the riley grid floor is
+        0.40 Vs = 41 ft/s, so roughly 9 of its 81 airspeed bins sit below the
+        fit's declared range. The error there is in the conservative direction
+        -- less thrust than the aircraft really has -- and the recoveries this
+        paper reports live at 0.80-0.95 Vs, i.e. 83-98 ft/s, comfortably inside
+        the validated band. It matters only for states the value function
+        sweeps, not for the trajectories it produces.
+
+        Neither model clips C_T. The table lookup saturates at C_T = 0.5 and
+        the Appendix B dCD_T increment absorbs the excess, which is Riley's own
+        scheme; clipping C_T here would erase that excess silently.
         """
         vt = max(float(airspeed), 0.1)
         q_bar = 0.5 * self.AIR_DENSITY * vt * vt
