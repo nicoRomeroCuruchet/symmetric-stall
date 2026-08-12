@@ -31,6 +31,7 @@ import matplotlib.pyplot as plt
 logging.disable(logging.INFO)
 
 from symmetric_stall import train as main
+from symmetric_stall.engine import EngineLag
 from symmetric_stall.policy_iteration import PolicyIterationStall
 from symmetric_stall.aircraft.symmetric_stall import SymmetricStall
 from symmetric_stall.utils.utils import get_optimal_action
@@ -60,7 +61,9 @@ ARMS = [
 
 def run_arm(t_det, ramp, when):
     obs, _ = env.specific_reset(0.0, V0, np.deg2rad(A0), 0.0)
-    t, h, dt_ef, t_uns, t_pwr = 0.0, 0.0, 0.0, None, None
+    t, h, t_uns, t_pwr = 0.0, 0.0, None, None
+    engine = EngineLag(TAU_M)
+    dt_ef = engine.value
     stop, hs = RecoveryMonitor(dt), [0.0]
     H = {k: [] for k in ("t", "gamma", "v_norm", "alpha", "q", "de",
                          "dt_cmd", "dt_ef", "h")}
@@ -80,7 +83,7 @@ def run_arm(t_det, ramp, when):
             cmd = 0.0 if t_pwr is None else float(
                 np.clip((t - t_pwr) / ramp, 0.0, 1.0))
 
-        dt_ef = cmd if TAU_M <= 0 else dt_ef + (cmd - dt_ef) * (dt / TAU_M)
+        dt_ef = engine.step(cmd, dt)
 
         for k, v in (("t", t), ("gamma", obs[0]), ("v_norm", obs[1]),
                      ("alpha", obs[2]), ("q", obs[3]), ("de", de),

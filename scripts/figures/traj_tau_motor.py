@@ -28,6 +28,7 @@ import numpy as np
 from symmetric_stall import train as main
 from symmetric_stall import procedures as pp
 from symmetric_stall.aircraft.symmetric_stall import SymmetricStall
+from symmetric_stall.engine import EngineLag
 from symmetric_stall.policy_iteration import PolicyIterationStall
 
 V0 = float(sys.argv[1]) if len(sys.argv) > 1 else 0.85
@@ -36,23 +37,25 @@ TAUS = [0.0, 0.3, 0.6, 1.0]
 TAU_FIG = 0.6            # the tau drawn in the trajectory panels
 
 
-def con_retardo(ctrl, tau, dt):
+def with_engine_lag(ctrl, tau, dt):
     """Wrap a controller with the engine lag of eq. (A4).
 
-    The filter state lives in ctx, which rollout creates fresh per run, so
-    two arms cannot contaminate each other. It starts at 0: the stall entry is
-    at idle, which is what both scripted manoeuvres assume.
+    The filter state lives in ctx, which rollout creates fresh per run, so two
+    arms cannot contaminate each other. It starts at 0: the stall entry is at
+    idle, which is what both scripted manoeuvres assume. The response itself
+    comes from symmetric_stall.engine, so every arm in every figure uses the
+    same discretisation.
     """
     if tau <= 0.0:
         return ctrl
 
-    def nuevo(obs, t, opt, ctx):
+    def wrapped(obs, t, opt, ctx):
         de, thr_cmd = ctrl(obs, t, opt, ctx)
-        thr = ctx.get("_thr_motor", 0.0)
-        thr += (float(thr_cmd) - thr) * (dt / tau)
-        ctx["_thr_motor"] = thr
-        return (de, thr)
-    return nuevo
+        engine = ctx.get("_engine")
+        if engine is None:
+            engine = ctx["_engine"] = EngineLag(tau)
+        return (de, engine.step(thr_cmd, dt))
+    return wrapped
 
 
 env = SymmetricStall()
@@ -75,7 +78,7 @@ table = {}
 for tau in TAUS:
     row = []
     for name, mk, _, _ in BRAZOS:
-        r = pp.rollout(env, pi, con_retardo(mk(), tau, DT), ALPHA0, V0,
+        r = pp.rollout(env, pi, with_engine_lag(mk(), tau, DT), ALPHA0, V0,
                        record=True)
         row.append(r)
         table[(tau, name)] = r

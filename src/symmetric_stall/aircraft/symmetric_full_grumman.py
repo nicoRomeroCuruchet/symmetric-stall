@@ -69,9 +69,18 @@ rather than patched.
 What this model deliberately does NOT reproduce from Riley:
 
   - the first-order engine lag of eq. (A4), delta_t = 1/(tau_e s + 1)
-    delta_t,c. Riley never publishes a value for tau_e, and the sensitivity to
-    it is reported separately (scripts/figures/potencia_riley.py). Thrust is
-    otherwise commanded directly.
+    delta_t,c. It is applied when trajectories are rolled out -- see
+    symmetric_stall.engine -- but NOT while the policy is solved, because
+    carrying it into the DP would promote the effective throttle to a fifth
+    state and take the riley grid from 14.9 M states to 164 M, roughly six days
+    on a 3070, for a policy valid at one invented tau_e: Riley defines tau_e in
+    his symbol list and never publishes a value. The policy is therefore
+    optimal for an ideal engine and is flown on a lagged one, which is the
+    conservative reading -- the true optimum for the lagged plant can only do
+    better, so the gap measured against the CAA/FAA procedures is a lower
+    bound. The sensitivity is reported instead
+    (scripts/figures/potencia_riley.py): the absolute loss depends strongly on
+    tau_e, the comparison between arms barely does (8% over 0 to 1 s).
   - altitude: rho is fixed at sea level. This is consistent rather than
     contradictory, because C_T = T/(q_bar S) is independent of density --
     thrust scales with sigma by eq. (A10) and so does q_bar.

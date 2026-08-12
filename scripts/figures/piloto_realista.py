@@ -26,6 +26,7 @@ from symmetric_stall import train as main
 
 logging.disable(logging.INFO)
 
+from symmetric_stall.engine import EngineLag
 from symmetric_stall.policy_iteration import PolicyIterationStall
 from symmetric_stall.aircraft.symmetric_stall import SymmetricStall
 from symmetric_stall.utils.utils import get_optimal_action
@@ -50,7 +51,8 @@ def run_arm(mode, tau_m, tau_h=TAU_H):
     obs, _ = env.specific_reset(0.0, V0, np.deg2rad(A0), 0.0)
     n_ret = int(round(tau_h / dt))
     cola = deque([np.float32(DE_DOWN)] * n_ret, maxlen=max(1, n_ret))
-    dt_ef = 0.0 if mode != "optimal" else 0.0
+    engine = EngineLag(tau_m)
+    dt_ef = engine.value
     t, h, t_uns = 0.0, 0.0, None
     stop = RecoveryMonitor(dt)
     hs, hist = [0.0], {"t": [], "de": [], "dt_cmd": [], "dt_ef": [],
@@ -73,10 +75,7 @@ def run_arm(mode, tau_m, tau_h=TAU_H):
         else:                       # faa: the ramp starts on unstalling
             dt_cmd = 0.0 if t_uns is None else min((t - t_uns) / GRATTON_RAMP_S, 1.0)
 
-        if tau_m > 0.0:             # first-order engine (Riley A4)
-            dt_ef += (dt_cmd - dt_ef) * (dt / tau_m)
-        else:
-            dt_ef = dt_cmd
+        dt_ef = engine.step(dt_cmd, dt)   # first-order engine (Riley A4)
 
         for k, v in (("t", t), ("de", de), ("dt_cmd", dt_cmd), ("dt_ef", dt_ef),
                      ("alpha", obs[2]), ("gamma", obs[0]), ("h", h),
