@@ -519,15 +519,15 @@ def thrust_sensitivity():
     for eta in ETA_LIST:
         env = SymmetricStall()
         env.airplane.THROTTLE_LINEAR_MAPPING *= eta / ETA_NOMINAL
-        celda = {}
+        cell = {}
         for a0 in ALPHA_GRID_DEG:
             for v0 in VNORM_GRID:
                 r = rollout(env, pi, ctrl_optimal, a0, v0)
-                celda[f"a{a0:.0f}_v{v0:.2f}"] = {
+                cell[f"a{a0:.0f}_v{v0:.2f}"] = {
                     "h": float(r["h"]), "t": float(r["t"]),
                     "status": r["status"]}
-        data["cells"][f"eta{eta:.2f}"] = celda
-        can = celda[f"a{ALPHA_GRID_DEG[-1]:.0f}_v0.95"]["h"]
+        data["cells"][f"eta{eta:.2f}"] = cell
+        can = cell[f"a{ALPHA_GRID_DEG[-1]:.0f}_v0.95"]["h"]
         if abs(eta - 0.90) < 1e-9:
             base = can
         logger.info(f"eta={eta:.2f}: canonico h={can:.3f} m")

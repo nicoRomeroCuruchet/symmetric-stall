@@ -67,8 +67,8 @@ extern "C" __global__ void test_derivs(
 
 def cuda_body():
     txt = open("PolicyIteration.py").read()
-    marca = "cuda_source = reward_defines + r'''"
-    i = txt.index(marca) + len(marca)
+    marker = "cuda_source = reward_defines + r'''"
+    i = txt.index(marker) + len(marker)
     return txt[i:txt.index("'''", i)]
 
 
