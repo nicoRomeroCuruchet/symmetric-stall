@@ -1,19 +1,18 @@
-# Symmetric stall recovery — DP óptimo sobre la aerodinámica de Riley
+# Symmetric stall recovery — optimal DP over Riley's aerodynamics
 
-Recuperación óptima de pérdida simétrica en un Grumman AA-1, resuelta por
-iteración de políticas sobre GPU en un modelo 4-DOF con las tablas
-aerodinámicas de Riley (1985). El resultado central: la política óptima es una
-**cota**, no un procedimiento volable, y la penalización de los procedimientos
-CAA/FAA se explica casi enteramente por la rampa de potencia, no por el
-gatillo del elevador.
+Optimal recovery from a symmetric stall in a Grumman AA-1, solved by GPU policy
+iteration on a 4-DOF model with Riley's (1985) aerodynamic tables. The central
+result: the optimal policy is a **bound**, not a flyable procedure, and the
+penalty paid by the CAA/FAA procedures is explained almost entirely by the
+power ramp, not by the elevator trigger.
 
-**Estado:** el manuscrito todavía no está escrito. Los resultados, con sus
-números y su interpretación, están en [`results/LEEME.md`](results/LEEME.md) —
-es el material del que sale el paper.
+**Status:** the manuscript is not written yet. The results, with their numbers
+and their interpretation, live in [`results/README.md`](results/README.md) —
+that is the material the paper is written from.
 
-## Instalación
+## Installation
 
-Requiere una GPU NVIDIA (el solver es un kernel CUDA compilado con CuPy) y
+Requires an NVIDIA GPU (the solver is a CUDA kernel compiled through CuPy) and
 Python ≥ 3.10.
 
 ```bash
@@ -21,116 +20,133 @@ uv venv --python 3.14 .venv
 uv pip install -e .
 ```
 
-El extra `[ctk]` de CuPy viene incluido a propósito: sin los headers de CUDA,
-el kernel falla en tiempo de ejecución con `Failed to find CUDA headers`.
+CuPy's `[ctk]` extra is included on purpose: without the CUDA headers the
+kernel fails at runtime with `Failed to find CUDA headers`.
 
-## Entrenar
+## Training
 
 ```bash
-symstall-train                    # grilla riley + empuje riley = lo del paper
-symstall-train --grid paper1      # grilla del paper 1, para aislar efectos
+symstall-train                    # riley grid + riley thrust = the paper's setup
+symstall-train --grid paper1      # paper-1 grid, to separate effects
 symstall-train --help
 ```
 
-| grilla | dimensiones (γ, V, α, q) | estados | tiempo (RTX 3090) |
+| grid | dimensions (γ, V, α, q) | states | time (RTX 3090) |
 |---|---|---|---|
-| `riley` (default) | 56 × 81 × 80 × 41 | 14.878.080 | 47 iter, **4 h 18** |
-| `paper1` | 56 × 41 × 60 × 41 | 5.648.160 | 23 iter, **43 min** |
+| `riley` (default) | 56 × 81 × 80 × 41 | 14,878,080 | 47 iter, **4 h 18** |
+| `paper1` | 56 × 41 × 60 × 41 | 5,648,160 | 23 iter, **43 min** |
 
-La política sale en `data/policies/`, con la configuración codificada en el
-nombre y estampada adentro del `.npz` (clave `run_metadata`).
+The policy is written to `data/policies/`, with its configuration encoded in
+the filename and stamped inside the `.npz` (the `run_metadata` key).
 
-**La grilla `riley` es el default en todo el software**, no sólo en el CLI:
-`setup_symmetric_stall_experiment()` sin argumentos la construye, así que los
-scripts de figuras que reconstruyen el espacio de estados también la usan. Cada
-corrida loguea la grilla que construyó, y `assert_grid_matches()` aborta si una
-política cargada no fue entrenada con la grilla que se está usando — antes ese
-emparejamiento era silencioso.
+**The `riley` grid is the default throughout the software**, not just in the
+CLI: `setup_symmetric_stall_experiment()` with no arguments builds it, so the
+figure scripts that rebuild the state space use it too. Every run logs the grid
+it built, and `assert_grid_matches()` aborts if a loaded policy was not trained
+on the grid in use — that pairing used to happen silently.
 
-**Memoria de GPU:** ~430 MB para la grilla `riley` (todos los arrays son
-O(estados), ninguno O(estados × acciones)), así que entra en cualquier placa
-moderna. Verificado en una RTX 3070 Laptop de 8 GB. Lo que escala mal es el
-**tiempo**: en una 3070 esperá del orden de 11–15 h para la grilla `riley`.
+**GPU memory:** ~430 MB for the `riley` grid (every array is O(states), none is
+O(states × actions)), so it fits on any modern card. Verified on an 8 GB RTX
+3070 Laptop. What scales badly is **time**: on a 3070 expect on the order of
+11–15 h for the `riley` grid.
 
-Después de entrenar hay que rellenar la política terminal:
-
-```bash
-python scripts/figures/fill_terminal_policy.py data/policies/<archivo>.npz
-```
-
-Sobrescribe el `.npz` y deja el original como `.npz.raw`. El relleno vale entre
-10 cm y 74 cm de altura perdida según la velocidad inicial (ver `LEEME.md`).
-
-## Reproducir las figuras
-
-Todos los scripts se corren **desde la raíz del repo** y toman la política como
-primer argumento. Las figuras salen en `results/`.
+After training, the terminal policy has to be filled in:
 
 ```bash
-python scripts/figures/maniobras_086.py data/policies/<archivo>.npz 0.86
+python scripts/figures/fill_terminal_policy.py data/policies/<file>.npz
 ```
 
-| script | qué hace |
+This overwrites the `.npz` and leaves the original as `.npz.raw`. The fill is
+worth between 10 cm and 74 cm of lost altitude depending on the initial
+airspeed (see `results/README.md`).
+
+## Reproducing the figures
+
+Every script runs **from the repository root** and takes the policy as its
+first argument. Figures are written to `results/`.
+
+```bash
+python scripts/figures/maniobras_086.py data/policies/<file>.npz 0.86
+```
+
+| script | what it does |
 |---|---|
-| `canonica_filled_vs_raw.py <raw> <filled> V0...` | trayectorias rellenada vs cruda |
-| `barrido_v0.py <raw> <filled>` | la curva `h_min(V0)` |
-| `familia2.py <npz> <salida.png> V0...` | trayectorias superpuestas |
-| `maniobras_086.py <npz> <V0> [alpha0]` | óptimo vs CAA vs FAA |
-| `ablacion.py <npz> <V0>` | factorial gatillo × potencia |
-| `potencia_pura.py <npz> <V0>` | mismo elevador, distinta rampa |
-| `potencia_riley.py <npz> <V0> <tau_fig> <taus...>` | con el motor de Riley |
-| `piloto_realista.py <npz> <V0> <tau_h> <taus_m...>` | retardo humano + motor |
+| `canonica_filled_vs_raw.py <raw> <filled> V0...` | filled vs raw trajectories |
+| `barrido_v0.py <raw> <filled>` | the `h_min(V0)` curve |
+| `familia2.py <npz> <out.png> V0...` | overlaid trajectories |
+| `maniobras_086.py <npz> <V0> [alpha0]` | optimum vs CAA vs FAA |
+| `ablacion.py <npz> <V0>` | trigger × power factorial |
+| `potencia_pura.py <npz> <V0>` | same elevator, different ramp |
+| `potencia_riley.py <npz> <V0> <tau_fig> <taus...>` | with Riley's engine lag |
+| `piloto_realista.py <npz> <V0> <tau_h> <taus_m...>` | human delay + engine |
 
-## La configuración que antes viajaba escondida
+## The configuration that used to travel hidden
 
-Este es el arreglo principal de la migración. La configuración de una corrida
-entraba por tres canales invisibles, y el `.npz` no registraba ninguno:
+This is the main fix from the migration. A run's configuration arrived through
+three invisible channels, and the `.npz` recorded none of them:
 
-| antes | ahora |
+| before | now |
 |---|---|
-| `THRUST_MODEL=riley` como variable de entorno, default del código `paper1` — si te olvidabas, la canónica daba −13.3 m en vez de −6.8 | flag `--thrust`, default `riley`, y avisa si corrés con el default del código |
-| la grilla se elegía **editando `main.py`** con `set_grilla_paper.py`, dejando los comentarios describiendo una grilla y el código corriendo otra | flag `--grid`, dos presets nombrados en `train.py:GRIDS` |
-| `CG_AFT_M`/`CG_RIGHT_M`/`CG_BELOW_M`, leídas **al importar** la planta | flags `--cg-aft`/`--cg-right`/`--cg-below`, aplicadas antes del import (ver `runconfig.py`) |
-| todas las políticas se guardaban como `SymmetricStall_policy.npz` y se pisaban entre sí | el nombre codifica grilla + empuje + CG, y la config va adentro del `.npz` |
+| `THRUST_MODEL=riley` as an environment variable, with the code defaulting to `paper1` — forget it and the canonical recovery gave −13.3 m instead of −6.8 | `--thrust`, defaulting to `riley`, and it warns when running on the code default |
+| the grid was selected by **editing `main.py`** with `set_grilla_paper.py`, leaving the comments describing one grid while the code ran another | `--grid`, two named presets in `train.py:GRIDS` |
+| `CG_AFT_M`/`CG_RIGHT_M`/`CG_BELOW_M`, read **at import time** by the plant | `--cg-aft`/`--cg-right`/`--cg-below`, applied before the import (see `runconfig.py`) |
+| every policy was saved as `SymmetricStall_policy.npz`, overwriting the previous one | the filename encodes grid + thrust + CG, and the configuration goes inside the `.npz` |
 
-Las políticas entrenadas antes de este cambio son anónimas: al cargarlas, el
-solver avisa que no registran su configuración.
+Policies trained before this change are anonymous: loading one makes the solver
+warn that it does not record its configuration.
 
-## Estructura
+## Layout
 
 ```
-src/symmetric_stall/     el paquete instalable
-  policy_iteration.py    el solver: kernel CUDA + iteración de políticas
-  train.py               grillas, entrenamiento, simulación, heatmaps
-  cli.py                 el CLI (parsea y fija el entorno ANTES de importar la planta)
-  runconfig.py           empuje y CG: aplicar, describir, estampar
-  aircraft/              la planta: Grumman AA-1 y tablas de Riley
-  utils/                 interpolación baricéntrica, monitor de recuperación
-  analysis/              métricas de política, ablación de dt
+src/symmetric_stall/     the installable package
+  policy_iteration.py    the solver: CUDA kernel + policy iteration
+  train.py               grids, training, simulation, heatmaps
+  cli.py                 the CLI (sets the environment BEFORE importing the plant)
+  runconfig.py           thrust and CG: apply, describe, stamp
+  aircraft/              the plant: Grumman AA-1 and Riley's tables
+  utils/                 barycentric interpolation, recovery monitor
+  analysis/              policy metrics, dt ablation
 scripts/
-  figures/               las figuras del paper 4-DOF
-  verify/                verificaciones contra las tablas de Riley
-  paper1/                scripts del paper anterior (PPO vs PI, barridos de CG)
-results/                 figuras generadas + LEEME.md con los números
-data/policies/           los .npz (fuera de git: 119 MB c/u, regenerables)
-refs/                    PDFs de referencia (fuera de git)
-logs/                    logs de las corridas de la 3090
-attic/                   código muerto o de un solo uso — ver attic/README.md
+  figures/               the 4-DOF paper figures
+  verify/                checks against Riley's tables
+  paper1/                scripts from the previous paper (PPO vs PI, CG sweeps)
+results/                 generated figures + README.md with the numbers
+data/policies/           the .npz files (out of git: 119 MB each, regenerable)
+refs/                    reference PDFs (out of git)
+logs/                    logs from the 3090 runs
+attic/                   dead or single-use code — see attic/README.md
 ```
 
-## Pendientes
+## Open items
 
-1. **Escribir el manuscrito.** El material está en `results/LEEME.md`.
-2. **Analizar la corrida de la grilla del paper 1**, que es la que separa el
-   efecto de la grilla del efecto del empuje. Todavía sin analizar.
-3. **El valor de `tau_e` de Riley**: no está en el Apéndice A ni en la lista de
-   símbolos con cifra. Habría que buscarlo en las referencias del informe. La
-   pérdida absoluta depende fuerte de él; la comparación entre brazos no (8 %).
-4. **La caja no absorbente del 6-DOF**: el 4,99 % de sus celdas vale menos que
-   estrellarse. No afecta al 4-DOF de este repo (techo de α en +40).
+1. **Write the manuscript.** The material is in `results/README.md`.
+2. **Analyse the paper-1 grid run**, the one that separates the effect of the
+   grid from the effect of the thrust model. Still unanalysed — and note that
+   the `paper1` grid carries two known pathologies of its own (half its alpha
+   axis runs on clamped coefficients, and its +20° ceiling is non-absorbing),
+   so it is not a clean grid-only comparison.
+3. **Riley's `tau_e`**: it appears neither in Appendix A nor in the symbol list
+   with a figure. It would have to be tracked down in the report's references.
+   The absolute altitude loss depends strongly on it; the comparison between
+   arms barely does (8%).
+4. **The 6-DOF non-absorbing box**: 4.99% of its cells are worth less than
+   crashing. It does not affect the 4-DOF model in this repo (alpha ceiling at
+   +40).
 
-## Procedencia
+### Known issues in the solver
 
-Migrado desde `nromero@udesa:/home/nromero/stall-spin-recovery-dp` (la máquina
-con la 3090, donde se corrieron todos los resultados). Se trajo el código, las
-figuras y los logs; no las políticas entrenadas ni los entornos virtuales.
+Found while auditing, not yet fixed:
+
+- `run()` saves the policy twice — the second one anonymously into the current
+  working directory, which is where the stray `SymmetricStall_policy.npz` at the
+  root of the udesa tree came from.
+- The chattering tolerance lets policy iteration report *"converged optimally"*
+  with up to `n_states*1e-4` states still changing their optimal action (1,487
+  on the `riley` grid), without recording it.
+- The `.npz` records neither the final residual nor the number of iterations.
+
+## Provenance
+
+Migrated from `nromero@udesa:/home/nromero/stall-spin-recovery-dp` (the machine
+with the 3090, where every result was produced). Code, figures and logs were
+brought over; trained policies and virtualenvs were not.

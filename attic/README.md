@@ -1,45 +1,44 @@
-# attic — código muerto o de un solo uso
+# attic — dead or single-use code
 
-Nada de acá se importa desde `src/` ni desde `scripts/`, y **los imports no se
-reescribieron** cuando el proyecto pasó a ser un paquete: estos archivos quedan
-tal como llegaron de la máquina `udesa`. Si algo de acá se rescata, hay que
-arreglarle los imports primero.
+Nothing here is imported from `src/` or `scripts/`, and **the imports were not
+rewritten** when the project became a package: these files are exactly as they
+arrived from the `udesa` machine. If anything here is to be rescued, its
+imports have to be fixed first.
 
-## Roto: depende de módulos que no existen
+## Broken: depends on modules that do not exist
 
-Restos de la rama de barrena/6-DOF, que vivía en otro árbol.
+Leftovers from the spin / 6-DOF branch, which lived in a different tree.
 
-| archivo | importa | estado |
+| file | imports | state |
 |---|---|---|
-| `diag_eval_6dof.py` | `PolicyIterationBankedSpin` | el módulo no existe |
-| `volcar_simetrico.py` | `aircraft.banked_spin_grumman`, `aircraft.spin_grumman` | no existen |
+| `diag_eval_6dof.py` | `PolicyIterationBankedSpin` | module does not exist |
+| `volcar_simetrico.py` | `aircraft.banked_spin_grumman`, `aircraft.spin_grumman` | do not exist |
 
-## Obsoleto: reemplazado por el CLI
+## Obsolete: superseded by the CLI
 
-| archivo | reemplazado por |
+| file | superseded by |
 |---|---|
-| `set_grilla_paper.py` | `symstall-train --grid` — editaba `main.py` en el lugar |
-| `main.py.grilla_nueva` | preset `riley` de `train.py:GRIDS` |
-| `main.py.bak_umbral2` | ídem, con el umbral `has_dived` viejo (−2°, hoy −1°) |
+| `set_grilla_paper.py` | `symstall-train --grid` — it edited `main.py` in place |
+| `main.py.grilla_nueva` | the `riley` preset in `train.py:GRIDS` |
+| `main.py.bak_umbral2` | the same, with the old `has_dived` threshold (−2°, now −1°) |
 
-Los tres `main.py.*` son la evidencia de cómo se elegía la grilla antes: la
-copia con la grilla nueva es la que entrenó la política principal, aunque el
-`main.py` que quedó en disco tenía la del paper 1.
+The three `main.py.*` files are the evidence of how the grid used to be
+selected: the copy carrying the new grid is the one that trained the main
+policy, even though the `main.py` left on disk carried the paper-1 grid.
 
-## Parches de un solo uso
+## Single-use patches
 
 `patch_alpha_final.py`, `patch_det.py`, `patch_esc.py`, `fix_familia.py`,
-`fix_fig.py` — scripts que reescribían *otros* scripts con reemplazo de texto.
-Ya aplicados; se guardan solo como registro de qué se cambió.
+`fix_fig.py` — scripts that rewrote *other* scripts by text substitution.
+Already applied; kept only as a record of what was changed.
 
-`completar_arm_pd.py`, `regen_orphans.py` — utilidades puntuales de limpieza de
-datos.
+`completar_arm_pd.py`, `regen_orphans.py` — one-off data-cleaning utilities.
 
-## Otra línea de trabajo
+## A different line of work
 
-`PPO-SymmetricStall.py`, `PPO-SymmetricStall-baseline.py` — los baselines de
-PPO del paper 1. Necesitan `stable-baselines3`, que no está en las
-dependencias.
+`PPO-SymmetricStall.py`, `PPO-SymmetricStall-baseline.py` — the PPO baselines
+from paper 1. They need `stable-baselines3`, which is not among the
+dependencies.
 
-`exportar_godot_8dof.py`, `volcar_tablas.py` — exportadores para el visualizador
-en Godot y volcado de tablas.
+`exportar_godot_8dof.py`, `volcar_tablas.py` — exporters for the Godot
+visualiser and for dumping tables.
