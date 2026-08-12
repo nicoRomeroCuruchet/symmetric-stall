@@ -29,10 +29,10 @@ GAMMA0, ALPHA0, Q0 = 0.0, 20.0, 0.0
 COLOR = {"sin rellenar": "#D55E00", "rellenada": "#0072B2"}
 
 env = SymmetricStall()
-politicas = {}
-for etiqueta, ruta in (("sin rellenar", RAW), ("rellenada", FILLED)):
-    politicas[etiqueta] = PolicyIterationStall.load(ruta, env=env)
-    print("cargada %-13s %s" % (etiqueta, ruta.name))
+policies = {}
+for label, path in (("unfilled", RAW), ("filled", FILLED)):
+    policies[label] = PolicyIterationStall.load(path, env=env)
+    print("loaded %-13s %s" % (label, path.name))
 
 PANELES = [("gamma", r"$\gamma$ (deg)", np.rad2deg),
            ("v_norm", r"$V/V_s$", lambda x: x),
@@ -46,23 +46,23 @@ for v0 in VS:
     hists = {}
     print("\n=== IC canonica: gamma=%.0f, V=%.2f Vs, alpha=%.0f, q=%.0f ==="
           % (GAMMA0, v0, ALPHA0, Q0))
-    for etiqueta, pi in politicas.items():
+    for label, pi in policies.items():
         h = main.run_dp_simulation(pi, GAMMA0, v0, ALPHA0, Q0)
-        hists[etiqueta] = h
+        hists[label] = h
         hh = np.asarray(h["h"])
         print("  %-13s dur %6.2f s   dh %+8.3f m   h_min %+8.3f m   "
               "alpha_end %6.2f deg   mean thr %.3f"
-              % (etiqueta, h["t"][-1], h["h"][-1], hh.min(),
+              % (label, h["t"][-1], h["h"][-1], hh.min(),
                  np.rad2deg(h["alpha"][-1]), np.mean(h["dt_ctrl"])))
         main.plot_time_response(h, "canonica_%s_v%03d"
-                                % (etiqueta.replace(" ", ""), round(v0 * 100)))
+                                % (label.replace(" ", ""), round(v0 * 100)))
 
     # --- comparativo superpuesto ---
     fig, axes = plt.subplots(len(PANELES), 1, figsize=(7.2, 12.0), sharex=True)
     for ax, (clave, etiq, conv) in zip(axes, PANELES):
-        for etiqueta, h in hists.items():
+        for label, h in hists.items():
             ax.plot(h["t"], conv(np.asarray(h[clave])), lw=1.3,
-                    color=COLOR[etiqueta], label=etiqueta, zorder=3)
+                    color=COLOR[label], label=label, zorder=3)
         if clave == "alpha":
             ax.axhline(14.0, color="0.5", lw=0.8, ls="--", zorder=1)
             ax.annotate(r"$\alpha_s=14^\circ$", xy=(0.99, 14.0),
@@ -71,13 +71,13 @@ for v0 in VS:
         if clave in ("gamma", "h"):
             ax.axhline(0.0, color="0.85", lw=0.6, zorder=0)
         if clave == "h":
-            for etiqueta, h in hists.items():
+            for label, h in hists.items():
                 hh = np.asarray(h["h"]); i = int(np.argmin(hh))
-                ax.plot(h["t"][i], hh[i], "o", ms=5, color=COLOR[etiqueta],
+                ax.plot(h["t"][i], hh[i], "o", ms=5, color=COLOR[label],
                         mec="white", mew=1.0, zorder=4)
                 ax.annotate("%.2f m" % hh[i], xy=(h["t"][i], hh[i]),
                             xytext=(4, -10), textcoords="offset points",
-                            fontsize=7.5, color=COLOR[etiqueta])
+                            fontsize=7.5, color=COLOR[label])
         ax.set_ylabel(etiq, fontsize=9)
         ax.grid(True, color="0.92", lw=0.5)
         ax.set_axisbelow(True)

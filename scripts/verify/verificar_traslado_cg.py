@@ -115,6 +115,6 @@ ok3 = dcm_aft > 0 > dcm_fwd
 a.CG_AFT = a.CG_RIGHT = a.CG_BELOW = 0.0
 a.DXCG_OVER_CHORD = 0.05
 ok4 = abs(a.CG_AFT - 0.05 * a.CHORD) < 1e-12 and abs(a.DXCG_OVER_CHORD - 0.05) < 1e-12
-print("  (4) DXCG_OVER_CHORD sigue siendo la fraccion de cuerda: %s" % ("SI" if ok4 else "NO"))
+print("  (4) DXCG_OVER_CHORD is still the chord fraction: %s" % ("YES" if ok4 else "NO"))
 
 sys.exit(0 if (ident and worst < 1e-15 and ok3 and ok4) else 1)
