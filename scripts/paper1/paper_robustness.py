@@ -49,8 +49,14 @@ logger = logging.getLogger(__name__)
 
 OUT_DIR = paths.out_dir()
 
-MASS_FACTORS = [0.85, 0.90, 0.95, 1.00, 1.05, 1.10, 1.15]
-DXCG_LIST = [-0.07, -0.05, -0.03, 0.00, 0.03, 0.05, 0.07]  # aft-positive, chord frac
+# Both axes on a uniform 2.5 % step. The mass axis used to move in 5 % jumps,
+# which is coarse for a quantity whose whole range is one passenger's worth of
+# load; the CG axis used to step 2, 2, 3, 3, 2, 2 % of chord, so its contours
+# carried a spacing artefact that had nothing to do with the aircraft. The CG
+# range moves from +-0.07 to +-0.075 to land on the same grid, which is the
+# only thing that changed about what is covered.
+MASS_FACTORS = [round(0.85 + 0.025 * i, 4) for i in range(13)]     # 0.85 .. 1.15
+DXCG_LIST = [round(-0.075 + 0.025 * i, 4) for i in range(7)]       # aft-positive
 # CANONICAL comes from procedures.py: it used to be redeclared here as
 # (20, 0.95), so moving the evaluation band would have left this file
 # indexing a cell its own grid no longer contains.
@@ -78,6 +84,19 @@ plt.rcParams.update({
 })
 
 
+def cell_key(mass_factor: float, dxcg: float) -> str:
+    """Key of a (mass, CG) cell in robustness.json.
+
+    Three decimals, not two: at 2.5 % steps a 2-decimal key prints 0.875 as
+    0.88 and 0.075 as 0.07, which is both lossy and a lie about which aircraft
+    the cell is. Everything that writes or reads the matrix goes through here.
+    """
+    return f"m{mass_factor:.3f}_dx{dxcg:+.3f}"
+
+
+NOMINAL_KEY = "m1.000_dx+0.000"
+
+
 def perturbed_env(mass_factor: float, dxcg: float) -> SymmetricStall:
     """Perturb dynamics only; observation normalization (STALL_AIRSPEED)
     and throttle map (THROTTLE_LINEAR_MAPPING) stay nominal."""
@@ -87,45 +106,75 @@ def perturbed_env(mass_factor: float, dxcg: float) -> SymmetricStall:
     return env
 
 
-def run_matrix(pi):
+_MATRIX_STATE = {}
+
+
+def _matrix_init():
+    """One policy per worker. The .npz is 119 MB; loading it 91 times would
+    cost more than the rollouts."""
+    _MATRIX_STATE["pi"] = paths.load_policy(env=SymmetricStall())
+
+
+def _matrix_cell(job):
+    """One (mass, CG) cell: the nine ICs of the shared evaluation grid.
+
+    The unit of work is the CELL, not the rollout, so the perturbed plant is
+    built exactly once per cell as in the serial version -- and the nine
+    rollouts inside it stay in the order that produced the published numbers.
+    """
+    mf, dx = job
+    pi = _MATRIX_STATE["pi"]
+    env = perturbed_env(mf, dx)
+    vs_ratio = float(np.sqrt(mf))              # Vs_real / Vs_nominal
+    cell = {}
+    for a0 in ALPHA_GRID_DEG:
+        for v0f in VNORM_GRID:
+            # IC at v0f of the REAL stall speed, expressed in the
+            # nominal-Vs units the policy (and env state) use.
+            vnorm0 = v0f * vs_ratio
+            r = rollout(env, pi, ctrl_optimal, a0, vnorm0, record=True)
+            amax = float(np.rad2deg(np.max(r["hist"]["alpha"])))
+            gmax = float(np.rad2deg(np.max(r["hist"]["gamma"])))
+            # alpha AT EPISODE CLOSE. The stopping rule cuts at the first
+            # return to gamma = 0 after a dive, and the DP's terminal set is
+            # {gamma >= 0} with no condition on alpha: an oscillating
+            # trajectory can cross level while still stalled and be declared
+            # recovered. Recording it allows those cells to be flagged
+            # instead of read as fast recoveries.
+            afin = float(np.rad2deg(r["hist"]["alpha"][-1]))
+            cell[f"a{a0:.0f}_v{v0f:.2f}"] = {
+                "h": r["h"], "t": r["t"], "status": r["status"],
+                "alpha_max_deg": amax, "gamma_max_deg": gmax,
+                "alpha_final_deg": afin,
+            }
+    return cell
+
+
+def run_matrix(pi=None, workers=None):
+    """Mass x CG matrix, one process per worker.
+
+    The cells are independent and deterministic, so this is a pure speedup:
+    at 2.5 % steps the serial loop was 819 rollouts back to back, near an
+    hour, which made every iteration on the figure expensive.
+    """
+    import multiprocessing as mp
+    import os
+
     data = {"mass_factors": MASS_FACTORS, "dxcg": DXCG_LIST,
             "alpha0_deg": list(ALPHA_GRID_DEG), "v0_frac": list(VNORM_GRID),
             "cells": {}}
-    total = len(MASS_FACTORS) * len(DXCG_LIST)
-    done = 0
-    for mf in MASS_FACTORS:
-        vs_ratio = float(np.sqrt(mf))          # Vs_real / Vs_nominal
-        for dx in DXCG_LIST:
-            env = perturbed_env(mf, dx)
-            cell = {}
-            for a0 in ALPHA_GRID_DEG:
-                for v0f in VNORM_GRID:
-                    # IC at v0f of the REAL stall speed, expressed in the
-                    # nominal-Vs units the policy (and env state) use.
-                    vnorm0 = v0f * vs_ratio
-                    r = rollout(env, pi, ctrl_optimal, a0, vnorm0,
-                                record=True)
-                    amax = float(np.rad2deg(np.max(r["hist"]["alpha"])))
-                    gmax = float(np.rad2deg(np.max(r["hist"]["gamma"])))
-                    # alpha AT EPISODE CLOSE. The stopping rule cuts at the
-                    # first return to gamma = 0 after a dive, and the DP's
-                    # terminal set is {gamma >= 0} with no condition on alpha:
-                    # an oscillating trajectory can cross level while still
-                    # stalled and be declared recovered. Recording it allows
-                    # those cells to be flagged instead of read as fast
-                    # recoveries.
-                    afin = float(np.rad2deg(r["hist"]["alpha"][-1]))
-                    cell[f"a{a0:.0f}_v{v0f:.2f}"] = {
-                        "h": r["h"], "t": r["t"], "status": r["status"],
-                        "alpha_max_deg": amax, "gamma_max_deg": gmax,
-                        "alpha_final_deg": afin,
-                    }
-            data["cells"][f"m{mf:.2f}_dx{dx:+.2f}"] = cell
-            done += 1
-            ck = f"a{CANONICAL[0]:.0f}_v{CANONICAL[1]:.2f}"
-            logger.info(f"[{done}/{total}] m×{mf:.2f} dx{dx:+.2f}: "
-                        f"canonical {cell[ck]['h']:.2f} m "
-                        f"({cell[ck]['status']})")
+    jobs = [(float(mf), float(dx)) for mf in MASS_FACTORS for dx in DXCG_LIST]
+    n = workers or max(1, min(12, (os.cpu_count() or 2) - 2))
+    logger.info(f"[matrix] {len(jobs)} cells x {len(ALPHA_GRID_DEG)*len(VNORM_GRID)}"
+                f" ICs over {n} workers")
+    with mp.get_context("spawn").Pool(n, initializer=_matrix_init) as pool:
+        out = pool.map(_matrix_cell, jobs, chunksize=1)
+
+    ck = f"a{CANONICAL[0]:.0f}_v{CANONICAL[1]:.2f}"
+    for (mf, dx), cell in zip(jobs, out):
+        data["cells"][cell_key(mf, dx)] = cell
+        logger.info(f"m×{mf:.3f} dx{dx:+.3f}: canonical {cell[ck]['h']:.2f} m "
+                    f"({cell[ck]['status']})")
     (OUT_DIR / "robustness.json").write_text(json.dumps(data, indent=1))
     logger.info("[+] robustness.json written")
     return data
@@ -227,9 +276,9 @@ def make_matrix_figure(data=None):
         data = json.loads((OUT_DIR / "robustness.json").read_text())
     ck = f"a{CANONICAL[0]:.0f}_v{CANONICAL[1]:.2f}"
     M = data["mass_factors"]; DX = data["dxcg"]
-    H = np.array([[data["cells"][f"m{mf:.2f}_dx{dx:+.2f}"][ck]["h"]
+    H = np.array([[data["cells"][cell_key(mf, dx)][ck]["h"]
                    for dx in DX] for mf in M])
-    h_nom = data["cells"]["m1.00_dx+0.00"][ck]["h"]
+    h_nom = data["cells"][NOMINAL_KEY][ck]["h"]
     excess = h_nom - H          # positive = worse than nominal-on-nominal
 
     from matplotlib.colors import TwoSlopeNorm
@@ -260,12 +309,12 @@ def make_matrix_figure(data=None):
     # own close -- separates the two by a wide margin, and makes it structurally
     # impossible to flag the reference.
     ALPHA_S_DEG = 14.0
-    afin_nom = data["cells"]["m1.00_dx+0.00"][ck].get("alpha_final_deg")
+    afin_nom = data["cells"][NOMINAL_KEY][ck].get("alpha_final_deg")
     alpha_close_thr = max(ALPHA_S_DEG, afin_nom or ALPHA_S_DEG) + 1.0
 
     for i, mf in enumerate(M):
         for j, dx in enumerate(DX):
-            cellinfo = data["cells"][f"m{mf:.2f}_dx{dx:+.2f}"][ck]
+            cellinfo = data["cells"][cell_key(mf, dx)][ck]
             # two different marks, for two different failures of the metric:
             #   *  does not return to level within the horizon
             #   †  returns to level STILL STALLED: the trajectory oscillates
@@ -282,8 +331,13 @@ def make_matrix_figure(data=None):
             ax.text(j, i, f"{excess[i, j]:+.1f}{mark}", ha="center",
                     va="center", fontsize=9,
                     color="white" if dark else "black")
-    ax.set_xticks(range(len(DX)), [f"{d * 100:+.0f}%" for d in DX])
-    ax.set_yticks(range(len(M)), [f"{(m - 1) * 100:+.0f}%" for m in M])
+    # %+.0f turned the 2.5 % steps into "+2%" and "+8%": one decimal, with
+    # the trailing .0 trimmed so whole percentages stay clean.
+    def pct(x):
+        return f"{x:+.1f}%".replace(".0%", "%")
+
+    ax.set_xticks(range(len(DX)), [pct(d * 100) for d in DX])
+    ax.set_yticks(range(len(M)), [pct((m - 1) * 100) for m in M])
     ax.set_xlabel(r"CG shift (% of $\bar{c}$, aft positive)")
     ax.set_ylabel("Mass change vs. nominal")
     sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
@@ -298,9 +352,9 @@ def make_matrix_figure(data=None):
 
     # Report what the marks cover, so a clean map is visibly clean rather than
     # merely unannotated.
-    afins = np.array([data["cells"][f"m{mf:.2f}_dx{dx:+.2f}"][ck]
+    afins = np.array([data["cells"][cell_key(mf, dx)][ck]
                       ["alpha_final_deg"] for mf in M for dx in DX])
-    n_star = sum(data["cells"][f"m{mf:.2f}_dx{dx:+.2f}"][ck]["status"]
+    n_star = sum(data["cells"][cell_key(mf, dx)][ck]["status"]
                  != "recovered" for mf in M for dx in DX)
     logger.info(f"[=] alpha at close: {afins.min():.2f}-{afins.max():.2f} deg "
                 f"(nominal {afin_nom:.2f}); still-stalled threshold "
@@ -333,13 +387,13 @@ def write_cg_gap_table(data=None):
         r"Excess over nominal CG (m) \\",
         r"        \midrule",
     ]
-    h_ref = data["cells"][f"m1.00_dx{0.0:+.2f}"][ck]["h"]
+    h_ref = data["cells"][NOMINAL_KEY][ck]["h"]
     for dx in DXCG_LIST:
-        k = f"m1.00_dx{dx:+.2f}"
+        k = cell_key(1.00, dx)
         if k not in data["cells"]:
             continue
         h_pol = data["cells"][k][ck]["h"]
-        lines.append(f"        ${dx:+.2f}$ & ${h_pol:.2f}$ & "
+        lines.append(f"        ${dx:+.3f}$ & ${h_pol:.2f}$ & "
                      f"${h_ref - h_pol:+.2f}$ \\\\")
     lines += [
         r"        \bottomrule", r"    \end{tabular}", r"\end{table}", "",
