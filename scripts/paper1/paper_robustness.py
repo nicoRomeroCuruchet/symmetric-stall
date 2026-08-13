@@ -241,21 +241,41 @@ def make_matrix_figure(data=None):
 
     fig, ax = plt.subplots(figsize=(6.4, 4.2))
     ax.imshow(excess, cmap=cmap, norm=norm, aspect="auto", origin="lower")
+
+    # Threshold for "returned to level STILL STALLED", referred to the nominal
+    # cell rather than to alpha_s.
+    #
+    # A bare alpha_s = 14 deg marked 26 of the 49 cells, the nominal one among
+    # them -- and the nominal cell is the reference the whole map is measured
+    # against, its excess is +0.0 by construction, so flagging it as a
+    # non-comparable recovery contradicts the figure. The cause is that the
+    # optimum ENDS pinned to the stall boundary: that is the sliding mode, and
+    # over this matrix it closes between 12.61 and 14.51 deg, i.e. within half
+    # a degree of the nominal 14.09. Marking it marks the normal terminal state
+    # of a well flown recovery.
+    #
+    # What the mark is for looks nothing like that: a trajectory caught mid
+    # second stall reaches 35 deg (the full-pull arms of maneuvers.json). One
+    # degree above whichever is higher -- the stall boundary or the reference's
+    # own close -- separates the two by a wide margin, and makes it structurally
+    # impossible to flag the reference.
     ALPHA_S_DEG = 14.0
+    afin_nom = data["cells"]["m1.00_dx+0.00"][ck].get("alpha_final_deg")
+    alpha_close_thr = max(ALPHA_S_DEG, afin_nom or ALPHA_S_DEG) + 1.0
+
     for i, mf in enumerate(M):
         for j, dx in enumerate(DX):
             cellinfo = data["cells"][f"m{mf:.2f}_dx{dx:+.2f}"][ck]
             # two different marks, for two different failures of the metric:
             #   *  does not return to level within the horizon
-            #   #  returns to level STILL STALLED (alpha > alpha_s at close):
-            #      the trajectory oscillates and the gamma = 0 crossing catches
-            #      it mid second attempt, so its loss is not comparable with a
-            #      complete recovery
+            #   †  returns to level STILL STALLED: the trajectory oscillates
+            #      and the gamma = 0 crossing catches it mid second attempt,
+            #      so its loss is not comparable with a complete recovery
             afin = cellinfo.get("alpha_final_deg")
             if cellinfo["status"] != "recovered":
                 mark = "*"
-            elif afin is not None and afin > ALPHA_S_DEG:
-                mark = "†"          # daga
+            elif afin is not None and afin > alpha_close_thr:
+                mark = "†"
             else:
                 mark = ""
             dark = abs(excess[i, j]) > 0.6 * lim
@@ -275,6 +295,17 @@ def make_matrix_figure(data=None):
         fig.savefig(OUT_DIR / f"fig_robustness_matrix.{ext}", dpi=300,
                     bbox_inches="tight")
     plt.close(fig)
+
+    # Report what the marks cover, so a clean map is visibly clean rather than
+    # merely unannotated.
+    afins = np.array([data["cells"][f"m{mf:.2f}_dx{dx:+.2f}"][ck]
+                      ["alpha_final_deg"] for mf in M for dx in DX])
+    n_star = sum(data["cells"][f"m{mf:.2f}_dx{dx:+.2f}"][ck]["status"]
+                 != "recovered" for mf in M for dx in DX)
+    logger.info(f"[=] alpha at close: {afins.min():.2f}-{afins.max():.2f} deg "
+                f"(nominal {afin_nom:.2f}); still-stalled threshold "
+                f"{alpha_close_thr:.2f} -> {(afins > alpha_close_thr).sum()} "
+                f"marked; {n_star} did not return to level")
     logger.info("[+] fig_robustness_matrix.{png,pdf} written")
 
 
