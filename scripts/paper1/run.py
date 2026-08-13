@@ -35,6 +35,8 @@ EXPERIMENTS = {
                        "open-loop held-pull sweep", "min"),
     "procedure_figs": ("procedures:_procedure_figs_cmd",
                        "redraw fig_procedures + fig_pilot_sensitivity", "s"),
+    "ic_figs":        ("procedures:_ic_figs_cmd",
+                       "redraw every IC-plane map from the cache", "s"),
     "ic_heatmap":     ("procedures:_ic_heatmap_cmd",
                        "dense IC-plane sweep (~600 rollouts) + maps", "min"),
     "caa_ramp":       ("procedures:_caa_ramp_cmd",
@@ -63,6 +65,8 @@ REQUIRES = {
     "procedure_figs": ("procedures.json", "procedures"),
     "held_pull": ("procedures.json", "procedures"),
     "caa_ramp": ("ic_heatmap_dense.json", "ic_heatmap"),
+    "ic_figs": ("ic_heatmap_dense.json", "ic_heatmap"),
+    "switch_heatmap": ("ic_heatmap_dense.json", "ic_heatmap"),
 }
 
 #: Experiments that cannot run yet, and what each is waiting on.

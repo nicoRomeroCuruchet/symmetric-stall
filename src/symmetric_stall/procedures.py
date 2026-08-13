@@ -836,10 +836,20 @@ IC_HM_ALPHAS = np.arange(14.0, 20.01, 0.5)       # deg, 13 values
 
 #: Paper 1 swept 0.90 to 1.00. With Riley's thrust that whole strip sits at or
 #: above the edge of the recoverable region — only its 0.90 row still descends
-#: — so the sweep is extended downward to cover the band where a stall entry
-#: actually loses altitude. The Riley grid itself goes down to V/Vs = 0.4.
-IC_HM_V0 = float(os.environ.get("STALL_IC_V0", 0.75))
-IC_HM_V1 = float(os.environ.get("STALL_IC_V1", 1.00))
+#: — so the sweep runs over the WHOLE airspeed axis the policy was solved on,
+#: 0.40 to 0.90 Vs, and stops where the recoverable region does.
+#:
+#: Everything in that band recovers, with no timeouts, and the cost is close to
+#: linear in entry airspeed: -85.75 m at 0.40, -16.87 at 0.80, -2.70 at 0.90,
+#: i.e. about 1.75 m per hundredth of Vs, easing off only above 0.85.
+#:
+#: Caveat below 0.58 Vs: Riley fits his thrust as a linear T(V) and declares it
+#: appropriate above 60 ft/s = 0.579 Vs, saying the fit UNDERestimates thrust
+#: at lower speeds and large throttle. The bottom third of this sweep is
+#: therefore conservative — the real aircraft has more thrust there than the
+#: model gives it, so those altitude losses are upper bounds.
+IC_HM_V0 = float(os.environ.get("STALL_IC_V0", 0.40))
+IC_HM_V1 = float(os.environ.get("STALL_IC_V1", 0.90))
 IC_HM_DV = float(os.environ.get("STALL_IC_DV", 0.005))
 IC_HM_VNORMS = np.arange(IC_HM_V0, IC_HM_V1 + 1e-9, IC_HM_DV)
 
@@ -1031,7 +1041,12 @@ def make_ic_cuts_figure(data=None):
 # field can be read against the switching surface cell by cell. Unlike the
 # third column of that figure, which shows -V(x), these are closed-loop
 # rollouts: the two differ by the action-blending gap.
-GA_VNORMS = [0.90, 1.00, 1.10]
+# Paper 1's three panels were 0.90, 1.00 and 1.10 Vs. Under Riley's thrust the
+# recoverable region ends near 0.92, so two of those three would have shown an
+# aircraft flying away rather than recovering. They move into the live band,
+# with the top panel at the canonical entry so it can be read against every
+# other figure.
+GA_VNORMS = [0.50, 0.70, 0.85]
 GA_ALPHAS = np.arange(14.0, 20.01, 0.25)   # 25 values
 GA_GAMMAS = np.arange(-30.0, 0.01, 1.0)    # 31 values
 
@@ -1570,7 +1585,9 @@ def write_montecarlo_table(data=None):
         r"\begin{table}[H]", r"    \centering",
         r"    \caption{Coverage of the stalled-entry set: every arm flown "
         rf"from the same ${n}$ Latin-hypercube samples of "
-        r"$\gamma_0 \in [-30^\circ, 0]$, $V_0/V_s \in [0.90, 1.00]$, "
+        r"$\gamma_0 \in [-30^\circ, 0]$, "
+        f"$V_0/V_s \\in [{MC_BOUNDS['vnorm0'][0]:.2f}, "
+        f"{MC_BOUNDS['vnorm0'][1]:.2f}]$, "
         r"$\alpha_0 \in [14^\circ, 20^\circ]$, "
         r"$q_0 \in [-20, 20]^\circ$/s. Unlike the planar maps of "
         r"Fig.~\ref{fig:ic_procedures}, this samples the interactions "
@@ -1606,12 +1623,15 @@ def write_montecarlo_table(data=None):
 # from every sampled entry.
 MC_BOUNDS = {
     "gamma0_deg": (-30.0, 0.0),
-    # Capped at Vs: with gamma0 ~ 0 and V0 > Vs the entry sits on the boundary
-    # of the absorbing level-flight set, where "altitude loss until recovery"
-    # does not measure a recovery -- the aircraft has the energy to fly out by
-    # reducing alpha, and full power merely induces a climb, a decay and a
-    # genuine break that the metric then charges to the recovery.
-    "vnorm0": (0.90, 1.00),
+    # Capped at the recoverable edge, not at Vs. The reasoning is paper 1's --
+    # above it the entry sits on the boundary of the absorbing level-flight
+    # set, where "altitude loss until recovery" does not measure a recovery:
+    # the aircraft has the energy to fly out by reducing alpha, and full power
+    # merely induces a climb, a decay and a genuine break that the metric then
+    # charges to the recovery -- but with Riley's thrust that edge is near 0.92
+    # Vs rather than at Vs, so the old (0.90, 1.00) box straddled it and most
+    # samples never stalled. The floor is the grid's own.
+    "vnorm0": (0.40, 0.90),
     "alpha0_deg": (14.0, 20.0),
     "q0_deg": (-20.0, 20.0),
 }
@@ -1806,14 +1826,17 @@ def make_procedures_ic_figure(data=None):
     Vm, Am = _ic_mesh(A, V)
 
     fig, axes = plt.subplots(1, 3, figsize=(13.0, 3.5), sharey=True)
+    # Levels per panel rather than fixed: each procedure sits at its own level
+    # (the excess is almost constant across the plane), so one shared set drew
+    # nothing on two of the three panels.
     panels = [(axes[0], exc_caa, "CAA: simultaneous power (2 s ramp)",
-               [4, 6, 8, 10]),
+               _ic_contour_levels(exc_caa, n=3)),
               (axes[1], exc_faa,
                r"FAA: power gated on $\alpha<\alpha_s$ (2 s ramp)",
-               [4, 6, 8, 10]),
+               _ic_contour_levels(exc_faa, n=3)),
               (axes[2], exc_pd,
                "Power-delayed (Gratton: 2 s pause + 2 s ramp)",
-               [20, 22])]
+               _ic_contour_levels(exc_pd, n=3))]
     for ax, g, title, levels in panels:
         pcm = ax.pcolormesh(Vm, Am, g.T, cmap=cmap_exc, norm=norm_exc,
                             shading="gouraud")
@@ -1898,6 +1921,27 @@ def make_switch_delay_ic_figure(data=None):
     logger.info("[+] fig_switch_delay_ic.{png,pdf} written")
 
 
+def _ic_contour_levels(field, n=5):
+    """Round contour levels spanning what the field actually covers.
+
+    Fixed levels were fine while the sweep spanned 0.10 Vs and 20 m. Over the
+    whole 0.40-0.90 band the loss runs to -85 m, and a fixed [-15, -10, -5]
+    crowds every label into the right-hand edge, leaving four fifths of the
+    map unannotated.
+    """
+    lo, hi = np.nanmin(field), np.nanmax(field)
+    if not np.isfinite(lo) or not np.isfinite(hi) or hi <= lo:
+        return [-15, -10, -5]
+    span = hi - lo
+    # A round step: 1, 2, 5, 10, 20 ... whichever gives about `n` lines.
+    raw = span / (n + 1)
+    mag = 10.0 ** np.floor(np.log10(raw))
+    step = next((m * mag for m in (1, 2, 5, 10) if m * mag >= raw), 10 * mag)
+    first = np.ceil(lo / step) * step
+    levels = np.arange(first, hi, step)
+    return [float(x) for x in levels if lo < x < hi] or [-15, -10, -5]
+
+
 def make_optimal_ic_figure(data=None):
     """Standalone map of the optimal recovery's altitude loss over the
     dense IC grid (viridis, matching the policy heatmaps), with labeled
@@ -1908,8 +1952,8 @@ def make_optimal_ic_figure(data=None):
 
     fig, ax = plt.subplots(figsize=(5.6, 4.2))
     pcm = ax.pcolormesh(Vm, Am, opt, cmap="viridis", shading="gouraud")
-    cs = ax.contour(Vm, Am, opt, levels=[-15, -10, -5], colors="white",
-                    linewidths=1.6)
+    cs = ax.contour(Vm, Am, opt, levels=_ic_contour_levels(opt),
+                    colors="white", linewidths=1.6)
     ax.clabel(cs, fmt=lambda x: f"{x:.0f} m", fontsize=11)
     _ic_axes(ax)
     ax.grid(True, color="white", linestyle=":", linewidth=0.6, alpha=0.55)
@@ -2116,6 +2160,17 @@ def _procedure_figs_cmd():
     rep = json.loads((OUT_DIR / "procedures.json").read_text())
     make_power_delay_figure(rep)
     make_pilot_sensitivity_figure(rep)
+
+
+def _ic_figs_cmd():
+    """Redraw every IC-plane map from the cached dense sweep, no rollouts."""
+    d = json.loads((OUT_DIR / "ic_heatmap_dense.json").read_text())
+    make_optimal_ic_figure(d)
+    make_ic_heatmap_figure(d)
+    if "caa_ramp" in d:
+        make_procedures_ic_figure(d)
+    if all(f"switch{t:g}" in d for t in SWITCH_HM_TAUS):
+        make_switch_delay_ic_figure(d)
 
 
 def _ic_heatmap_cmd():
