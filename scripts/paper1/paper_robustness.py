@@ -56,7 +56,20 @@ OUT_DIR = paths.out_dir()
 # range moves from +-0.07 to +-0.075 to land on the same grid, which is the
 # only thing that changed about what is covered.
 MASS_FACTORS = [round(0.85 + 0.025 * i, 4) for i in range(13)]     # 0.85 .. 1.15
-DXCG_LIST = [round(-0.075 + 0.025 * i, 4) for i in range(7)]       # aft-positive
+
+# The CG axis runs out to the point where the AIRFRAME breaks, not just over
+# the loading variation of a given day. cg_reach.py puts the open-loop
+# short-period divergence at 0.453 c-bar; ending the sweep at +0.20 (x_cg =
+# 0.45) reaches it, so the matrix can say whether mass and CG stay separable
+# all the way there -- something a +-7.5 % window cannot resolve.
+#
+# Past about +0.075 this is no longer a loading variation but a different
+# aeroplane, well outside any certified envelope. CERT_DXCG marks where that
+# stops being true, and the figure draws it.
+DXCG_LIST = [round(-0.100 + 0.025 * i, 4) for i in range(14)]      # aft-positive
+CERT_DXCG = 0.075
+X_CG_REF = 0.25                      # Riley's tables are referenced here
+X_CG_DIVERGENT = 0.453               # from cg_reach.py
 # CANONICAL comes from procedures.py: it used to be redeclared here as
 # (20, 0.95), so moving the evaluation band would have left this file
 # indexing a cell its own grid no longer contains.
@@ -288,7 +301,7 @@ def make_matrix_figure(data=None):
     lim = max(abs(excess.min()), abs(excess.max()), 1.0)
     norm = TwoSlopeNorm(vmin=-lim, vcenter=0.0, vmax=lim)
 
-    fig, ax = plt.subplots(figsize=(6.4, 4.2))
+    fig, ax = plt.subplots(figsize=(11.0, 6.2))
     ax.imshow(excess, cmap=cmap, norm=norm, aspect="auto", origin="lower")
 
     # Threshold for "returned to level STILL STALLED", referred to the nominal
@@ -329,17 +342,49 @@ def make_matrix_figure(data=None):
                 mark = ""
             dark = abs(excess[i, j]) > 0.6 * lim
             ax.text(j, i, f"{excess[i, j]:+.1f}{mark}", ha="center",
-                    va="center", fontsize=9,
+                    va="center", fontsize=7.5,
                     color="white" if dark else "black")
     # %+.0f turned the 2.5 % steps into "+2%" and "+8%": one decimal, with
     # the trailing .0 trimmed so whole percentages stay clean.
     def pct(x):
         return f"{x:+.1f}%".replace(".0%", "%")
 
-    ax.set_xticks(range(len(DX)), [pct(d * 100) for d in DX])
-    ax.set_yticks(range(len(M)), [pct((m - 1) * 100) for m in M])
+    ax.set_xticks(range(len(DX)), [pct(d * 100) for d in DX],
+                  rotation=45, ha="right", fontsize=8.5)
+    ax.set_yticks(range(len(M)), [pct((m - 1) * 100) for m in M], fontsize=8.5)
     ax.set_xlabel(r"CG shift (% of $\bar{c}$, aft positive)")
     ax.set_ylabel("Mass change vs. nominal")
+
+    # The CG axis now runs past what a day's loading can do, so it has to say
+    # where each regime ends: a boundary the reader cannot see is a boundary
+    # the figure implicitly denies.
+    def _edge(dx_value):
+        """x position of a CG value on the cell-index axis, or None."""
+        if dx_value < DX[0] or dx_value > DX[-1]:
+            return None
+        j = float(np.interp(dx_value, DX, np.arange(len(DX))))
+        return j
+
+    j_cert = _edge(CERT_DXCG)
+    if j_cert is not None:
+        ax.axvline(j_cert, color="0.15", lw=1.2, ls="--")
+        ax.annotate("day-to-day loading", xy=(j_cert, 1.0),
+                    xycoords=("data", "axes fraction"), xytext=(-6, 22),
+                    textcoords="offset points", fontsize=8.5, color="0.15",
+                    ha="right", va="bottom")
+    j_div = _edge(X_CG_DIVERGENT - X_CG_REF)
+    if j_div is not None:
+        ax.axvline(j_div, color="#7B1113", lw=1.4, ls="--")
+        ax.annotate("airframe divergent\n(open loop)", xy=(j_div, 1.0),
+                    xycoords=("data", "axes fraction"), xytext=(6, 22),
+                    textcoords="offset points", fontsize=8.5, color="#7B1113",
+                    ha="left", va="bottom")
+
+    ax2 = ax.secondary_xaxis("top", functions=(
+        lambda j: np.interp(j, np.arange(len(DX)), np.array(DX)) + X_CG_REF,
+        lambda x: np.interp(x - X_CG_REF, DX, np.arange(len(DX)))))
+    ax2.set_xlabel(r"$x_{cg}/\bar{c}$", fontsize=10, labelpad=8,
+                   loc="left")
     sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
     cb = fig.colorbar(sm, ax=ax, fraction=0.046, pad=0.03)
     cb.set_label("altitude loss (varied aircraft)\n"
