@@ -50,6 +50,8 @@ EXPERIMENTS = {
                        "steady descent rates feeding the prose", "s"),
     "rob_feasible":   ("paper_robustness:level_flight_feasibility",
                        "level-flight feasibility and V* per mass", "s"),
+    "cg_reach":       ("cg_reach:main",
+                       "push the CG aft past the divergence boundary", "min"),
     # --- model-only figures (no policy) ------------------------------------
     "riley_coeffs":   ("paper_fig_riley_coeffs:main",
                        "Riley coefficient tables (model only)", "s"),
