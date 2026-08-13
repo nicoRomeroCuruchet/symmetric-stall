@@ -972,7 +972,9 @@ class PolicyIterationStall:
         if filepath is None:
             filepath = Path.cwd() / f"{self.env.unwrapped.__class__.__name__}_policy.npz"
 
-        filepath = filepath.with_suffix(".npz")
+        filepath = Path(filepath)
+        if filepath.suffix != ".npz":
+            filepath = filepath.with_name(filepath.name + ".npz")
         filepath.parent.mkdir(parents=True, exist_ok=True)
 
         logger.info(f"Serializing policy to {filepath.resolve()}...")
@@ -1000,7 +1002,14 @@ class PolicyIterationStall:
     @classmethod
     def load(cls, filepath: Path, env: gym.Env = None) -> "PolicyIterationStall":
         """Load a saved policy instance from a serialized .npz archive."""
-        filepath = filepath.with_suffix(".npz")
+        # Only supply the extension when the path as given is not there.
+        # A bare with_suffix(".npz") rewrites the LAST suffix, so the .npz.raw
+        # that fill_terminal_policy.py leaves behind became .npz.npz and could
+        # never be loaded -- which is every script that takes the raw policy as
+        # an argument.
+        filepath = Path(filepath)
+        if not filepath.exists():
+            filepath = filepath.with_suffix(".npz")
 
         logger.info(f"Loading policy from {filepath.resolve()}...")
         data = np.load(filepath)
