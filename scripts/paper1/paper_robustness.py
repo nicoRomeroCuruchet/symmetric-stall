@@ -39,19 +39,21 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from symmetric_stall.aircraft.symmetric_stall import SymmetricStall
+from symmetric_stall import paths
 from symmetric_stall.procedures import rollout, ctrl_optimal
-from paper_table_dp_vs_ppo import ALPHA_GRID_DEG, VNORM_GRID
+from symmetric_stall.procedures import ALPHA_GRID_DEG, CANONICAL, VNORM_GRID
 from symmetric_stall.policy_iteration import PolicyIterationStall
 from symmetric_stall.utils.utils import get_optimal_action
 
 logger = logging.getLogger(__name__)
 
-POLICY_PATH = Path("results/SymmetricStall_policy.npz")
-OUT_DIR = Path("results/paper")
+OUT_DIR = paths.out_dir()
 
 MASS_FACTORS = [0.85, 0.90, 0.95, 1.00, 1.05, 1.10, 1.15]
 DXCG_LIST = [-0.07, -0.05, -0.03, 0.00, 0.03, 0.05, 0.07]  # aft-positive, chord frac
-CANONICAL = (20.0, 0.95)
+# CANONICAL comes from procedures.py: it used to be redeclared here as
+# (20, 0.95), so moving the evaluation band would have left this file
+# indexing a cell its own grid no longer contains.
 
 # WITHDRAWN 2026-07-29. It was a hardcoded dict of GPU re-solves from an old
 # campaign (one per CG), used to tabulate the "suboptimality gap" against the
@@ -150,9 +152,9 @@ def normalization_gap(long_horizon_s: float = 60.0):
     The three monotone-saving numbers quoted in the robustness section come from
     here. They used to be computed by hand, outside any script.
     """
-    pi = PolicyIterationStall.load(POLICY_PATH, env=SymmetricStall())
+    pi = paths.load_policy(env=SymmetricStall())
     a0, v0f = CANONICAL
-    floor = float(np.load(POLICY_PATH, allow_pickle=True)["bounds_low"][1])
+    floor = float(np.load(paths.policy_path(), allow_pickle=True)["bounds_low"][1])
 
     def free_run(env, vnorm0):
         """Rollout with no stopping rule: h(T) and the gamma swing in the tail."""
@@ -334,7 +336,7 @@ def characterize_steady_state(horizon_s: float = 120.0):
     the rule to read it as level.
     """
     try:
-        pi = PolicyIterationStall.load(POLICY_PATH, env=SymmetricStall())
+        pi = paths.load_policy(env=SymmetricStall())
         out = {}
         for mf in (1.05, 1.10, 1.15):
             env = perturbed_env(mf, 0.0)
@@ -485,7 +487,7 @@ def level_flight_feasibility():
 
 def main():
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    pi = PolicyIterationStall.load(POLICY_PATH, env=SymmetricStall())
+    pi = paths.load_policy(env=SymmetricStall())
     data = run_matrix(pi)
     make_matrix_figure(data)
     write_cg_gap_table(data)
@@ -498,27 +500,32 @@ ETA_LIST = [0.75, 0.80, 0.85, 0.90, 0.95]
 def thrust_sensitivity():
     """What the thrust-model assumption costs.
 
-    `THROTTLE_LINEAR_MAPPING` does not come from Riley: it is calibrated by
-    assuming the aircraft trims at 2*Vs at full throttle. Against the 108
-    continuous hp of Table I that implies a propeller efficiency of 0.903, high
-    for a fixed-pitch propeller (0.75-0.85 is typical).
+    Under paper 1's model this measured the cost of a calibration:
+    `THROTTLE_LINEAR_MAPPING` did not come from Riley but from assuming the
+    aircraft trims at 2*Vs at full throttle, which against the 108 continuous
+    hp of Table I implies a propeller efficiency of 0.903 -- high for a
+    fixed-pitch propeller, where 0.75-0.85 is typical.
 
-    Rather than recalibrating blindly -- swapping one assumption for another --
-    what it costs is measured: the NOMINAL policy is flown on plants whose
-    engine delivers less than modelled. The pilot commands the same throttle
-    fraction; the thrust he gets is smaller.
+    That calibration no longer exists: Riley's Appendix A supplies T(delta_t, V)
+    directly, and under THRUST_MODEL=riley the constant is not read at all.
+    Scaling it, as this experiment used to, now perturbs nothing and would
+    report a flat table as though the model were insensitive to thrust. The
+    perturbation therefore moves onto `THRUST_SCALE`, which multiplies the
+    delivered thrust under either model, and the question becomes the one that
+    survives the correction: what an engine that underdelivers costs, whatever
+    the reason -- a tired engine, a coarse propeller, a hot day.
 
     Same pattern as the mass and CG matrix: the plant is perturbed, not the
-    controller.
+    controller. The policy keeps flying as though the engine were nominal.
     """
-    pi = PolicyIterationStall.load(POLICY_PATH, env=SymmetricStall())
+    pi = paths.load_policy(env=SymmetricStall())
     data = {"eta_nominal": ETA_NOMINAL, "eta": ETA_LIST,
             "alpha0_deg": list(ALPHA_GRID_DEG), "v0_frac": list(VNORM_GRID),
             "cells": {}}
     base = None
     for eta in ETA_LIST:
         env = SymmetricStall()
-        env.airplane.THROTTLE_LINEAR_MAPPING *= eta / ETA_NOMINAL
+        env.airplane.THRUST_SCALE = eta / ETA_NOMINAL
         cell = {}
         for a0 in ALPHA_GRID_DEG:
             for v0 in VNORM_GRID:
@@ -527,7 +534,7 @@ def thrust_sensitivity():
                     "h": float(r["h"]), "t": float(r["t"]),
                     "status": r["status"]}
         data["cells"][f"eta{eta:.2f}"] = cell
-        can = cell[f"a{ALPHA_GRID_DEG[-1]:.0f}_v0.95"]["h"]
+        can = cell[f"a{ALPHA_GRID_DEG[-1]:.0f}_v{VNORM_GRID[-1]:.2f}"]["h"]
         if abs(eta - 0.90) < 1e-9:
             base = can
         logger.info(f"eta={eta:.2f}: canonico h={can:.3f} m")
@@ -535,7 +542,7 @@ def thrust_sensitivity():
         logger.info("--- excess against eta=0.90 ---")
         for eta in ETA_LIST:
             can = data["cells"][f"eta{eta:.2f}"][
-                f"a{ALPHA_GRID_DEG[-1]:.0f}_v0.95"]["h"]
+                f"a{ALPHA_GRID_DEG[-1]:.0f}_v{VNORM_GRID[-1]:.2f}"]["h"]
             logger.info(f"  eta={eta:.2f}: {can - base:+.3f} m")
     (OUT_DIR / "thrust_sensitivity.json").write_text(json.dumps(data, indent=1))
     logger.info("[+] thrust_sensitivity.json written")

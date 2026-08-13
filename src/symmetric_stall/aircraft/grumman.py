@@ -205,6 +205,13 @@ class Grumman:
         self.THROTTLE_LINEAR_MAPPING = None
         self._initialize_throttle_model()
 
+        # Multiplies the delivered thrust under EITHER thrust model, so that
+        # "the engine gives less than modelled" is one perturbation rather than
+        # one per model. Evaluation-only: the CUDA kernel does not read it, so
+        # scaling it perturbs the plant a policy is flown on, never the plant
+        # it was solved for -- which is exactly the robustness question.
+        self.THRUST_SCALE = 1.0
+
     def _update_state_from_derivative(self, value_to_update, value_derivative):
         value_to_update += self.TIME_STEP * value_derivative
         return value_to_update
@@ -385,6 +392,7 @@ class Grumman:
             thrust = (t0 + t1 * vt * self._MS_TO_FTS) * self._LBF_TO_N
         else:
             thrust = self.THROTTLE_LINEAR_MAPPING * float(throttle)
+        thrust *= self.THRUST_SCALE
         # Equation (A11) verbatim. Riley does NOT clip C_T: he computes it
         # and uses it as is. What saturates is the table interpolation, since
         # there are only columns at C_T=0 and C_T=0.5, and the excess is

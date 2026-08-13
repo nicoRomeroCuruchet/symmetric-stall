@@ -13,9 +13,16 @@ against the published values, cell by cell.
 import json
 from pathlib import Path
 
-OUT = Path("results/paper")
-ALPHAS = (16, 18, 20)
-VNORMS = (0.90, 0.95, 1.00)
+from symmetric_stall import paths
+from symmetric_stall.procedures import ALPHA_GRID_DEG, VNORM_GRID
+
+OUT = paths.out_dir()
+
+# Taken from the shared evaluation grid rather than repeated here: this file
+# used to carry its own copy of paper 1's band, so it kept indexing 0.95 after
+# the band moved and died on a KeyError.
+ALPHAS = [int(a) for a in ALPHA_GRID_DEG]
+VNORMS = list(VNORM_GRID)
 
 CAB = (r"\begin{table}[hbt!]", r"    \centering",
        r"    \caption{Altitude loss $\Delta h$ (m) of the optimal DP policy (CAA-like:",

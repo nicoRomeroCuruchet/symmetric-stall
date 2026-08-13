@@ -45,23 +45,53 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
+from symmetric_stall import paths
 from symmetric_stall.aircraft.symmetric_stall import SymmetricStall
 # Shared evaluation grid. It used to be imported from the paper-1 script
 # paper_table_dp_vs_ppo.py, which only resolved because the two files were
 # siblings on sys.path[0]; now this package is the single source and that
 # script imports from here.
-ALPHA_GRID_DEG = [16.0, 18.0, 20.0]
-VNORM_GRID = [0.90, 0.95, 1.00]
+#
+# THE BAND MOVED. Paper 1 evaluated on V0/Vs in {0.90, 0.95, 1.00} with the
+# constant-Kt propeller, whose thrust does not decay with airspeed and so
+# starves the aircraft exactly where the stall lives. Under Riley's Appendix-A
+# thrust the same entries no longer descend at all: at 0.95 the canonical
+# recovery CLIMBS (+11.8 m, timeout) and at 1.00 more so, leaving two of the
+# three columns measuring nothing. The live band is 0.80-0.90 (results/README).
+PAPER1_VNORM_GRID = [0.90, 0.95, 1.00]
+
+ALPHA_GRID_DEG = [float(x) for x in
+                  os.environ.get("STALL_ALPHA_GRID", "16,18,20").split(",")]
+VNORM_GRID = [float(x) for x in
+              os.environ.get("STALL_VNORM_GRID", "0.80,0.85,0.90").split(",")]
 from symmetric_stall.policy_iteration import PolicyIterationStall
 from symmetric_stall.utils.recovery import DIVE_THRESHOLD_DEG, RecoveryMonitor
 from symmetric_stall.utils.utils import get_optimal_action, get_optimal_action_greedy
 
 logger = logging.getLogger(__name__)
 
-POLICY_PATH = Path("results/SymmetricStall_policy.npz")
-OUT_DIR = Path("results/paper")
+#: Resolved lazily, and only through `paths.load_policy()`, so that no
+#: experiment can load a policy without having chosen a thrust model.
+OUT_DIR = Path(os.environ.get("STALL_OUT", paths.DEFAULT_OUT_DIR))
 
-CANONICAL = (20.0, 0.95)               # (alpha0 deg, V0/Vs)
+#: (alpha0 deg, V0/Vs). Paper 1 used (20, 0.95); under Riley's thrust that
+#: entry climbs instead of stalling, so the canonical case moves to 0.85,
+#: which results/README.md reports at -9.34 m.
+CANONICAL = (float(os.environ.get("STALL_CANON_ALPHA", 20.0)),
+             float(os.environ.get("STALL_CANON_VNORM", 0.85)))
+
+# The canonical entry is the row every table sets in bold and every trajectory
+# figure develops in the time domain, so it has to BE one of the cells those
+# tables contain. Paper 1 satisfied this by accident (0.95 sat in its band);
+# moving the band broke it silently, and the tables went on rendering with the
+# bold row simply absent.
+if (CANONICAL[0] not in ALPHA_GRID_DEG) or (CANONICAL[1] not in VNORM_GRID):
+    raise ValueError(
+        f"canonical IC {CANONICAL} is not a cell of the evaluation grid "
+        f"{ALPHA_GRID_DEG} x {VNORM_GRID}. Set STALL_CANON_ALPHA / "
+        f"STALL_CANON_VNORM to a grid point, or widen the grid."
+    )
+
 MAX_TIME = 15.0
 ALPHA_STALL_RAD = np.deg2rad(14.0)     # Riley positive stall
 GRATTON_RAMP_S = 2.0                   # Gratton's "increase power over 2 s"
@@ -212,7 +242,7 @@ def compute_held_pull():
     """Canonical-IC sweep of the open-loop held pull; adds arm
     'e3d_held_pull' (dh + alpha_max after the switch) to procedures.json."""
     rep = json.loads((OUT_DIR / "procedures.json").read_text())
-    pi = PolicyIterationStall.load(POLICY_PATH, env=SymmetricStall())
+    pi = paths.load_policy(env=SymmetricStall())
     a0c, v0c = CANONICAL
     arm = {}
     for X in HELD_PULL_DEG:
@@ -321,20 +351,46 @@ def run_maneuvers(pi, env):
                     "alpha_max_deg": float(np.rad2deg(
                         np.max(r["hist"]["alpha"])))}
         out[name] = per_ic
+        ck = f"a{CANONICAL[0]:.0f}_v{CANONICAL[1]:.2f}"
         logger.info(f"    maneuver {name}: canonical "
-                    f"{per_ic['a20_v0.95']['h']:.2f} m "
-                    f"({per_ic['a20_v0.95']['status']})")
+                    f"{per_ic[ck]['h']:.2f} m ({per_ic[ck]['status']})")
+    return out
+
+
+def optimal_reference(pi, env=None):
+    """Closed-loop DP optimum over the shared IC grid: the reference every
+    procedure comparison is scored against.
+
+    Nine rollouts, ~15 s. It used to be read out of `mca_comparison.json`
+    purely because the MCA script happened to have computed it first, which
+    made the manoeuvre table depend on a second trained policy it has no need
+    for. The cached value is still preferred when present.
+    """
+    env = env if env is not None else pi.env
+    out = {}
+    for alpha0 in ALPHA_GRID_DEG:
+        for v0 in VNORM_GRID:
+            r = rollout(env, pi, ctrl_optimal, alpha0, v0)
+            out[f"a{alpha0:.0f}_v{v0:.2f}"] = {
+                "h": float(r["h"]), "t": float(r["t"]), "status": r["status"],
+            }
+            logger.info(f"    a0={alpha0:4.0f} V0={v0:.2f}: "
+                        f"{r['h']:7.2f} m ({r['status']})")
     return out
 
 
 def main_maneuvers():
-    """Scripted-maneuver comparison only (fast; reuses the optimal rollouts
-    already stored by paper_mca_comparison)."""
+    """Scripted-maneuver comparison only (fast)."""
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    pi = PolicyIterationStall.load(POLICY_PATH, env=SymmetricStall())
+    pi = paths.load_policy(env=SymmetricStall())
     man = run_maneuvers(pi, pi.env)
 
-    opt = json.loads((OUT_DIR / "mca_comparison.json").read_text())["fixed"]["rollouts"]
+    cached = OUT_DIR / "mca_comparison.json"
+    if cached.exists():
+        opt = json.loads(cached.read_text())["fixed"]["rollouts"]
+    else:
+        logger.info("[ref] no mca_comparison.json; computing the DP reference")
+        opt = optimal_reference(pi)
 
     print("\n=== Δh (m) by IC: optimal DP vs CAA / FAA manoeuvres (α-hold pilot) ===")
     hdr = (f"{'IC':<14}{'DP OPT':>9}{'CAA':>9}{'FAA':>9}"
@@ -584,7 +640,7 @@ def make_trajectory_greedy_figure():
     control panels are the point of the figure -- greedy holds full throttle
     for the entire recovery and saturates the elevator, while the blend
     reports intermediate commands that correspond to no admissible action."""
-    pi = PolicyIterationStall.load(POLICY_PATH, env=SymmetricStall())
+    pi = paths.load_policy(env=SymmetricStall())
     a0c, v0c = CANONICAL
     logger.info("[greedy] rolling out (slow: argmax over the action set "
                 "at every step)")
@@ -655,7 +711,7 @@ def make_trajectory_comparison_figure():
     Same paired-panel layout as the single-trajectory figure; one color
     per protocol (consistent with the power-delay figure: blue optimum,
     orange CAA-timing, green FAA)."""
-    pi = PolicyIterationStall.load(POLICY_PATH, env=SymmetricStall())
+    pi = paths.load_policy(env=SymmetricStall())
     a0c, v0c = CANONICAL
     r_opt = rollout(pi.env, pi, ctrl_optimal, a0c, v0c, record=True)
 
@@ -777,7 +833,15 @@ def make_trajectory_comparison_figure():
 # finer spacing; the sweep covers only the well-posed stalled-entry domain
 # V0 <= Vs (see _load_dense_cropped), so no rollout is discarded.
 IC_HM_ALPHAS = np.arange(14.0, 20.01, 0.5)       # deg, 13 values
-IC_HM_VNORMS = np.arange(0.90, 1.0001, 0.005)    # V0/Vs, 21 values
+
+#: Paper 1 swept 0.90 to 1.00. With Riley's thrust that whole strip sits at or
+#: above the edge of the recoverable region — only its 0.90 row still descends
+#: — so the sweep is extended downward to cover the band where a stall entry
+#: actually loses altitude. The Riley grid itself goes down to V/Vs = 0.4.
+IC_HM_V0 = float(os.environ.get("STALL_IC_V0", 0.75))
+IC_HM_V1 = float(os.environ.get("STALL_IC_V1", 1.00))
+IC_HM_DV = float(os.environ.get("STALL_IC_DV", 0.005))
+IC_HM_VNORMS = np.arange(IC_HM_V0, IC_HM_V1 + 1e-9, IC_HM_DV)
 
 IC_HM_STRATEGIES = [
     ("optimal", "Optimal (CAA-like)", lambda: ctrl_optimal),
@@ -806,14 +870,14 @@ _SWEEP_STATE = {}
 
 
 def _sweep_init():
-    _SWEEP_STATE["pi"] = PolicyIterationStall.load(POLICY_PATH,
-                                                   env=SymmetricStall())
+    _SWEEP_STATE["pi"] = paths.load_policy(env=SymmetricStall())
 
 
 def _sweep_job(job):
     key, v0, a0 = job
     pi = _SWEEP_STATE["pi"]
-    return rollout(pi.env, pi, _ctrl_factory(key), a0, v0)["h"]
+    r = rollout(pi.env, pi, _ctrl_factory(key), a0, v0)
+    return r["h"], r["status"]
 
 
 def _sweep(keys, alphas=None, vnorms=None, workers=None):
@@ -835,14 +899,25 @@ def _sweep(keys, alphas=None, vnorms=None, workers=None):
     with mp.get_context("spawn").Pool(n, initializer=_sweep_init) as pool:
         out = pool.map(_sweep_job, jobs, chunksize=4)
 
-    grids, i = {}, 0
+    # `h` alone cannot be read: an entry that never stalls does not trigger the
+    # stopping rule, so the rollout integrates the whole horizon of a CLIMB and
+    # reports it as a large positive "altitude loss". Those cells are not
+    # recoveries measured badly, they are a different flight, and the maps mask
+    # them rather than colouring them as the best cells on the plane.
+    grids, statuses, i = {}, {}, 0
     for k in keys:
-        grid = []
+        grid, stat = [], []
         for _ in vnorms:
-            grid.append([float(x) for x in out[i:i + len(alphas)]])
+            row = out[i:i + len(alphas)]
+            grid.append([float(h) for h, _st in row])
+            stat.append([st for _h, st in row])
             i += len(alphas)
         grids[k] = grid
-        logger.info(f"[sweep] {k} done")
+        statuses[f"{k}__status"] = stat
+        n_bad = sum(st != "recovered" for r in stat for st in r)
+        logger.info(f"[sweep] {k} done ({n_bad}/{len(alphas)*len(vnorms)} "
+                    f"did not recover)")
+    grids.update(statuses)
     return grids
 
 
@@ -1655,7 +1730,21 @@ def _load_dense_cropped(data=None):
     V = np.array(data["vnorm0"])
     keep = V <= 1.0 + 1e-9
     V = V[keep]
-    grids = {k: np.array(data[k])[keep, :] for k, _, _ in IC_HM_STRATEGIES}
+    grids = {k: np.array(data[k], dtype=float)[keep, :]
+             for k, _, _ in IC_HM_STRATEGIES}
+
+    # Blank out the entries that never recovered. Under Riley's thrust the
+    # high-airspeed corner of this plane simply flies away instead of
+    # stalling, and the horizon-long climb it accumulates would otherwise
+    # print as the largest altitude GAIN on the map -- the same number, with
+    # the opposite meaning, as a recovery. NaN propagates through pcolormesh
+    # and contour as a hole, so every map inherits the mask.
+    for k, _, _ in IC_HM_STRATEGIES:
+        st = data.get(f"{k}__status")
+        if st is None:
+            continue                     # cache predating the status record
+        bad = np.array(st, dtype=object)[keep, :] != "recovered"
+        grids[k][bad] = np.nan
     return A, V, grids
 
 
@@ -1875,9 +1964,9 @@ def make_ic_heatmap_figure(data=None):
 
 def main():
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    pi = PolicyIterationStall.load(POLICY_PATH, env=SymmetricStall())
+    pi = paths.load_policy(env=SymmetricStall())
     env = pi.env
-    report = {"policy": str(POLICY_PATH)}
+    report = {"policy": paths.policy_path().name}
 
     # CAA evidence
     report["caa_evidence"] = caa_evidence(pi)
@@ -1991,7 +2080,8 @@ def write_summary_table(report: dict) -> None:
     lines = [
         r"\begin{table}[hbt!]", r"    \centering",
         r"    \caption{Altitude loss from the canonical deep-stall IC "
-        r"($\alpha_0=20^\circ$, $V_0=0.95\,V_s$) for the DP optimum and "
+        f"($\\alpha_0={CANONICAL[0]:.0f}^\\circ$, "
+        f"$V_0={CANONICAL[1]:.2f}\\,V_s$) for the DP optimum and "
         r"procedure/pilot deviations built on top of it (optimal pitch "
         r"unless stated), sorted from least to most altitude lost.}",
         r"    \label{tab:procedures}",
@@ -2009,6 +2099,40 @@ def write_summary_table(report: dict) -> None:
         r"    \end{tabular}", r"\end{table}",
     ]
     (OUT_DIR / "table_procedures.tex").write_text("\n".join(lines) + "\n")
+
+
+# ── Named entry points ───────────────────────────────────────────────────
+# These three used to exist only as branches of `__main__`, so nothing could
+# drive them except a shell. scripts/paper1/run.py needs to import them,
+# because the thrust model has to be set before this module is imported at all.
+
+def _procedure_figs_cmd():
+    """Redraw the two procedure figures from procedures.json, no rollouts.
+
+    Narrower than the `--figs-only` branch, which also redraws the IC-plane
+    maps: those read the dense cache, and redrawing them while a sweep is
+    rewriting it reads a half-written file.
+    """
+    rep = json.loads((OUT_DIR / "procedures.json").read_text())
+    make_power_delay_figure(rep)
+    make_pilot_sensitivity_figure(rep)
+
+
+def _ic_heatmap_cmd():
+    """Dense IC sweep (~600 rollouts) plus both IC-plane figures."""
+    d = compute_ic_heatmap_dense()
+    make_optimal_ic_figure(d)
+    make_ic_heatmap_figure(d)
+
+
+def _caa_ramp_cmd():
+    """Add the realistic-CAA arm to the dense cache and redraw the map."""
+    make_procedures_ic_figure(compute_caa_ramp_dense())
+
+
+def _switch_heatmap_cmd():
+    """Dense switch-delay sweep (~350 rollouts) plus its IC-plane figure."""
+    make_switch_delay_ic_figure(compute_switch_delay_dense())
 
 
 if __name__ == "__main__":
