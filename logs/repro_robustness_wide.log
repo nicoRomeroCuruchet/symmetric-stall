@@ -1,0 +1,231 @@
+2026-08-13 19:20:32,831 INFO    model: {'thrust_model': 'riley', 'cg_aft_m': '0.0', 'cg_right_m': '0.0', 'cg_below_m': '0.0'}
+2026-08-13 19:20:32,832 INFO    policy: /home/nromero/Documents/research/symmetric-stall/data/policies/SymmetricStall_riley_56x81x80x41_thrust-riley.npz
+2026-08-13 19:20:32,832 INFO    output: /home/nromero/Documents/research/symmetric-stall/results/5_paper1_repro
+2026-08-13 19:20:32,832 INFO    === robustness — mass x CG degradation matrix of the nominal policy
+2026-08-13 19:20:33.324 | INFO     | symmetric_stall.policy_iteration:load:1014 - Loading policy from /home/nromero/Documents/research/symmetric-stall/data/policies/SymmetricStall_riley_56x81x80x41_thrust-riley.npz...
+2026-08-13 19:20:33.369 | INFO     | symmetric_stall.policy_iteration:load:1034 - Policy trained with: {'cg_aft_m': '0.0', 'cg_below_m': '0.0', 'cg_right_m': '0.0', 'chattering_tolerance': 1487, 'final_residual': 0.0, 'gamma': 1.0, 'grid': 'riley', 'grid_shape': [56, 81, 80, 41], 'n_micro': 10, 'n_policy_steps': 50, 'n_states': 14878080, 'n_states_chattering': 1228, 'theta': 5e-06, 'thrust_model': 'riley', 'use_mca_timestep': False}
+2026-08-13 19:20:33.369 | SUCCESS  | symmetric_stall.policy_iteration:load:1056 - Policy loaded successfully from /home/nromero/Documents/research/symmetric-stall/data/policies/SymmetricStall_riley_56x81x80x41_thrust-riley.npz
+2026-08-13 19:20:33,369 INFO    [matrix] 182 cells x 9 ICs over 12 workers
+2026-08-13 19:20:34.141 | INFO     | symmetric_stall.policy_iteration:load:1014 - Loading policy from /home/nromero/Documents/research/symmetric-stall/data/policies/SymmetricStall_riley_56x81x80x41_thrust-riley.npz...
+2026-08-13 19:20:34.161 | INFO     | symmetric_stall.policy_iteration:load:1014 - Loading policy from /home/nromero/Documents/research/symmetric-stall/data/policies/SymmetricStall_riley_56x81x80x41_thrust-riley.npz...
+2026-08-13 19:20:34.217 | INFO     | symmetric_stall.policy_iteration:load:1014 - Loading policy from /home/nromero/Documents/research/symmetric-stall/data/policies/SymmetricStall_riley_56x81x80x41_thrust-riley.npz...
+2026-08-13 19:20:34.219 | INFO     | symmetric_stall.policy_iteration:load:1034 - Policy trained with: {'cg_aft_m': '0.0', 'cg_below_m': '0.0', 'cg_right_m': '0.0', 'chattering_tolerance': 1487, 'final_residual': 0.0, 'gamma': 1.0, 'grid': 'riley', 'grid_shape': [56, 81, 80, 41], 'n_micro': 10, 'n_policy_steps': 50, 'n_states': 14878080, 'n_states_chattering': 1228, 'theta': 5e-06, 'thrust_model': 'riley', 'use_mca_timestep': False}
+2026-08-13 19:20:34.220 | SUCCESS  | symmetric_stall.policy_iteration:load:1056 - Policy loaded successfully from /home/nromero/Documents/research/symmetric-stall/data/policies/SymmetricStall_riley_56x81x80x41_thrust-riley.npz
+2026-08-13 19:20:34.221 | INFO     | symmetric_stall.policy_iteration:load:1014 - Loading policy from /home/nromero/Documents/research/symmetric-stall/data/policies/SymmetricStall_riley_56x81x80x41_thrust-riley.npz...
+2026-08-13 19:20:34.247 | INFO     | symmetric_stall.policy_iteration:load:1034 - Policy trained with: {'cg_aft_m': '0.0', 'cg_below_m': '0.0', 'cg_right_m': '0.0', 'chattering_tolerance': 1487, 'final_residual': 0.0, 'gamma': 1.0, 'grid': 'riley', 'grid_shape': [56, 81, 80, 41], 'n_micro': 10, 'n_policy_steps': 50, 'n_states': 14878080, 'n_states_chattering': 1228, 'theta': 5e-06, 'thrust_model': 'riley', 'use_mca_timestep': False}
+2026-08-13 19:20:34.248 | SUCCESS  | symmetric_stall.policy_iteration:load:1056 - Policy loaded successfully from /home/nromero/Documents/research/symmetric-stall/data/policies/SymmetricStall_riley_56x81x80x41_thrust-riley.npz
+2026-08-13 19:20:34.289 | INFO     | symmetric_stall.policy_iteration:load:1034 - Policy trained with: {'cg_aft_m': '0.0', 'cg_below_m': '0.0', 'cg_right_m': '0.0', 'chattering_tolerance': 1487, 'final_residual': 0.0, 'gamma': 1.0, 'grid': 'riley', 'grid_shape': [56, 81, 80, 41], 'n_micro': 10, 'n_policy_steps': 50, 'n_states': 14878080, 'n_states_chattering': 1228, 'theta': 5e-06, 'thrust_model': 'riley', 'use_mca_timestep': False}
+2026-08-13 19:20:34.289 | SUCCESS  | symmetric_stall.policy_iteration:load:1056 - Policy loaded successfully from /home/nromero/Documents/research/symmetric-stall/data/policies/SymmetricStall_riley_56x81x80x41_thrust-riley.npz
+2026-08-13 19:20:34.311 | INFO     | symmetric_stall.policy_iteration:load:1034 - Policy trained with: {'cg_aft_m': '0.0', 'cg_below_m': '0.0', 'cg_right_m': '0.0', 'chattering_tolerance': 1487, 'final_residual': 0.0, 'gamma': 1.0, 'grid': 'riley', 'grid_shape': [56, 81, 80, 41], 'n_micro': 10, 'n_policy_steps': 50, 'n_states': 14878080, 'n_states_chattering': 1228, 'theta': 5e-06, 'thrust_model': 'riley', 'use_mca_timestep': False}
+2026-08-13 19:20:34.312 | SUCCESS  | symmetric_stall.policy_iteration:load:1056 - Policy loaded successfully from /home/nromero/Documents/research/symmetric-stall/data/policies/SymmetricStall_riley_56x81x80x41_thrust-riley.npz
+2026-08-13 19:20:34.430 | INFO     | symmetric_stall.policy_iteration:load:1014 - Loading policy from /home/nromero/Documents/research/symmetric-stall/data/policies/SymmetricStall_riley_56x81x80x41_thrust-riley.npz...
+2026-08-13 19:20:34.505 | INFO     | symmetric_stall.policy_iteration:load:1014 - Loading policy from /home/nromero/Documents/research/symmetric-stall/data/policies/SymmetricStall_riley_56x81x80x41_thrust-riley.npz...
+2026-08-13 19:20:34.506 | INFO     | symmetric_stall.policy_iteration:load:1034 - Policy trained with: {'cg_aft_m': '0.0', 'cg_below_m': '0.0', 'cg_right_m': '0.0', 'chattering_tolerance': 1487, 'final_residual': 0.0, 'gamma': 1.0, 'grid': 'riley', 'grid_shape': [56, 81, 80, 41], 'n_micro': 10, 'n_policy_steps': 50, 'n_states': 14878080, 'n_states_chattering': 1228, 'theta': 5e-06, 'thrust_model': 'riley', 'use_mca_timestep': False}
+2026-08-13 19:20:34.507 | SUCCESS  | symmetric_stall.policy_iteration:load:1056 - Policy loaded successfully from /home/nromero/Documents/research/symmetric-stall/data/policies/SymmetricStall_riley_56x81x80x41_thrust-riley.npz
+2026-08-13 19:20:34.533 | INFO     | symmetric_stall.policy_iteration:load:1014 - Loading policy from /home/nromero/Documents/research/symmetric-stall/data/policies/SymmetricStall_riley_56x81x80x41_thrust-riley.npz...
+2026-08-13 19:20:34.541 | INFO     | symmetric_stall.policy_iteration:load:1014 - Loading policy from /home/nromero/Documents/research/symmetric-stall/data/policies/SymmetricStall_riley_56x81x80x41_thrust-riley.npz...
+2026-08-13 19:20:34.545 | INFO     | symmetric_stall.policy_iteration:load:1014 - Loading policy from /home/nromero/Documents/research/symmetric-stall/data/policies/SymmetricStall_riley_56x81x80x41_thrust-riley.npz...
+2026-08-13 19:20:34.553 | INFO     | symmetric_stall.policy_iteration:load:1014 - Loading policy from /home/nromero/Documents/research/symmetric-stall/data/policies/SymmetricStall_riley_56x81x80x41_thrust-riley.npz...
+2026-08-13 19:20:34.558 | INFO     | symmetric_stall.policy_iteration:load:1014 - Loading policy from /home/nromero/Documents/research/symmetric-stall/data/policies/SymmetricStall_riley_56x81x80x41_thrust-riley.npz...
+2026-08-13 19:20:34.580 | INFO     | symmetric_stall.policy_iteration:load:1014 - Loading policy from /home/nromero/Documents/research/symmetric-stall/data/policies/SymmetricStall_riley_56x81x80x41_thrust-riley.npz...
+2026-08-13 19:20:34.594 | INFO     | symmetric_stall.policy_iteration:load:1034 - Policy trained with: {'cg_aft_m': '0.0', 'cg_below_m': '0.0', 'cg_right_m': '0.0', 'chattering_tolerance': 1487, 'final_residual': 0.0, 'gamma': 1.0, 'grid': 'riley', 'grid_shape': [56, 81, 80, 41], 'n_micro': 10, 'n_policy_steps': 50, 'n_states': 14878080, 'n_states_chattering': 1228, 'theta': 5e-06, 'thrust_model': 'riley', 'use_mca_timestep': False}
+2026-08-13 19:20:34.594 | SUCCESS  | symmetric_stall.policy_iteration:load:1056 - Policy loaded successfully from /home/nromero/Documents/research/symmetric-stall/data/policies/SymmetricStall_riley_56x81x80x41_thrust-riley.npz
+2026-08-13 19:20:34.636 | INFO     | symmetric_stall.policy_iteration:load:1034 - Policy trained with: {'cg_aft_m': '0.0', 'cg_below_m': '0.0', 'cg_right_m': '0.0', 'chattering_tolerance': 1487, 'final_residual': 0.0, 'gamma': 1.0, 'grid': 'riley', 'grid_shape': [56, 81, 80, 41], 'n_micro': 10, 'n_policy_steps': 50, 'n_states': 14878080, 'n_states_chattering': 1228, 'theta': 5e-06, 'thrust_model': 'riley', 'use_mca_timestep': False}
+2026-08-13 19:20:34.636 | SUCCESS  | symmetric_stall.policy_iteration:load:1056 - Policy loaded successfully from /home/nromero/Documents/research/symmetric-stall/data/policies/SymmetricStall_riley_56x81x80x41_thrust-riley.npz
+2026-08-13 19:20:34.649 | INFO     | symmetric_stall.policy_iteration:load:1034 - Policy trained with: {'cg_aft_m': '0.0', 'cg_below_m': '0.0', 'cg_right_m': '0.0', 'chattering_tolerance': 1487, 'final_residual': 0.0, 'gamma': 1.0, 'grid': 'riley', 'grid_shape': [56, 81, 80, 41], 'n_micro': 10, 'n_policy_steps': 50, 'n_states': 14878080, 'n_states_chattering': 1228, 'theta': 5e-06, 'thrust_model': 'riley', 'use_mca_timestep': False}
+2026-08-13 19:20:34.650 | SUCCESS  | symmetric_stall.policy_iteration:load:1056 - Policy loaded successfully from /home/nromero/Documents/research/symmetric-stall/data/policies/SymmetricStall_riley_56x81x80x41_thrust-riley.npz
+2026-08-13 19:20:34.661 | INFO     | symmetric_stall.policy_iteration:load:1034 - Policy trained with: {'cg_aft_m': '0.0', 'cg_below_m': '0.0', 'cg_right_m': '0.0', 'chattering_tolerance': 1487, 'final_residual': 0.0, 'gamma': 1.0, 'grid': 'riley', 'grid_shape': [56, 81, 80, 41], 'n_micro': 10, 'n_policy_steps': 50, 'n_states': 14878080, 'n_states_chattering': 1228, 'theta': 5e-06, 'thrust_model': 'riley', 'use_mca_timestep': False}
+2026-08-13 19:20:34.665 | SUCCESS  | symmetric_stall.policy_iteration:load:1056 - Policy loaded successfully from /home/nromero/Documents/research/symmetric-stall/data/policies/SymmetricStall_riley_56x81x80x41_thrust-riley.npz
+2026-08-13 19:20:34.745 | INFO     | symmetric_stall.policy_iteration:load:1034 - Policy trained with: {'cg_aft_m': '0.0', 'cg_below_m': '0.0', 'cg_right_m': '0.0', 'chattering_tolerance': 1487, 'final_residual': 0.0, 'gamma': 1.0, 'grid': 'riley', 'grid_shape': [56, 81, 80, 41], 'n_micro': 10, 'n_policy_steps': 50, 'n_states': 14878080, 'n_states_chattering': 1228, 'theta': 5e-06, 'thrust_model': 'riley', 'use_mca_timestep': False}
+2026-08-13 19:20:34.746 | SUCCESS  | symmetric_stall.policy_iteration:load:1056 - Policy loaded successfully from /home/nromero/Documents/research/symmetric-stall/data/policies/SymmetricStall_riley_56x81x80x41_thrust-riley.npz
+2026-08-13 19:20:34.749 | INFO     | symmetric_stall.policy_iteration:load:1034 - Policy trained with: {'cg_aft_m': '0.0', 'cg_below_m': '0.0', 'cg_right_m': '0.0', 'chattering_tolerance': 1487, 'final_residual': 0.0, 'gamma': 1.0, 'grid': 'riley', 'grid_shape': [56, 81, 80, 41], 'n_micro': 10, 'n_policy_steps': 50, 'n_states': 14878080, 'n_states_chattering': 1228, 'theta': 5e-06, 'thrust_model': 'riley', 'use_mca_timestep': False}
+2026-08-13 19:20:34.749 | SUCCESS  | symmetric_stall.policy_iteration:load:1056 - Policy loaded successfully from /home/nromero/Documents/research/symmetric-stall/data/policies/SymmetricStall_riley_56x81x80x41_thrust-riley.npz
+2026-08-13 19:20:34.777 | INFO     | symmetric_stall.policy_iteration:load:1034 - Policy trained with: {'cg_aft_m': '0.0', 'cg_below_m': '0.0', 'cg_right_m': '0.0', 'chattering_tolerance': 1487, 'final_residual': 0.0, 'gamma': 1.0, 'grid': 'riley', 'grid_shape': [56, 81, 80, 41], 'n_micro': 10, 'n_policy_steps': 50, 'n_states': 14878080, 'n_states_chattering': 1228, 'theta': 5e-06, 'thrust_model': 'riley', 'use_mca_timestep': False}
+2026-08-13 19:20:34.778 | SUCCESS  | symmetric_stall.policy_iteration:load:1056 - Policy loaded successfully from /home/nromero/Documents/research/symmetric-stall/data/policies/SymmetricStall_riley_56x81x80x41_thrust-riley.npz
+2026-08-13 19:30:13,981 INFO    m×0.850 dx-0.100: canonical -6.17 m (recovered)
+2026-08-13 19:30:13,982 INFO    m×0.850 dx-0.075: canonical -5.66 m (recovered)
+2026-08-13 19:30:13,985 INFO    m×0.850 dx-0.050: canonical -5.17 m (recovered)
+2026-08-13 19:30:13,985 INFO    m×0.850 dx-0.025: canonical -4.69 m (recovered)
+2026-08-13 19:30:13,986 INFO    m×0.850 dx+0.000: canonical -4.24 m (recovered)
+2026-08-13 19:30:13,986 INFO    m×0.850 dx+0.025: canonical -3.80 m (recovered)
+2026-08-13 19:30:13,986 INFO    m×0.850 dx+0.050: canonical -3.39 m (recovered)
+2026-08-13 19:30:13,986 INFO    m×0.850 dx+0.075: canonical -2.99 m (recovered)
+2026-08-13 19:30:13,986 INFO    m×0.850 dx+0.100: canonical -2.61 m (recovered)
+2026-08-13 19:30:13,986 INFO    m×0.850 dx+0.125: canonical -2.24 m (recovered)
+2026-08-13 19:30:13,986 INFO    m×0.850 dx+0.150: canonical -1.88 m (recovered)
+2026-08-13 19:30:13,986 INFO    m×0.850 dx+0.175: canonical -1.56 m (recovered)
+2026-08-13 19:30:13,986 INFO    m×0.850 dx+0.200: canonical -1.26 m (recovered)
+2026-08-13 19:30:13,986 INFO    m×0.850 dx+0.225: canonical -0.98 m (recovered)
+2026-08-13 19:30:13,986 INFO    m×0.875 dx-0.100: canonical -6.91 m (recovered)
+2026-08-13 19:30:13,986 INFO    m×0.875 dx-0.075: canonical -6.36 m (recovered)
+2026-08-13 19:30:13,986 INFO    m×0.875 dx-0.050: canonical -5.84 m (recovered)
+2026-08-13 19:30:13,986 INFO    m×0.875 dx-0.025: canonical -5.34 m (recovered)
+2026-08-13 19:30:13,986 INFO    m×0.875 dx+0.000: canonical -4.86 m (recovered)
+2026-08-13 19:30:13,986 INFO    m×0.875 dx+0.025: canonical -4.40 m (recovered)
+2026-08-13 19:30:13,986 INFO    m×0.875 dx+0.050: canonical -3.96 m (recovered)
+2026-08-13 19:30:13,986 INFO    m×0.875 dx+0.075: canonical -3.54 m (recovered)
+2026-08-13 19:30:13,986 INFO    m×0.875 dx+0.100: canonical -3.14 m (recovered)
+2026-08-13 19:30:13,986 INFO    m×0.875 dx+0.125: canonical -2.76 m (recovered)
+2026-08-13 19:30:13,986 INFO    m×0.875 dx+0.150: canonical -2.38 m (recovered)
+2026-08-13 19:30:13,986 INFO    m×0.875 dx+0.175: canonical -2.03 m (recovered)
+2026-08-13 19:30:13,986 INFO    m×0.875 dx+0.200: canonical -1.71 m (recovered)
+2026-08-13 19:30:13,986 INFO    m×0.875 dx+0.225: canonical -1.41 m (recovered)
+2026-08-13 19:30:13,986 INFO    m×0.900 dx-0.100: canonical -7.74 m (recovered)
+2026-08-13 19:30:13,986 INFO    m×0.900 dx-0.075: canonical -7.16 m (recovered)
+2026-08-13 19:30:13,986 INFO    m×0.900 dx-0.050: canonical -6.60 m (recovered)
+2026-08-13 19:30:13,986 INFO    m×0.900 dx-0.025: canonical -6.07 m (recovered)
+2026-08-13 19:30:13,986 INFO    m×0.900 dx+0.000: canonical -5.55 m (recovered)
+2026-08-13 19:30:13,986 INFO    m×0.900 dx+0.025: canonical -5.06 m (recovered)
+2026-08-13 19:30:13,986 INFO    m×0.900 dx+0.050: canonical -4.59 m (recovered)
+2026-08-13 19:30:13,986 INFO    m×0.900 dx+0.075: canonical -4.14 m (recovered)
+2026-08-13 19:30:13,986 INFO    m×0.900 dx+0.100: canonical -3.71 m (recovered)
+2026-08-13 19:30:13,986 INFO    m×0.900 dx+0.125: canonical -3.31 m (recovered)
+2026-08-13 19:30:13,986 INFO    m×0.900 dx+0.150: canonical -2.96 m (recovered)
+2026-08-13 19:30:13,986 INFO    m×0.900 dx+0.175: canonical -2.63 m (recovered)
+2026-08-13 19:30:13,986 INFO    m×0.900 dx+0.200: canonical -2.29 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×0.900 dx+0.225: canonical -1.93 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×0.925 dx-0.100: canonical -8.67 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×0.925 dx-0.075: canonical -8.05 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×0.925 dx-0.050: canonical -7.44 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×0.925 dx-0.025: canonical -6.87 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×0.925 dx+0.000: canonical -6.32 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×0.925 dx+0.025: canonical -5.79 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×0.925 dx+0.050: canonical -5.28 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×0.925 dx+0.075: canonical -4.80 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×0.925 dx+0.100: canonical -4.36 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×0.925 dx+0.125: canonical -3.95 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×0.925 dx+0.150: canonical -3.57 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×0.925 dx+0.175: canonical -3.20 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×0.925 dx+0.200: canonical -2.86 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×0.925 dx+0.225: canonical -2.53 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×0.950 dx-0.100: canonical -9.69 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×0.950 dx-0.075: canonical -9.03 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×0.950 dx-0.050: canonical -8.39 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×0.950 dx-0.025: canonical -7.77 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×0.950 dx+0.000: canonical -7.18 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×0.950 dx+0.025: canonical -6.61 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×0.950 dx+0.050: canonical -6.08 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×0.950 dx+0.075: canonical -5.58 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×0.950 dx+0.100: canonical -5.12 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×0.950 dx+0.125: canonical -4.68 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×0.950 dx+0.150: canonical -4.26 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×0.950 dx+0.175: canonical -3.86 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×0.950 dx+0.200: canonical -3.48 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×0.950 dx+0.225: canonical -3.13 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×0.975 dx-0.100: canonical -10.84 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×0.975 dx-0.075: canonical -10.13 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×0.975 dx-0.050: canonical -9.45 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×0.975 dx-0.025: canonical -8.79 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×0.975 dx+0.000: canonical -8.16 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×0.975 dx+0.025: canonical -7.58 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×0.975 dx+0.050: canonical -7.03 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×0.975 dx+0.075: canonical -6.51 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×0.975 dx+0.100: canonical -6.01 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×0.975 dx+0.125: canonical -5.54 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×0.975 dx+0.150: canonical -5.09 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×0.975 dx+0.175: canonical -4.66 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×0.975 dx+0.200: canonical -4.25 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×0.975 dx+0.225: canonical -3.86 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×1.000 dx-0.100: canonical -12.13 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×1.000 dx-0.075: canonical -11.38 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×1.000 dx-0.050: canonical -10.66 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×1.000 dx-0.025: canonical -9.99 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×1.000 dx+0.000: canonical -9.35 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×1.000 dx+0.025: canonical -8.74 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×1.000 dx+0.050: canonical -8.16 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×1.000 dx+0.075: canonical -7.61 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×1.000 dx+0.100: canonical -7.08 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×1.000 dx+0.125: canonical -6.58 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×1.000 dx+0.150: canonical -6.12 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×1.000 dx+0.175: canonical -5.67 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×1.000 dx+0.200: canonical -5.25 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×1.000 dx+0.225: canonical -4.86 m (recovered)
+2026-08-13 19:30:13,987 INFO    m×1.025 dx-0.100: canonical -13.59 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.025 dx-0.075: canonical -12.82 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.025 dx-0.050: canonical -12.10 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.025 dx-0.025: canonical -11.41 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.025 dx+0.000: canonical -10.76 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.025 dx+0.025: canonical -10.13 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.025 dx+0.050: canonical -9.52 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.025 dx+0.075: canonical -8.95 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.025 dx+0.100: canonical -8.40 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.025 dx+0.125: canonical -7.89 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.025 dx+0.150: canonical -7.41 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.025 dx+0.175: canonical -6.98 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.025 dx+0.200: canonical -6.59 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.025 dx+0.225: canonical -6.25 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.050 dx-0.100: canonical -15.29 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.050 dx-0.075: canonical -14.51 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.050 dx-0.050: canonical -13.77 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.050 dx-0.025: canonical -13.07 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.050 dx+0.000: canonical -12.40 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.050 dx+0.025: canonical -11.76 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.050 dx+0.050: canonical -11.15 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.050 dx+0.075: canonical -10.56 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.050 dx+0.100: canonical -10.02 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.050 dx+0.125: canonical -9.51 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.050 dx+0.150: canonical -9.05 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.050 dx+0.175: canonical -8.65 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.050 dx+0.200: canonical -8.31 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.050 dx+0.225: canonical -8.04 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.075 dx-0.100: canonical -17.25 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.075 dx-0.075: canonical -16.46 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.075 dx-0.050: canonical -15.70 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.075 dx-0.025: canonical -14.98 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.075 dx+0.000: canonical -14.30 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.075 dx+0.025: canonical -13.65 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.075 dx+0.050: canonical -13.04 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.075 dx+0.075: canonical -12.46 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.075 dx+0.100: canonical -11.92 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.075 dx+0.125: canonical -11.43 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.075 dx+0.150: canonical -11.00 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.075 dx+0.175: canonical -10.65 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.075 dx+0.200: canonical -10.42 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.075 dx+0.225: canonical -10.32 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.100 dx-0.100: canonical -19.43 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.100 dx-0.075: canonical -18.60 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.100 dx-0.050: canonical -17.82 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.100 dx-0.025: canonical -17.10 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.100 dx+0.000: canonical -16.42 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.100 dx+0.025: canonical -15.78 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.100 dx+0.050: canonical -15.17 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.100 dx+0.075: canonical -14.60 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.100 dx+0.100: canonical -14.07 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.100 dx+0.125: canonical -13.60 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.100 dx+0.150: canonical -13.20 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.100 dx+0.175: canonical -12.90 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.100 dx+0.200: canonical -12.79 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.100 dx+0.225: canonical -14.75 m (timeout)
+2026-08-13 19:30:13,988 INFO    m×1.125 dx-0.100: canonical -21.81 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.125 dx-0.075: canonical -20.96 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.125 dx-0.050: canonical -20.18 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.125 dx-0.025: canonical -19.44 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.125 dx+0.000: canonical -18.74 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.125 dx+0.025: canonical -18.10 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.125 dx+0.050: canonical -17.49 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.125 dx+0.075: canonical -16.91 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.125 dx+0.100: canonical -16.39 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.125 dx+0.125: canonical -15.94 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.125 dx+0.150: canonical -15.57 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.125 dx+0.175: canonical -15.35 m (recovered)
+2026-08-13 19:30:13,988 INFO    m×1.125 dx+0.200: canonical -15.38 m (recovered)
+2026-08-13 19:30:13,989 INFO    m×1.125 dx+0.225: canonical -17.62 m (timeout)
+2026-08-13 19:30:13,989 INFO    m×1.150 dx-0.100: canonical -24.38 m (recovered)
+2026-08-13 19:30:13,989 INFO    m×1.150 dx-0.075: canonical -23.55 m (recovered)
+2026-08-13 19:30:13,989 INFO    m×1.150 dx-0.050: canonical -22.76 m (recovered)
+2026-08-13 19:30:13,989 INFO    m×1.150 dx-0.025: canonical -22.00 m (recovered)
+2026-08-13 19:30:13,989 INFO    m×1.150 dx+0.000: canonical -21.29 m (recovered)
+2026-08-13 19:30:13,989 INFO    m×1.150 dx+0.025: canonical -20.60 m (recovered)
+2026-08-13 19:30:13,989 INFO    m×1.150 dx+0.050: canonical -19.97 m (recovered)
+2026-08-13 19:30:13,989 INFO    m×1.150 dx+0.075: canonical -19.39 m (recovered)
+2026-08-13 19:30:13,989 INFO    m×1.150 dx+0.100: canonical -18.88 m (recovered)
+2026-08-13 19:30:13,989 INFO    m×1.150 dx+0.125: canonical -18.47 m (recovered)
+2026-08-13 19:30:13,989 INFO    m×1.150 dx+0.150: canonical -18.23 m (recovered)
+2026-08-13 19:30:13,989 INFO    m×1.150 dx+0.175: canonical -18.18 m (recovered)
+2026-08-13 19:30:13,989 INFO    m×1.150 dx+0.200: canonical -19.05 m (timeout)
+2026-08-13 19:30:13,989 INFO    m×1.150 dx+0.225: canonical -20.60 m (timeout)
+2026-08-13 19:30:13,993 INFO    [+] robustness.json written
+2026-08-13 19:30:15,499 INFO    [=] alpha at close: 11.85-16.02 deg (nominal 14.09); still-stalled threshold 15.09 -> 8 marked; 4 did not return to level
+2026-08-13 19:30:15,499 INFO    [+] fig_robustness_matrix.{png,pdf} written
+2026-08-13 19:30:15,499 INFO    [+] table_robustness_cg_gap.tex written
+2026-08-13 19:30:15,499 INFO    === robustness done

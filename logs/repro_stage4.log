@@ -1,0 +1,75 @@
+2026-08-13 12:52:30,514 INFO    model: {'thrust_model': 'riley', 'cg_aft_m': '0.0', 'cg_right_m': '0.0', 'cg_below_m': '0.0'}
+2026-08-13 12:52:30,514 INFO    policy: /home/nromero/Documents/research/symmetric-stall/data/policies/SymmetricStall_riley_56x81x80x41_thrust-riley.npz
+2026-08-13 12:52:30,514 INFO    output: /home/nromero/Documents/research/symmetric-stall/results/5_paper1_repro
+2026-08-13 12:52:30,514 INFO    === robustness — mass x CG degradation matrix of the nominal policy
+2026-08-13 12:52:31.460 | INFO     | symmetric_stall.policy_iteration:load:1014 - Loading policy from /home/nromero/Documents/research/symmetric-stall/data/policies/SymmetricStall_riley_56x81x80x41_thrust-riley.npz...
+2026-08-13 12:52:31.540 | INFO     | symmetric_stall.policy_iteration:load:1034 - Policy trained with: {'cg_aft_m': '0.0', 'cg_below_m': '0.0', 'cg_right_m': '0.0', 'chattering_tolerance': 1487, 'final_residual': 0.0, 'gamma': 1.0, 'grid': 'riley', 'grid_shape': [56, 81, 80, 41], 'n_micro': 10, 'n_policy_steps': 50, 'n_states': 14878080, 'n_states_chattering': 1228, 'theta': 5e-06, 'thrust_model': 'riley', 'use_mca_timestep': False}
+2026-08-13 12:52:31.541 | SUCCESS  | symmetric_stall.policy_iteration:load:1056 - Policy loaded successfully from /home/nromero/Documents/research/symmetric-stall/data/policies/SymmetricStall_riley_56x81x80x41_thrust-riley.npz
+2026-08-13 12:52:57,513 INFO    [1/49] m×0.85 dx-0.07: canonical -5.56 m (recovered)
+2026-08-13 12:53:22,561 INFO    [2/49] m×0.85 dx-0.05: canonical -5.17 m (recovered)
+2026-08-13 12:53:46,924 INFO    [3/49] m×0.85 dx-0.03: canonical -4.79 m (recovered)
+2026-08-13 12:54:09,992 INFO    [4/49] m×0.85 dx+0.00: canonical -4.24 m (recovered)
+2026-08-13 12:54:32,489 INFO    [5/49] m×0.85 dx+0.03: canonical -3.72 m (recovered)
+2026-08-13 12:55:13,500 INFO    [6/49] m×0.85 dx+0.05: canonical -3.39 m (recovered)
+2026-08-13 12:56:02,860 INFO    [7/49] m×0.85 dx+0.07: canonical -3.07 m (recovered)
+2026-08-13 12:56:31,178 INFO    [8/49] m×0.90 dx-0.07: canonical -7.05 m (recovered)
+2026-08-13 12:56:58,913 INFO    [9/49] m×0.90 dx-0.05: canonical -6.60 m (recovered)
+2026-08-13 12:57:26,270 INFO    [10/49] m×0.90 dx-0.03: canonical -6.17 m (recovered)
+2026-08-13 12:57:52,153 INFO    [11/49] m×0.90 dx+0.00: canonical -5.55 m (recovered)
+2026-08-13 12:58:17,992 INFO    [12/49] m×0.90 dx+0.03: canonical -4.97 m (recovered)
+2026-08-13 12:58:43,055 INFO    [13/49] m×0.90 dx+0.05: canonical -4.59 m (recovered)
+2026-08-13 12:59:16,792 INFO    [14/49] m×0.90 dx+0.07: canonical -4.23 m (recovered)
+2026-08-13 12:59:48,719 INFO    [15/49] m×0.95 dx-0.07: canonical -8.90 m (recovered)
+2026-08-13 13:00:20,319 INFO    [16/49] m×0.95 dx-0.05: canonical -8.39 m (recovered)
+2026-08-13 13:00:50,964 INFO    [17/49] m×0.95 dx-0.03: canonical -7.89 m (recovered)
+2026-08-13 13:01:20,435 INFO    [18/49] m×0.95 dx+0.00: canonical -7.18 m (recovered)
+2026-08-13 13:01:49,389 INFO    [19/49] m×0.95 dx+0.03: canonical -6.50 m (recovered)
+2026-08-13 13:02:18,272 INFO    [20/49] m×0.95 dx+0.05: canonical -6.08 m (recovered)
+2026-08-13 13:02:46,110 INFO    [21/49] m×0.95 dx+0.07: canonical -5.68 m (recovered)
+2026-08-13 13:03:23,584 INFO    [22/49] m×1.00 dx-0.07: canonical -11.23 m (recovered)
+2026-08-13 13:04:00,376 INFO    [23/49] m×1.00 dx-0.05: canonical -10.66 m (recovered)
+2026-08-13 13:04:37,106 INFO    [24/49] m×1.00 dx-0.03: canonical -10.12 m (recovered)
+2026-08-13 13:05:11,873 INFO    [25/49] m×1.00 dx+0.00: canonical -9.35 m (recovered)
+2026-08-13 13:05:46,867 INFO    [26/49] m×1.00 dx+0.03: canonical -8.63 m (recovered)
+2026-08-13 13:06:20,592 INFO    [27/49] m×1.00 dx+0.05: canonical -8.16 m (recovered)
+2026-08-13 13:06:54,108 INFO    [28/49] m×1.00 dx+0.07: canonical -7.72 m (recovered)
+2026-08-13 13:07:25,691 INFO    [29/49] m×1.05 dx-0.07: canonical -14.36 m (recovered)
+2026-08-13 13:07:49,948 INFO    [30/49] m×1.05 dx-0.05: canonical -13.77 m (recovered)
+2026-08-13 13:08:13,964 INFO    [31/49] m×1.05 dx-0.03: canonical -13.21 m (recovered)
+2026-08-13 13:08:37,489 INFO    [32/49] m×1.05 dx+0.00: canonical -12.40 m (recovered)
+2026-08-13 13:09:01,349 INFO    [33/49] m×1.05 dx+0.03: canonical -11.63 m (recovered)
+2026-08-13 13:09:25,243 INFO    [34/49] m×1.05 dx+0.05: canonical -11.15 m (recovered)
+2026-08-13 13:09:49,083 INFO    [35/49] m×1.05 dx+0.07: canonical -10.68 m (recovered)
+2026-08-13 13:10:17,618 INFO    [36/49] m×1.10 dx-0.07: canonical -18.44 m (recovered)
+2026-08-13 13:10:47,726 INFO    [37/49] m×1.10 dx-0.05: canonical -17.82 m (recovered)
+2026-08-13 13:11:41,984 INFO    [38/49] m×1.10 dx-0.03: canonical -17.25 m (recovered)
+2026-08-13 13:12:34,700 INFO    [39/49] m×1.10 dx+0.00: canonical -16.42 m (recovered)
+2026-08-13 13:13:28,804 INFO    [40/49] m×1.10 dx+0.03: canonical -15.66 m (recovered)
+2026-08-13 13:14:22,693 INFO    [41/49] m×1.10 dx+0.05: canonical -15.17 m (recovered)
+2026-08-13 13:15:17,697 INFO    [42/49] m×1.10 dx+0.07: canonical -14.71 m (recovered)
+2026-08-13 13:16:17,596 INFO    [43/49] m×1.15 dx-0.07: canonical -23.39 m (recovered)
+2026-08-13 13:17:18,366 INFO    [44/49] m×1.15 dx-0.05: canonical -22.76 m (recovered)
+2026-08-13 13:18:15,672 INFO    [45/49] m×1.15 dx-0.03: canonical -22.15 m (recovered)
+2026-08-13 13:18:42,561 INFO    [46/49] m×1.15 dx+0.00: canonical -21.29 m (recovered)
+2026-08-13 13:19:10,113 INFO    [47/49] m×1.15 dx+0.03: canonical -20.47 m (recovered)
+2026-08-13 13:19:38,061 INFO    [48/49] m×1.15 dx+0.05: canonical -19.97 m (recovered)
+2026-08-13 13:20:06,587 INFO    [49/49] m×1.15 dx+0.07: canonical -19.50 m (recovered)
+2026-08-13 13:20:06,589 INFO    [+] robustness.json written
+2026-08-13 13:20:07,248 INFO    [+] fig_robustness_matrix.{png,pdf} written
+2026-08-13 13:20:07,249 INFO    [+] table_robustness_cg_gap.tex written
+2026-08-13 13:20:07,249 INFO    === robustness done
+2026-08-13 13:20:07,249 INFO    === rob_steady — steady descent rates feeding the prose
+2026-08-13 13:20:07.249 | INFO     | symmetric_stall.policy_iteration:load:1014 - Loading policy from /home/nromero/Documents/research/symmetric-stall/data/policies/SymmetricStall_riley_56x81x80x41_thrust-riley.npz...
+2026-08-13 13:20:07.293 | INFO     | symmetric_stall.policy_iteration:load:1034 - Policy trained with: {'cg_aft_m': '0.0', 'cg_below_m': '0.0', 'cg_right_m': '0.0', 'chattering_tolerance': 1487, 'final_residual': 0.0, 'gamma': 1.0, 'grid': 'riley', 'grid_shape': [56, 81, 80, 41], 'n_micro': 10, 'n_policy_steps': 50, 'n_states': 14878080, 'n_states_chattering': 1228, 'theta': 5e-06, 'thrust_model': 'riley', 'use_mca_timestep': False}
+2026-08-13 13:20:07.294 | SUCCESS  | symmetric_stall.policy_iteration:load:1056 - Policy loaded successfully from /home/nromero/Documents/research/symmetric-stall/data/policies/SymmetricStall_riley_56x81x80x41_thrust-riley.npz
+2026-08-13 13:20:44,705 INFO    m×1.05: gamma_ss=+0.52 (balance +0.45) sink=-0.27 m/s  alpha_ss=14.1  cruces de gamma>=0 en 120 s: 3
+2026-08-13 13:21:22,263 INFO    m×1.1: gamma_ss=-0.50 (balance -0.50) sink=0.27 m/s  alpha_ss=14.4  cruces de gamma>=0 en 120 s: 2
+2026-08-13 13:21:59,749 INFO    m×1.15: gamma_ss=-1.21 (balance -1.20) sink=0.67 m/s  alpha_ss=14.5  cruces de gamma>=0 en 120 s: 2
+2026-08-13 13:21:59,749 INFO    [+] robustness_steady_state.json written
+2026-08-13 13:21:59,751 INFO    === rob_steady done
+2026-08-13 13:21:59,751 INFO    === rob_feasible — level-flight feasibility and V* per mass
+2026-08-13 13:21:59,812 INFO    m×1.05: level flight at V_ss infeasible; V* = 0.960 Vs_nom = 0.937 Vs_real
+2026-08-13 13:21:59,900 INFO    m×1.1: level flight at V_ss infeasible; V* = 0.990 Vs_nom = 0.944 Vs_real
+2026-08-13 13:22:00,014 INFO    m×1.15: level flight at V_ss infeasible; V* = 1.020 Vs_nom = 0.951 Vs_real
+2026-08-13 13:22:00,015 INFO    [+] robustness_feasibility.json written
+2026-08-13 13:22:00,015 INFO    === rob_feasible done

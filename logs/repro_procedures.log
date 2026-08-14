@@ -1,0 +1,38 @@
+2026-08-13 12:38:26,607 INFO    model: {'thrust_model': 'riley', 'cg_aft_m': '0.0', 'cg_right_m': '0.0', 'cg_below_m': '0.0'}
+2026-08-13 12:38:26,607 INFO    policy: /home/nromero/Documents/research/symmetric-stall/data/policies/SymmetricStall_riley_56x81x80x41_thrust-riley.npz
+2026-08-13 12:38:26,607 INFO    output: /home/nromero/Documents/research/symmetric-stall/results/5_paper1_repro
+2026-08-13 12:38:26,607 INFO    === procedures — E1/E3b/E3c: power delay, switch delay, partial pull
+2026-08-13 12:38:27.091 | INFO     | symmetric_stall.policy_iteration:load:1014 - Loading policy from /home/nromero/Documents/research/symmetric-stall/data/policies/SymmetricStall_riley_56x81x80x41_thrust-riley.npz...
+2026-08-13 12:38:27.136 | INFO     | symmetric_stall.policy_iteration:load:1034 - Policy trained with: {'cg_aft_m': '0.0', 'cg_below_m': '0.0', 'cg_right_m': '0.0', 'chattering_tolerance': 1487, 'final_residual': 0.0, 'gamma': 1.0, 'grid': 'riley', 'grid_shape': [56, 81, 80, 41], 'n_micro': 10, 'n_policy_steps': 50, 'n_states': 14878080, 'n_states_chattering': 1228, 'theta': 5e-06, 'thrust_model': 'riley', 'use_mca_timestep': False}
+2026-08-13 12:38:27.136 | SUCCESS  | symmetric_stall.policy_iteration:load:1056 - Policy loaded successfully from /home/nromero/Documents/research/symmetric-stall/data/policies/SymmetricStall_riley_56x81x80x41_thrust-riley.npz
+2026-08-13 12:38:27,348 INFO    [=] full-throttle argmax: 99.0% global, 99.7% in recovery window
+2026-08-13 12:38:29,333 INFO    [=] optimal canonical: -9.35 m; de switch at t*=0.21000000000000005 s
+2026-08-13 12:38:44,646 INFO        E1 instant tau=0s: canonical -9.35 m
+2026-08-13 12:39:00,124 INFO        E1 instant tau=0.1s: canonical -10.99 m
+2026-08-13 12:39:15,860 INFO        E1 instant tau=0.25s: canonical -12.94 m
+2026-08-13 12:39:31,973 INFO        E1 instant tau=0.5s: canonical -16.15 m
+2026-08-13 12:39:48,958 INFO        E1 instant tau=1s: canonical -21.98 m
+2026-08-13 12:40:07,574 INFO        E1 instant tau=2s: canonical -33.11 m
+2026-08-13 12:40:29,110 INFO        E1 instant tau=4s: canonical -52.19 m
+2026-08-13 12:40:46,241 INFO        E1 ramp2s tau=0s: canonical -22.02 m
+2026-08-13 12:41:03,605 INFO        E1 ramp2s tau=0.1s: canonical -23.19 m
+2026-08-13 12:41:21,161 INFO        E1 ramp2s tau=0.25s: canonical -24.90 m
+2026-08-13 12:41:39,087 INFO        E1 ramp2s tau=0.5s: canonical -27.68 m
+2026-08-13 12:41:57,772 INFO        E1 ramp2s tau=1s: canonical -33.07 m
+2026-08-13 12:42:17,982 INFO        E1 ramp2s tau=2s: canonical -43.10 m
+2026-08-13 12:42:41,296 INFO        E1 ramp2s tau=4s: canonical -60.06 m
+2026-08-13 12:42:59,057 INFO        E1 gated(a<14) ramp: canonical -26.80 m
+2026-08-13 12:43:14,435 INFO        E3b tau_s=0s: canonical -9.35 m
+2026-08-13 12:43:29,699 INFO        E3b tau_s=0.1s: canonical -9.56 m
+2026-08-13 12:43:44,485 INFO        E3b tau_s=0.25s: canonical -11.93 m
+2026-08-13 12:43:58,874 INFO        E3b tau_s=0.5s: canonical -22.75 m
+2026-08-13 12:44:13,891 INFO        E3b tau_s=1s: canonical -50.79 m
+2026-08-13 12:44:29,285 INFO        E3c de_pull=-25deg: canonical -9.35 m
+2026-08-13 12:44:44,682 INFO        E3c de_pull=-20deg: canonical -9.35 m
+2026-08-13 12:45:00,065 INFO        E3c de_pull=-15deg: canonical -9.35 m
+2026-08-13 12:45:15,399 INFO        E3c de_pull=-10deg: canonical -9.36 m
+2026-08-13 12:45:30,436 INFO        E3c de_pull=-5deg: canonical -10.38 m
+2026-08-13 12:45:30,853 INFO    [+] fig_procedures.{png,pdf} written
+2026-08-13 12:45:31,305 INFO    [+] fig_pilot_sensitivity.{png,pdf} written
+2026-08-13 12:45:31,305 INFO    [+] Wrote figures, table_procedures.tex and procedures.json to /home/nromero/Documents/research/symmetric-stall/results/5_paper1_repro
+2026-08-13 12:45:31,305 INFO    === procedures done
