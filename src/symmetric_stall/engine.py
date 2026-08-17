@@ -24,15 +24,31 @@ on 16(b) and 0.97 s on 18(b) -- hence RILEY_TAU_E below. The fit is well
 conditioned: on 16(a) the residual is 77 rpm at the optimum against 139 rpm at
 tau_e = 0.1 s and 270 rpm at 3 s.
 
-Three checks that the digitiser is reading the page and not itself: it recovers
-a 1.83 s chop where Riley's text says the chops "occurred in 2 sec"; the
-(A3)+(A12) chain predicts 2387 rpm at the trim throttle where the figure starts
-at 2400; and 1135 rpm at closed throttle where the figure floors at 1100.
+Four checks that the digitiser is reading the page and not itself, each against
+a source that is not the plot: it recovers a 1.83 s chop where Riley's TEXT says
+the chops "occurred in 2 sec"; it reads 120.0 ft/s at t = 0 where the CAPTION
+states V = 120 ft/sec; the (A3)+(A12) chain predicts 2387 rpm at the trim
+throttle where the figure starts at 2400; and 1135 rpm at closed throttle where
+the figure floors at 1100.
 
-It is an identification off a 1985 scan, not a number Riley signs, and the
-figure is flown at 5000 ft while (A12) is stated at sea level. Treat 0.85 s as
-good to about +/- 0.15 s and say where it comes from.
-See scripts/verify/identificar_tau_motor.py, which reproduces all of it.
+HOW GOOD IS IT. The time histories are published as PLOTS ONLY -- tables I to
+VIII carry aerodynamic coefficients, airfoil coordinates and stability
+comparisons, and none of them is a time history -- so the trace is a
+reconstruction of a drawing and the honest question is how much of one.
+
+At 400 dpi a pixel is worth 48 ms and 16 rpm, far finer than needed. What limits
+the reading is the printed line, whose median thickness is 7 px = 113 rpm: there
+is no value of N, there is a band. Displacing the trace by half a line width
+moves tau_e from 0.62 to 1.00, and misreading V by 5 ft/s moves it from 0.68 to
+0.91. What does NOT matter is the geometry -- a 1 % error in the time axis, or
+a fit window anywhere from 8 to 20 s, moves the last digit only.
+
+So the number is tau_e = 0.8 +/- 0.2 s, and RILEY_TAU_E = 0.85 sits inside it.
+Reassuringly the three independent figures span 0.79 to 0.97, i.e. they scatter
+by about what the digitisation noise predicts. Downstream this is worth roughly
++/- 2 m on the canonical altitude loss of -19.8 m -- so quote that number to one
+decimal at most, and never to three. `identificar_tau_motor.py --uncertainty`
+regenerates the perturbation table; the script reproduces everything else.
 
 WHERE THIS LIVES, AND WHY NOT IN THE DP. The lag is applied when a trajectory
 is rolled out, not while the policy is solved. Carrying it into the dynamic

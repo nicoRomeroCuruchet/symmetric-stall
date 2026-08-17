@@ -34,16 +34,40 @@ Digitising the traces and fitting gives **0.79 s** on fig. 16(a), **0.82 s** on
 conditioned — on 16(a) the residual is 77 rpm at the optimum against 139 rpm at
 τ_e = 0.1 s and 270 rpm at 3 s.
 
-Three checks that the digitiser reads the page rather than itself: it recovers a
-**1.83 s** chop where Riley's text says the chops "occurred in 2 sec"; the
-(A3)+(A12) chain predicts **2387 rpm** at the trim throttle where the figure
-starts at **2400**; and **1135 rpm** at closed throttle where the figure floors
-at **1100**.
+Four checks that the digitiser reads the page rather than itself, each against a
+source that is not the plot: it recovers a **1.83 s** chop where Riley's *text*
+says the chops "occurred in 2 sec"; it reads **120.0 ft/s** at t = 0 where the
+*caption* states V = 120 ft/sec; the (A3)+(A12) chain predicts **2387 rpm** at
+the trim throttle where the figure starts at **2400**; and **1135 rpm** at
+closed throttle where the figure floors at **1100**.
 
-It is an identification off a 1985 scan, not a number Riley signs, and fig. 16
-is flown at 5000 ft while (A12) is stated at sea level. Treat it as **0.85 ±
-0.15 s** and say where it came from. `scripts/verify/identificar_tau_motor.py`
-reproduces all of it from the PDF.
+### How good is it
+
+The time histories are published **as plots only**. Tables I–VIII carry
+aerodynamic coefficients, airfoil coordinates, hinge moments and stability
+comparisons; none of them is a time history. So the trace is a reconstruction of
+a drawing, and the question worth answering is how much of one.
+
+Not the raster: at 400 dpi a pixel is worth 48 ms and 16 rpm. What limits the
+reading is the **printed line, 7 px thick = 113 rpm** — there is no value of N,
+there is a band. Perturbing each thing the reconstruction could get wrong
+(`identificar_tau_motor.py --uncertainty`):
+
+| perturbation | τ_e |
+|---|---|
+| none (as fitted) | 0.79 |
+| **N up half a line width (+57 rpm)** | **1.00** |
+| **N down half a line width (−57 rpm)** | **0.62** |
+| V misread by ±5 ft/s | 0.68 / 0.91 |
+| time axis ±1 % | 0.79 / 0.80 |
+| fit window 8 s / 20 s | 0.80 / 0.79 |
+
+The geometry is solid; where the centre of a thick line is placed is not. So the
+honest number is **τ_e = 0.8 ± 0.2 s**, with 0.85 inside it — and the three
+independent figures scatter over 0.79–0.97, about what that noise predicts.
+
+Downstream that is worth roughly **±2 m** on the canonical −19.8 m. Quote it to
+one decimal at most; the third digit is decoration.
 
 **`fig_engine_tau_id.png`** is that identification, and it is the evidence for
 every number in this directory. Panel (a) is the fit: rms residual in engine

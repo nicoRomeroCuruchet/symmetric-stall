@@ -180,6 +180,65 @@ def trace(dark, a, b, xl, xr, y_top, y_bot, start):
     return np.asarray(t), np.asarray(y)
 
 
+def uncertainty(page, workdir):
+    """How much of tau_e is the figure, and how much is the digitiser.
+
+    The time histories exist only as plots, so the trace is a reconstruction of
+    a drawing. This perturbs each thing the reconstruction could get wrong and
+    refits, which turns the error bar into something derived rather than
+    asserted. The dominant term is not the raster resolution -- it is the
+    thickness of the printed line, which makes N a band rather than a value.
+    """
+    dark, panels, xl, xr = page_panels(page, workdir)
+    a, b = panels[I_N]
+
+    thick = []
+    for x in range(xl + 40, xr - 40):
+        px = np.where(dark[a + 3:b - 3, x])[0]
+        if px.size:
+            thick.append(px.max() - px.min() + 1)
+    px_per_rpm = (b - a) / N_FS
+    px_per_s = (xr - xl) / T_SPAN
+    lw_rpm = float(np.median(thick)) / px_per_rpm
+
+    t_c, cmd_r = trace(dark, *panels[I_THR], xl, xr, THR_FS, 0.0, THR_0)
+    t_N, N_r = trace(dark, *panels[I_N], xl, xr, N_FS, 0.0, N_0)
+    t_V, V_r = trace(dark, *panels[I_V], xl, xr, V_FS, 0.0, V_0)
+
+    def fit(dN=0.0, dV=0.0, t_scale=1.0, horizon=FIT_HORIZON_S):
+        tf = np.linspace(0.0, horizon, int(horizon * 100))
+        cmd = np.interp(tf, t_c * t_scale, cmd_r)
+        V = np.interp(tf, t_V * t_scale, V_r) + dV
+        obs = np.interp(tf, t_N * t_scale, N_r) + dN
+        dt = tf[1] - tf[0]
+        errs = np.array([np.sqrt(np.mean((rpm(lag(cmd, dt, t), V) - obs) ** 2))
+                         for t in TAU_GRID])
+        return float(TAU_GRID[int(np.argmin(errs))])
+
+    print(f"\nresolution      : {1000 / px_per_s:.0f} ms/px, "
+          f"{1 / px_per_rpm:.0f} rpm/px")
+    print(f"printed line    : {np.median(thick):.1f} px thick = {lw_rpm:.0f} rpm")
+    print(f"\n  {'perturbation':<42}{'tau_e':>6}")
+    print("  " + "-" * 48)
+    rows = [("none (as fitted)", {}),
+            (f"N up half a line width (+{lw_rpm/2:.0f} rpm)", dict(dN=+lw_rpm / 2)),
+            (f"N down half a line width (-{lw_rpm/2:.0f} rpm)", dict(dN=-lw_rpm / 2)),
+            ("V misread by +5 ft/s", dict(dV=+5.0)),
+            ("V misread by -5 ft/s", dict(dV=-5.0)),
+            ("time axis +1 %", dict(t_scale=1.01)),
+            ("time axis -1 %", dict(t_scale=0.99)),
+            ("fit window 8 s", dict(horizon=8.0)),
+            ("fit window 20 s", dict(horizon=20.0))]
+    taus = []
+    for lab, kw in rows:
+        t = fit(**kw)
+        taus.append(t)
+        print(f"  {lab:<42}{t:6.2f}")
+    print(f"\n  spread: {min(taus):.2f} to {max(taus):.2f} s "
+          f"-> tau_e = {np.mean([min(taus), max(taus)]):.1f} "
+          f"+/- {(max(taus) - min(taus)) / 2:.1f} s")
+
+
 def identify(page, workdir):
     """Digitise one figure and fit tau_e to it."""
     dark, panels, xl, xr = page_panels(page, workdir)
@@ -212,6 +271,9 @@ def main(argv=None):
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--plot", action="store_true",
                     help="write the fit figure next to the results")
+    ap.add_argument("--uncertainty", action="store_true",
+                    help="perturb the digitisation and refit, to derive the "
+                         "error bar on tau_e rather than assert it")
     args = ap.parse_args(argv)
 
     if not PDF.exists():
@@ -247,12 +309,21 @@ def main(argv=None):
         print("\nchecks:")
         print(f"  chop duration        {r['chop'][1] - r['chop'][0]:.2f} s  "
               f"(Riley's text: 'occurred in 2 sec')")
+        # The caption states the entry speed, so this one checks the vertical
+        # calibration of a panel against prose rather than against an equation.
+        print(f"  V at t=0             {r['V'][0]:.1f} ft/s  "
+              f"(caption: 'V = 120 ft/sec')")
         # Against the START of the trace, not its maximum: the max can sit on
         # a scanner speck and would flatter the check.
         print(f"  trim rpm, (A3)+(A12) {rpm(r['thr0'], r['v0']):.0f}  "
               f"(figure: {r['n_obs'][0]:.0f})")
         print(f"  idle rpm, (A3)+(A12) {rpm(0.0, r['V'].min()):.0f}  "
               f"(figure: {r['n_lo']:.0f})")
+
+        if args.uncertainty:
+            first = results[0]["page"]
+            print(f"\n=== uncertainty, on {PAGES[first]} ===")
+            uncertainty(first, work)
 
         if args.plot:
             _plot(out)
