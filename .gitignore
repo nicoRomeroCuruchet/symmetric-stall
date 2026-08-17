@@ -19,3 +19,14 @@ papers/
 
 # Staging area for the migration from udesa
 _incoming/
+
+# LaTeX build artifacts. main.pdf is NOT ignored on purpose: it is the
+# submitted build, and pdflatex deletes it when a run aborts, so git is what
+# gets it back.
+stall-paper/*.aux
+stall-paper/*.fdb_latexmk
+stall-paper/*.fls
+stall-paper/*.log
+stall-paper/*.out
+stall-paper/*.blg
+stall-paper/*.synctex.gz
