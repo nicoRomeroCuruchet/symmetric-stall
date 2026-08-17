@@ -16,6 +16,14 @@ plant they ask it of.
 > reads −9.35 m here and −19.79 m there. Differences between arms move less than
 > 12 % and can be cited from either. This directory is the τ_e = 0 end of the
 > sensitivity analysis, not superseded work.
+>
+> Three figure pairs here are **not** τ_e = 0 results and are kept only as the
+> working record of how the constant was pinned down:
+> `fig_trajectories_procedures_tau050` (an intermediate guess at τ_e, made
+> before the identification), `fig_trajectories_procedures_tau085` (an early
+> render, produced before figures carried the engine stamp) and
+> `fig_engine_tau_id` (the identification itself). For all three the
+> authoritative copies live in `../6_riley_engine/`. Do not cite these.
 
     python scripts/paper1/run.py --list          # the suite and what blocks what
     python scripts/paper1/run.py trajectories    # one experiment
