@@ -1,0 +1,19 @@
+\begin{table}[H]
+    \centering
+    \caption{Coverage of the stalled-entry set: every arm flown from the same $1000$ Latin-hypercube samples of $\gamma_0 \in [-30^\circ, 0]$, $V_0/V_s \in [0.90, 1.00]$, $\alpha_0 \in [14^\circ, 20^\circ]$, $q_0 \in [-20, 20]^\circ$/s. Unlike the planar maps of Fig.~\ref{fig:ic_procedures}, this samples the interactions between entry states, so the ranking is certified over the set rather than on a slice of it. Percentiles describe the uniform sampling box, not an operational entry distribution; the per-entry ranking reported below is distribution-free.}
+    \label{tab:montecarlo}
+    \setlength{\tabcolsep}{14pt}\renewcommand{\arraystretch}{1.15}
+    \begin{tabular}{lrrrr}
+        \hline
+        & \multicolumn{2}{c}{$\Delta h$ (m)} & \multicolumn{2}{c}{excess over optimum (m)} \\
+        Arm & median & 5th pct & median & 95th pct \\
+        \hline
+        DP optimum & $-24.08$ & $-43.61$ & --- & --- \\
+        CAA (simultaneous) & $-30.67$ & $-49.63$ & $6.56$ & $8.05$ \\
+        FAA (gated on $\alpha < \alpha_s$) & $-32.05$ & $-51.19$ & $8.12$ & $10.60$ \\
+        Power-delayed (Gratton) & $-41.85$ & $-59.42$ & $17.71$ & $22.68$ \\
+        \hline
+    \end{tabular}
+    \\[2pt]
+    \footnotesize The CAA sequence loses less than the FAA sequence at $100.0\%$ of the sampled entries (median advantage $1.50$\,m, smallest $0.05$\,m); $998$ of $1000$ entries closed the recovery under every arm.
+\end{table}

@@ -1,0 +1,156 @@
+\begin{thebibliography}{24}
+\newcommand{\enquote}[1]{``#1''}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\providecommand{\urlprefix}{URL }
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{\discretionary{}{}{}https://doi.org/#1}\else
+  \providecommand{\doi}[1]{\discretionary{}{}{}\urlstyle{rm}\url{https://doi.org/#1}}\fi
+
+\bibitem[{Belcastro and Foster(2010)}]{Belcastro2010}
+Belcastro, C.~M., and Foster, J.~V., \enquote{Aircraft loss-of-control accident
+  analysis,} \emph{AIAA Guidance, Navigation, and Control Conference}, 2010.
+\newblock \doi{10.2514/6.2010-8004}, aIAA Paper 2010-8004.
+
+\bibitem[{{Federal Aviation Administration}(2021)}]{FAA2021}
+{Federal Aviation Administration}, \enquote{Airplane Flying Handbook, Chapter
+  5: Maintaining Aircraft Control: Upset Prevention and Recovery Training,}
+  Tech. Rep. FAA-H-8083-3C, U.S. Department of Transportation, Federal Aviation
+  Administration, Washington, DC, 2021.
+\newblock
+  \url{https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/airplane_handbook}.
+
+\bibitem[{{Federal Aviation Administration}(2000)}]{FAA2000}
+{Federal Aviation Administration}, \enquote{Stall and Spin Awareness Training,}
+  Tech. Rep. Advisory Circular AC 61-67C, U.S. Department of Transportation,
+  Federal Aviation Administration, Washington, DC, 2000.
+\newblock With Changes 1--2.
+
+\bibitem[{Stough et~al.(1985)Stough, DiCarlo, and Patton}]{Stough1985}
+Stough, I., H.~Paul, DiCarlo, D.~J., and Patton, J., James~M., \enquote{Flight
+  investigation of stall, spin, and recovery characteristics of a low-wing,
+  single-engine, {T}-tail light airplane,} Tech. Rep. NASA TP-2427, NASA
+  Langley Research Center, 1985.
+
+\bibitem[{{UK Civil Aviation Authority}(2009)}]{CAA2009}
+{UK Civil Aviation Authority}, \enquote{Stall/Spin Awareness,} Handling Sense
+  Leaflet 02, v2, Civil Aviation Authority, 2009.
+
+\bibitem[{Gratton et~al.(2014)Gratton, Hoff, Bromfield, Rahman, Harbour, and
+  Williams}]{Gratton2014}
+Gratton, G.~B., Hoff, R.~I., Bromfield, M., Rahman, A., Harbour, S., and
+  Williams, S., \enquote{Evaluating a Set of Stall Recovery Actions for Single
+  Engine Light Aeroplanes,} \emph{The Aeronautical Journal}, Vol. 118, No.
+  1203, 2014, pp. 461--480.
+\newblock \doi{10.1017/S0001924000009313}.
+
+\bibitem[{Bunge and Kroo(2018)}]{Bunge2018}
+Bunge, R.~A., and Kroo, I.~M., \enquote{Automatic Spin Recovery with Minimal
+  Altitude Loss,} \emph{2018 AIAA Guidance, Navigation, and Control
+  Conference}, Kissimmee, FL, 2018, pp. 1--13.
+\newblock \doi{10.2514/6.2018-1866}.
+
+\bibitem[{Bellman(1957)}]{Bellman1957}
+Bellman, R., \emph{Dynamic Programming}, Princeton University Press, Princeton,
+  NJ, 1957.
+
+\bibitem[{Bertsekas(2017)}]{Bertsekas2017}
+Bertsekas, D.~P., \emph{Dynamic Programming and Optimal Control},
+  4\textsuperscript{th} ed., Vol.~1, Athena Scientific, Belmont, MA, 2017.
+
+\bibitem[{Crespo et~al.(2012)Crespo, Kenny, Cox, and Murri}]{Crespo2012}
+Crespo, L.~G., Kenny, S.~P., Cox, D.~E., and Murri, D.~G., \enquote{Analysis of
+  control strategies for aircraft flight upset recovery,} \emph{AIAA Guidance,
+  Navigation, and Control Conference}, 2012.
+\newblock \doi{10.2514/6.2012-5026}, aIAA Paper 2012-5026.
+
+\bibitem[{Cunis et~al.(2019)Cunis, Burlion, and Condomines}]{Cunis2019}
+Cunis, T., Burlion, L., and Condomines, J.-P., \enquote{Piecewise polynomial
+  modeling for control and analysis of aircraft dynamics beyond stall,}
+  \emph{Journal of Guidance, Control, and Dynamics}, Vol.~42, No.~4, 2019, pp.
+  949--957.
+\newblock \doi{10.2514/1.G003618}.
+
+\bibitem[{Grillo et~al.(2024)Grillo, Torre, and Bunge}]{Grillo2023}
+Grillo, A., Torre, G.~G., and Bunge, R.~A., \enquote{Optimal Stall Recovery via
+  Deep Reinforcement Learning for a General Aviation Aircraft,} \emph{AIAA
+  SCITECH 2024 Forum}, Orlando, FL, 2024.
+\newblock \doi{10.2514/6.2024-1280}.
+
+\bibitem[{Munos and Moore(1998)}]{Munos1998}
+Munos, R., and Moore, A.~W., \enquote{Barycentric Interpolators for Continuous
+  Space and Time Reinforcement Learning,} \emph{Advances in Neural Information
+  Processing Systems}, Vol.~11, 1998.
+
+\bibitem[{Munos and Moore(2002)}]{Munos2002}
+Munos, R., and Moore, A.~W., \enquote{Variable Resolution Discretization in
+  Optimal Control,} \emph{Machine Learning}, Vol.~49, No. 2--3, 2002, pp.
+  291--323.
+\newblock \doi{10.1023/A:1017992615625}.
+
+\bibitem[{Riley(1985)}]{Riley1985}
+Riley, D.~R., \enquote{Simulator Study of the Stall Departure Characteristics
+  of a Light General Aviation Airplane with and without a Wing-Leading-Edge
+  Modification,} Tech. Rep. NASA-TM-86309, NASA Langley Research Center,
+  Hampton, VA, 1985.
+
+\bibitem[{Bui et~al.(2022)Bui, Hu, He, Lu, Giovanis, Shriraman, and
+  Chen}]{Bui2022}
+Bui, M., Hu, H., He, C., Lu, M., Giovanis, G., Shriraman, A., and Chen, M.,
+  \enquote{{OptimizedDP}: an efficient, user-friendly library for optimal
+  control and dynamic programming,} \emph{arXiv preprint arXiv:2204.05520},
+  2022.
+
+\bibitem[{Courant et~al.(1967)Courant, Friedrichs, and Lewy}]{Courant1967}
+Courant, R., Friedrichs, K., and Lewy, H., \enquote{On the Partial Difference
+  Equations of Mathematical Physics,} \emph{IBM Journal of Research and
+  Development}, Vol.~11, No.~2, 1967, pp. 215--234.
+\newblock \doi{10.1147/rd.112.0215}, english translation of the 1928 original
+  in Mathematische Annalen.
+
+\bibitem[{Betts(1998)}]{Betts1998}
+Betts, J.~T., \enquote{Survey of numerical methods for trajectory
+  optimization,} \emph{Journal of Guidance, Control, and Dynamics}, Vol.~21,
+  No.~2, 1998, pp. 193--207.
+\newblock \doi{10.2514/2.4231}.
+
+\bibitem[{Andersson et~al.(2019)Andersson, Gillis, Horn, Rawlings, and
+  Diehl}]{Andersson2019}
+Andersson, J. A.~E., Gillis, J., Horn, G., Rawlings, J.~B., and Diehl, M.,
+  \enquote{{CasADi}: a software framework for nonlinear optimization and
+  optimal control,} \emph{Mathematical Programming Computation}, Vol.~11,
+  No.~1, 2019, pp. 1--36.
+\newblock \doi{10.1007/s12532-018-0139-4}.
+
+\bibitem[{W{\"a}chter and Biegler(2006)}]{Wachter2006}
+W{\"a}chter, A., and Biegler, L.~T., \enquote{On the implementation of an
+  interior-point filter line-search algorithm for large-scale nonlinear
+  programming,} \emph{Mathematical Programming}, Vol. 106, No.~1, 2006, pp.
+  25--57.
+\newblock \doi{10.1007/s10107-004-0559-y}.
+
+\bibitem[{Filippov(1988)}]{Filippov1988}
+Filippov, A.~F., \emph{Differential Equations with Discontinuous Righthand
+  Sides}, Mathematics and Its Applications (Soviet Series), Vol.~18, Kluwer
+  Academic Publishers, Dordrecht, 1988.
+\newblock \doi{10.1007/978-94-015-7793-9}.
+
+\bibitem[{Utkin(1977)}]{Utkin1977}
+Utkin, V.~I., \enquote{Variable structure systems with sliding modes,}
+  \emph{IEEE Transactions on Automatic Control}, Vol. AC-22, No.~2, 1977, pp.
+  212--222.
+\newblock \doi{10.1109/TAC.1977.1101446}.
+
+\bibitem[{Bryson and Ho(1975)}]{BrysonHo1975}
+Bryson, A.~E., and Ho, Y.-C., \emph{Applied Optimal Control: Optimization,
+  Estimation, and Control}, Hemisphere Publishing, Washington, DC, 1975.
+
+\bibitem[{Hartman and Biermann(1938)}]{HartmanBiermann1938}
+Hartman, E.~P., and Biermann, D., \enquote{The Aerodynamic Characteristics of
+  Full-Scale Propellers Having 2, 3, and 4 Blades of {C}lark {Y} and {R.A.F.} 6
+  Airfoil Sections,} Tech. Rep. NACA-TR-640, National Advisory Committee for
+  Aeronautics, Washington, DC, 1938.
+\newblock \urlprefix\url{https://ntrs.nasa.gov/citations/19930091715},
+  aerodynamic tests of seven full-scale 10-ft-diameter propellers.
+
+\end{thebibliography}
