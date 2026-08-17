@@ -863,6 +863,24 @@ or $-20.3$ (power-on) at $\alpha = 18^\circ$
 (Table~\ref{tab:riley_cmq}), a stabilizing effect entirely absent from
 models that freeze the derivative at its cruise value.
 
+These three features also delineate what may be fairly compared across
+studies. The slipstream increment is a purely aerodynamic effect: the
+propeller wake accelerates the flow over the wing and tail, raising the
+local dynamic pressure beyond what the freestream provides, and it
+cannot be reproduced by adding explicit thrust terms to the equations
+of motion. Those represent the mechanical projection of the thrust
+vector and leave the aerodynamic coefficients unchanged, so a model
+that treats thrust only as a body-axis force will systematically
+underpredict the normal force available during a powered recovery.
+Published altitude-loss figures obtained on decoupled,
+constant-derivative models (those of Grillo et al.\ \cite{Grillo2023}
+among them) are therefore not commensurable with the results reported
+here: any difference between them conflates the solution method with
+the aerodynamic model. For this reason no quantitative comparison
+against decoupled-model results is attempted; the validation of this
+framework rests instead on Case~I, where the benchmark and this work
+share the same plant.
+
 \subsubsection{Bilinear Interpolation Scheme}
 
 For any current thrust coefficient $C_T \in [0, 0.5]$ and angle of
@@ -1356,8 +1374,10 @@ $V_0 > V_s$ the entry sits on the boundary of the DP's absorbing
 level-flight set (the formulation rightly treats such a state as
 already recovered), and under full power the vertical force balance
 lifts it into that set within the first integration step
-($\dot{\gamma}(0) \approx +5$--$7\,^\circ$/s, the propulsion-coupled
-transient of Appendix~\ref{sec:why_climbs}); past the boundary the
+($\dot{\gamma}(0) \approx +4\,^\circ$/s over $\alpha_0 =
+16$--$20^\circ$, the slipstream lift increment of the Riley tables of
+Sec.~\ref{sec:riley_aero} raising $C_L$ at fixed $\alpha$ enough to
+close the vertical balance above unity); past the boundary the
 recovery problem, and with it the policy, is simply not posed. A
 single degree of initial descent absorbs the transient entirely (the
 climb then peaks below $0^\circ$), so the boundary is sharp. The
@@ -1461,9 +1481,7 @@ with the two scripted procedures flown from the same entry.
     throttle settings of panels~(e)--(f) are convex combinations of
     the discrete extremes, not commands the optimizer selected: the
     underlying policy is bang-bang, and holds full throttle
-    throughout. The brief $\gamma > 0$ excursion of the optimum
-    (panel~a) is the transient derived in
-    Appendix~\ref{sec:why_climbs}. The dashed line in panel~(c) is the
+    throughout. The dashed line in panel~(c) is the
     \emph{power-off} stall boundary of the Riley tables,
     $\alpha_s = 14^\circ$; the superscript qualifies the boundary, not
     the state of the aircraft, which holds full throttle throughout.
@@ -1492,19 +1510,6 @@ usable lift curve without paying the post-stall drag penalty of a
 secondary stall, the policy maximizes the normal acceleration
 throughout the arc, arresting the descent with a total altitude loss of
 $7.8$\,m from the canonical initial condition.
-
-One feature of panel~(a) deserves comment before the comparison, since
-it inverts the expected sign: over the first fraction of a second the
-optimum \emph{climbs}, $\gamma$ rising above zero before the dive
-develops. This is not a numerical artifact of the discretization. It
-is a direct consequence of the propulsion-coupled aerodynamics of
-Sec.~\ref{sec:riley_aero}: at full power and deep stall the slipstream
-lift increment of the Riley tables is large enough that the vertical
-force balance closes above unity, so $\dot{\gamma} > 0$ until the
-angle of attack falls. Appendix~\ref{sec:why_climbs} derives the
-threshold condition and evaluates it at this entry; the point here is
-only that the excursion is physical, and that it is available to the
-optimum precisely because power is applied immediately.
 
 The two scripted procedures overlay the same panels. Their
 pitch-control law is identical by construction (same nose-down input,
@@ -2401,128 +2406,6 @@ $40$  & $-0.573$ & $-0.859$ \\
 \bottomrule
 \end{tabular}
 \end{table}
-
-\section{Why the Optimal Trajectory Initially Climbs: Propulsion-Coupled Lift}
-\label{sec:why_climbs}
-
-A striking feature of the closed-loop trajectory of
-Figure~\ref{fig:4dof_trajectory_riley} is the sign of the very first
-transient: at $t \approx 0.2$\,s the flight path angle briefly rises
-\emph{above} zero before the dive develops: the aircraft momentarily
-\emph{gains} altitude immediately after the recovery policy is applied,
-while still deep in the stall. This subsection derives the mechanism
-directly from the Riley tables, and shows that it is structurally
-absent from the thrust-as-body-force formulation used in classical
-flight dynamics and, in particular, in the recent stall-recovery
-study of Grillo et al.\ \cite{Grillo2023}.
-
-The distinction under examination is whether engine thrust
-\emph{aerodynamically} modifies the lift coefficient. In the classical
-decoupled treatment (Eqs.~(7) of \cite{Grillo2023} are a
-representative instance), thrust appears as an explicit body-axis
-force ($T\sin\alpha$, $T\cos\alpha$) in the equations of motion, while
-the aerodynamic coefficients themselves are power-independent. The
-propulsion-coupled model instead computes $C_T$ from the instantaneous
-throttle and airspeed and interpolates the tables accordingly, so the
-propeller slipstream modifies $C_{L_o}$, $C_{L_{\delta_e}}$,
-$C_{D_o}$, and $C_{m_{\hat{q}}}$ directly. To isolate the effect of
-this modeling choice alone, both cases below use the same Riley
-wind-tunnel data: the decoupled case evaluates the tables at
-$C_T = 0$ regardless of throttle and re-introduces thrust as a
-body-axis force; the coupled case is the model of this work.
-
-\subsection{Threshold Condition for $\dot{\gamma} > 0$}
-
-Setting $\dot{\gamma} > 0$ in Eq.~\eqref{eq:gam_riley} and using
-$V_s^2 = 2mg/(\rho S C_{L_{stall}})$ yields the required lift
-coefficient for level-flight acceleration:
-\begin{equation}
-    C_L > C_L^{req} \equiv C_{L_{stall}}
-    \left(\frac{V_s}{V}\right)^2 \cos\gamma.
-    \label{eq:cl_req}
-\end{equation}
-At the canonical initial condition ($\gamma = 0$, $V = 0.95\,V_s$):
-\begin{equation}
-    C_L^{req} = 1.26 \times (1/0.95)^2 \approx \mathbf{1.396}.
-\end{equation}
-
-\subsection{Evaluation at the Initial Deep-Stall Condition}
-
-At $t = 0$: $\alpha = 20^\circ$, $V = 0.95\,V_s \approx 30.0$\,m/s,
-$q = 0$, and the policy saturates $\delta_t = 1.0$ and
-$\delta_e = +15^\circ = +0.2618$\,rad (full nose-down; positive
-$\delta_e$ is trailing-edge down, hence $C_{m_{\delta_e}} < 0$). The
-thrust coefficient follows from the throttle calibration
-($K_t \approx 1151$\,N):
-\begin{equation}
-    C_T = \frac{K_t\,\delta_t}{\tfrac{1}{2}\rho V^2 S}
-        = \frac{1151}{5026} \approx \mathbf{0.229},
-    \label{eq:ct_numeric}
-\end{equation}
-well below the $0.5$ clip boundary. With $\hat{q} = 0$, the lift
-coefficient reduces to $C_L = C_{L_o} + C_{L_{\delta_e}}\,\delta_e$.
-
-\paragraph{Case 1: propulsion-decoupled aerodynamics.}
-Reading Tables~\ref{tab:riley_cl} and \ref{tab:riley_clde} at
-$\alpha = 20^\circ$, $C_T = 0$: $C_{L_o} = 1.250$,
-$C_{L_{\delta_e}} = 0.269$, hence
-\begin{equation}
-    C_L\big|_{C_T=0} = 1.250 + 0.269 \times 0.2618 = \mathbf{1.320}
-    < 1.396 \;\Rightarrow\; \dot{\gamma} < 0.
-\end{equation}
-The aircraft descends immediately: the direct thrust projection
-$T\sin\alpha/(mV)$ adds a small positive contribution to
-$\dot{\gamma}$, but it cannot compensate the lift shortfall of
-$-0.075$.
-
-\paragraph{Case 2: propulsion-coupled aerodynamics.}
-With $C_T = 0.229$, the interpolation factor is
-$t_{C_T} = 0.229/0.5 = 0.458$ and Eq.~\eqref{eq:bilinear} gives
-\begin{align}
-    C_{L_o}\big|_{C_T=0.229} &= 1.250 + 0.458\,(1.760 - 1.250) = 1.484,\\
-    C_{L_{\delta_e}}\big|_{C_T=0.229} &= 0.269 + 0.458\,(0.515 - 0.269)
-    = 0.382\ \text{rad}^{-1},
-\end{align}
-hence
-\begin{equation}
-    C_L\big|_{C_T=0.229} = 1.484 + 0.382 \times 0.2618 = \mathbf{1.584}
-    > 1.396 \;\Rightarrow\; \dot{\gamma} > 0.
-\end{equation}
-The aircraft gains altitude at $t = 0$, and $\gamma$ rises above zero
-until the stall break reduces $\alpha$ and $C_L$ falls below
-$C_L^{req}$.
-
-\subsection{Physical Interpretation}
-
-The propeller slipstream raises $C_{L_o}$ at $\alpha = 20^\circ$ from
-$1.250$ to $1.484$ and amplifies the elevator's lift contribution from
-$0.070$ to $0.100$, pushing the net $C_L$ above the level-flight
-threshold by $+0.189$. These increments are a purely aerodynamic
-slipstream effect: the propeller wake accelerates the flow over the
-wing and tail, raising the local dynamic pressure beyond what the
-freestream provides. Critically, the mechanism cannot be reproduced by
-adding explicit thrust terms to the equations of motion: those represent
-the mechanical projection of the thrust vector, but leave the
-aerodynamic coefficients unchanged. Any flight-dynamics model that
-treats thrust only as a body-axis force will systematically
-underpredict the available normal force during powered stall recovery
-and miss this initial altitude-gain transient. The implication for
-optimal control is direct: informed of the higher available lift, the
-exact DP policy schedules the stall break during the brief
-$\dot{\gamma} > 0$ window, extracting altitude margin before the
-descent phase begins.
-
-Beyond the transient itself, this analysis delineates what may be
-fairly compared across studies. Published altitude-loss figures
-obtained on decoupled, constant-derivative models (those of Grillo
-et al.\ \cite{Grillo2023} among them) are not commensurable with
-the results of this work: any difference conflates two distinct
-effects, the solution method and the aerodynamic model
-(propulsion-coupled tables vs.\ power-independent derivatives). The
-altitude-gain mechanism derived here isolates the model effect and
-shows it is not a refinement but a sign change in the initial
-dynamics; for this reason, no quantitative comparison against
-decoupled-model results is attempted.
 
 \bibliography{sample}
 
