@@ -1,0 +1,25 @@
+\begin{table}[hbt!]
+    \centering
+    \caption{Altitude loss $\Delta h$ (m) of the optimal DP policy (CAA-like:
+    simultaneous nose-down elevator + full power, then pull-up) vs.\ the same
+    optimal pitch schedule with delayed power (FAA-like), across initial
+    conditions ($\gamma_0=0$, $q_0=0$). PD = Gratton's power-delayed
+    ($\tau=2$\,s + 2\,s ramp); gated = power withheld until $\alpha<14^\circ$.}
+    \label{tab:caa_vs_faa}
+    \begin{tabular}{ccccccc}
+        \hline
+        $\alpha_0$ & $V_0/V_s$ & Optimal & $\tau{=}0.5$ s & $\tau{=}1$ s & PD & gated \\
+        \hline
+        16 & 0.80 & -26.30 & -32.12 & -37.67 & -56.92 & -41.18 \\
+        16 & 0.85 & -18.46 & -24.14 & -29.60 & -48.79 & -32.56 \\
+        16 & 0.90 & -10.95 & -16.34 & -21.64 & -40.70 & -23.81 \\
+        18 & 0.80 & -26.91 & -32.78 & -38.31 & -57.55 & -42.65 \\
+        18 & 0.85 & -19.07 & -24.79 & -30.24 & -49.41 & -33.91 \\
+        18 & 0.90 & -11.51 & -16.94 & -22.25 & -41.30 & -25.24 \\
+        20 & 0.80 & -27.63 & -33.55 & -39.07 & -58.30 & -44.03 \\
+        20 & 0.85 & -19.79 & -25.55 & -30.99 & -50.15 & -35.28 \\
+        20 & 0.90 & -12.19 & -17.68 & -22.99 & -42.03 & -26.59 \\
+        \hline
+        \multicolumn{7}{l}{\footnotesize\textsuperscript{t}\,No return to level flight within 15 s (shallow powered descent).}\\
+    \end{tabular}
+\end{table}

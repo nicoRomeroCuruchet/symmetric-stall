@@ -1,0 +1,25 @@
+\begin{table}[H]
+    \centering
+    \caption{Degradation of the \emph{nominal} policy with longitudinal CG position (canonical IC, nominal mass). The policy is trained once at the Riley reference CG ($0.25\,\bar{c}$) and flown unchanged on each shifted-CG aircraft, which is what an operator does: the CG of the day is not known to the controller. The excess column is the altitude cost of that mismatch, referenced to the nominal CG, and is zero there by construction.}
+    \label{tab:robustness_cg}
+    \begin{tabular}{c c c}
+        \toprule
+        $\Delta x_{cg}/\bar{c}$ & $\Delta h$ (m) & Excess over nominal CG (m) \\
+        \midrule
+        $-0.100$ & $-22.65$ & $+2.86$ \\
+        $-0.075$ & $-21.89$ & $+2.10$ \\
+        $-0.050$ & $-21.16$ & $+1.37$ \\
+        $-0.025$ & $-20.46$ & $+0.67$ \\
+        $+0.000$ & $-19.79$ & $+0.00$ \\
+        $+0.025$ & $-19.16$ & $-0.62$ \\
+        $+0.050$ & $-18.58$ & $-1.21$ \\
+        $+0.075$ & $-18.02$ & $-1.77$ \\
+        $+0.100$ & $-17.50$ & $-2.29$ \\
+        $+0.125$ & $-17.02$ & $-2.77$ \\
+        $+0.150$ & $-16.59$ & $-3.19$ \\
+        $+0.175$ & $-16.23$ & $-3.55$ \\
+        $+0.200$ & $-15.92$ & $-3.87$ \\
+        $+0.225$ & $-15.68$ & $-4.11$ \\
+        \bottomrule
+    \end{tabular}
+\end{table}

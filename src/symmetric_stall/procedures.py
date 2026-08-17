@@ -46,6 +46,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from symmetric_stall import paths
+from symmetric_stall import runconfig
+from symmetric_stall.engine import EngineLag
 from symmetric_stall.aircraft.symmetric_stall import SymmetricStall
 # Shared evaluation grid. It used to be imported from the paper-1 script
 # paper_table_dp_vs_ppo.py, which only resolved because the two files were
@@ -107,10 +109,39 @@ plt.rcParams.update({
 })
 
 
+def dump_json(path, obj, indent=1):
+    """Write a result file with the run's configuration stamped inside it.
+
+    Same reason as `stamp_engine`, for the artifacts that carry the numbers
+    rather than the pictures: a JSON of altitude losses is not interpretable
+    without knowing which plant produced it, and the filename cannot carry
+    thrust model, CG and engine at once. `run_config` goes first so it is the
+    first thing visible on opening the file.
+    """
+    if isinstance(obj, dict) and "run_config" not in obj:
+        obj = {"run_config": runconfig.describe(), **obj}
+    Path(path).write_text(json.dumps(obj, indent=indent))
+    return path
+
+
+def stamp_engine(fig):
+    """Write the run's engine into the corner of a figure.
+
+    Figures get pasted into slides and manuscripts far from the directory that
+    produced them, and altitude loss is the number the engine moves most: the
+    same canonical entry reads -9.4 m on an ideal engine and -19.8 m on Riley's.
+    A figure that does not name its engine is a number without units. Small and
+    grey so it never competes with the content, but present on every one.
+    """
+    fig.text(0.995, 0.004, runconfig.engine_label(), ha="right", va="bottom",
+             fontsize=7, color="0.55")
+    return fig
+
+
 # ── Rollout engine with a time/state-aware controller ────────────────────
 
 def rollout(env, pi, controller, alpha0_deg, vnorm0, record=False,
-            gamma0_deg=0.0, q0_deg=0.0, policy_action=None):
+            gamma0_deg=0.0, q0_deg=0.0, policy_action=None, engine_tau=None):
     """Closed-loop rollout; controller(obs, t, opt_action, ctx) -> action.
 
     `opt_action` is the policy's own (delta_e, delta_t) at the current obs;
@@ -126,26 +157,54 @@ def rollout(env, pi, controller, alpha0_deg, vnorm0, record=False,
     the default barycentric action blend (Approach A), or
     `get_optimal_action_greedy` (Approach B) to re-derive the Bellman argmax
     and keep the bang-bang structure the blend averages away.
+
+    `engine_tau` (s) puts Riley's first-order engine lag, eq. (A4), between the
+    throttle the controller commands and the throttle the aerodynamic model
+    sees. It affects the EVALUATION only: the policy is still the one solved
+    against an ideal engine, so what this measures is the ideal-engine optimum
+    flown on a real engine. `engine_tau <= 0` passes the command straight
+    through and reproduces the plant the policy was solved on, bit for bit. See
+    engine.py for why the lag is not a fifth state of the dynamic program.
+
+    Left as None it comes from `runconfig.engine_tau()`, i.e. from the run's
+    configuration rather than from each caller. That is deliberate: a rollout
+    that silently defaults to a different engine than the rest of the run is
+    exactly the bug that is impossible to see in an output file, so the engine
+    is set once for the run and every rollout inherits it.
+
+    With the lag on, `hist["dt_ctrl"]` keeps its meaning -- what the controller
+    ASKED for -- and `hist["dt_eff"]` carries what the engine actually
+    delivered. The two coincide when the lag is off.
     """
     v_stall = env.airplane.STALL_AIRSPEED
     dt = env.airplane.TIME_STEP
     policy_action = policy_action or get_optimal_action
+    engine = EngineLag(runconfig.engine_tau() if engine_tau is None
+                       else engine_tau)
 
     obs, _ = env.specific_reset(np.deg2rad(gamma0_deg), vnorm0,
                                 np.deg2rad(alpha0_deg), np.deg2rad(q0_deg))
     t, h = 0.0, 0.0
     stop = RecoveryMonitor(dt)
     ctx = {}
-    hist = {"t": [], "h": [], "de": [], "dt_ctrl": [], "alpha": [],
-            "gamma": [], "v_norm": [], "q": []} if record else None
+    hist = {"t": [], "h": [], "de": [], "dt_ctrl": [], "dt_eff": [],
+            "alpha": [], "gamma": [], "v_norm": [], "q": []} if record else None
 
     while t < MAX_TIME:
         opt_action = policy_action(obs, pi)[0]
         action = np.asarray(controller(obs, t, opt_action, ctx), dtype=np.float32)
+        dt_cmd = float(action[1])
+        # The engine advances on the COMMAND, and the plant is stepped with what
+        # comes out of it. Order matters: the lag is applied before env.step, so
+        # the very first step already flies the lagged throttle rather than the
+        # commanded one.
+        dt_eff = engine.step(dt_cmd, dt)
+        action[1] = dt_eff
 
         if record:
             hist["t"].append(t); hist["h"].append(h)
-            hist["de"].append(float(action[0])); hist["dt_ctrl"].append(float(action[1]))
+            hist["de"].append(float(action[0])); hist["dt_ctrl"].append(dt_cmd)
+            hist["dt_eff"].append(dt_eff)
             hist["alpha"].append(float(obs[2])); hist["gamma"].append(float(obs[0]))
             hist["v_norm"].append(float(obs[1])); hist["q"].append(float(obs[3]))
 
@@ -253,7 +312,7 @@ def compute_held_pull():
         logger.info(f"held pull -{X:g}: h={r['h']:.2f} ({r['status']}) "
                     f"alpha_max={amax:.1f}")
     rep["e3d_held_pull"] = arm
-    (OUT_DIR / "procedures.json").write_text(json.dumps(rep, indent=2))
+    dump_json(OUT_DIR / "procedures.json", rep, indent=2)
     logger.info("[+] e3d_held_pull added to procedures.json")
     return rep
 
@@ -442,7 +501,7 @@ def main_maneuvers():
     (OUT_DIR / "table_maneuvers.tex").write_text("\n".join(lines) + "\n")
 
     report = {"maneuvers": man, "optimal_ref": opt}
-    (OUT_DIR / "maneuvers.json").write_text(json.dumps(report, indent=2))
+    dump_json(OUT_DIR / "maneuvers.json", report, indent=2)
     logger.info(f"[+] Wrote table_maneuvers.tex and maneuvers.json to {OUT_DIR}")
 
 
@@ -577,6 +636,7 @@ def make_pilot_sensitivity_figure(report):
     ax_r.legend(loc="lower left", fontsize=8.5, framealpha=0.95)
 
     fig.tight_layout()
+    stamp_engine(fig)
     for ext in ("png", "pdf"):
         fig.savefig(OUT_DIR / f"fig_pilot_sensitivity.{ext}", dpi=300,
                     bbox_inches="tight")
@@ -627,6 +687,7 @@ def make_power_delay_figure(report):
     ax.legend(loc="lower left", fontsize=9.5, framealpha=0.95)
 
     fig.tight_layout()
+    stamp_engine(fig)
     for ext in ("png", "pdf"):
         fig.savefig(OUT_DIR / f"fig_procedures.{ext}", dpi=300, bbox_inches="tight")
     plt.close(fig)
@@ -698,6 +759,7 @@ def make_trajectory_greedy_figure():
         fig.legend(*fig.axes[0].get_legend_handles_labels(),
                    loc="lower center", ncol=2, frameon=False,
                    bbox_to_anchor=(0.5, -0.02))
+        stamp_engine(fig)
         for ext in ("png", "pdf"):
             fig.savefig(OUT_DIR / f"fig_trajectories_greedy.{ext}", dpi=300,
                         bbox_inches="tight")
@@ -705,15 +767,26 @@ def make_trajectory_greedy_figure():
     logger.info("[+] fig_trajectories_greedy.{png,pdf} written")
 
 
-def make_trajectory_comparison_figure():
+def make_trajectory_comparison_figure(engine_tau=None):
     """Time-domain comparison at the canonical IC: DP optimum vs the
     scripted CAA and FAA procedures (alpha-hold pilot, 2 s power ramp).
     Same paired-panel layout as the single-trajectory figure; one color
     per protocol (consistent with the power-delay figure: blue optimum,
-    orange CAA-timing, green FAA)."""
+    orange CAA-timing, green FAA).
+
+    `engine_tau > 0` flies all three arms on Riley's lagged engine, eq. (A4),
+    and writes to a separate file so the ideal-engine figure the rest of the
+    paper quotes is never overwritten. The policy is unchanged -- it is still
+    the one solved for an ideal engine -- so the lagged run is the honest
+    evaluation of that policy, not a re-optimisation. All three arms get the
+    same engine, which is what keeps the CAA/FAA comparison a comparison of
+    TIMING rather than of hardware."""
     pi = paths.load_policy(env=SymmetricStall())
     a0c, v0c = CANONICAL
-    r_opt = rollout(pi.env, pi, ctrl_optimal, a0c, v0c, record=True)
+    engine_tau = runconfig.engine_tau() if engine_tau is None else float(engine_tau)
+    lagged = engine_tau > 0.0
+    r_opt = rollout(pi.env, pi, ctrl_optimal, a0c, v0c, record=True,
+                    engine_tau=engine_tau)
 
     # Hold pull authority fixed across the three arms: the scripted pilots may
     # not haul back harder than the optimum does at this same entry. Otherwise
@@ -728,10 +801,10 @@ def make_trajectory_comparison_figure():
         ("DP optimum", "#2C4B9E", "-", r_opt),
         ("CAA ($\\alpha$-hold pilot)", "#E8742A", "--",
          rollout(pi.env, pi, make_maneuver("t0", "alpha_hold", de_cap),
-                 a0c, v0c, record=True)),
+                 a0c, v0c, record=True, engine_tau=engine_tau)),
         ("FAA ($\\alpha$-hold pilot)", "#2CA02C", "-.",
          rollout(pi.env, pi, make_maneuver("unstall", "alpha_hold", de_cap),
-                 a0c, v0c, record=True)),
+                 a0c, v0c, record=True, engine_tau=engine_tau)),
     ]
 
     rc = {
@@ -765,7 +838,17 @@ def make_trajectory_comparison_figure():
                 y = np.asarray(r["hist"][key])
                 if conv is not None:
                     y = conv(y)
-                if style == "step":
+                if lagged and key == "dt_ctrl":
+                    # On the lagged engine the throttle panel has to show BOTH
+                    # traces, or the reader cannot tell the command from the
+                    # thrust: thin dotted is what the arm asked for, heavy is
+                    # what the engine delivered. Every other panel is a state,
+                    # and states have only one version.
+                    ax.step(t, y, color=color, lw=0.9, ls=":", where="post",
+                            alpha=0.8)
+                    ax.plot(t, np.asarray(r["hist"]["dt_eff"]), color=color,
+                            lw=1.6, ls=ls)
+                elif style == "step":
                     ax.step(t, y, color=color, lw=1.6, ls=ls, where="post")
                 else:
                     ax.plot(t, y, color=color, lw=1.6, ls=ls)
@@ -809,6 +892,11 @@ def make_trajectory_comparison_figure():
         axs[3].axhline(0.0, color="0.45", linestyle="--", linewidth=0.9)
         axs[4].axhline(0.0, color="0.45", linestyle="--", linewidth=0.9)
         axs[5].set_ylim([-0.05, 1.05])
+        if lagged:
+            axs[5].annotate(r"dotted: commanded $\quad$ solid: engine "
+                            rf"($\tau_e = {engine_tau:g}$ s)",
+                            xy=(0.98, 0.06), xycoords="axes fraction",
+                            ha="right", fontsize=9, color="0.35")
         for label, color, _, r in runs:
             axs[6].plot(r["hist"]["t"][-1], r["hist"]["h"][-1], marker="o",
                         ms=5, color=color)
@@ -821,11 +909,21 @@ def make_trajectory_comparison_figure():
             ax.tick_params(labelbottom=True, labelsize=9)
         axs[-1].set_xlabel("Time (s)")
         fig.align_ylabels(axs)
+        # The ideal-engine figure keeps the bare name the manuscript cites; a
+        # lagged run is a different plant and gets a different file, tagged
+        # with the tau it was flown at, so the two can never be confused.
+        stem = ("fig_trajectories_procedures" if not lagged
+                else f"fig_trajectories_procedures_tau{round(engine_tau*100):03d}")
+        stamp_engine(fig)
         for ext in ("png", "pdf"):
-            fig.savefig(OUT_DIR / f"fig_trajectories_procedures.{ext}",
-                        dpi=300, bbox_inches="tight")
+            fig.savefig(OUT_DIR / f"{stem}.{ext}", dpi=300, bbox_inches="tight")
         plt.close(fig)
-        logger.info("[+] fig_trajectories_procedures.{png,pdf} written")
+        for lab, _, _, r in runs:
+            logger.info(f"[traj tau_e={engine_tau:g}] {lab}: "
+                        f"h={r['h']:.2f} m  t={r['t']:.2f} s  ({r['status']})")
+        logger.info(f"[+] {stem}.{{png,pdf}} written")
+    return {lab: {"h": r["h"], "t": r["t"], "status": r["status"]}
+            for lab, _, _, r in runs}
 
 
 # Dense IC sweep for the heatmap figures. The maps plot V0/Vs on the abscissa
@@ -983,7 +1081,7 @@ def compute_ic_cuts(vnorms=None, workers=None):
         data[cut] = {"values": [float(y) for y in ys], "label": label,
                      "grid": grid}
         logger.info(f"[cuts] {cut} done")
-    (OUT_DIR / "ic_cuts.json").write_text(json.dumps(data, indent=1))
+    dump_json(OUT_DIR / "ic_cuts.json", data, indent=1)
     logger.info("[+] ic_cuts.json written")
     return data
 
@@ -1029,6 +1127,7 @@ def make_ic_cuts_figure(data=None):
         ax.grid(True, color="white", linestyle=":", linewidth=0.6, alpha=0.55)
     cb = fig.colorbar(pcm, ax=axes, shrink=0.95, pad=0.02)
     cb.set_label(r"$\Delta h$ (m)")
+    stamp_engine(fig)
     for ext in ("png", "pdf"):
         fig.savefig(OUT_DIR / f"fig_ic_cuts.{ext}", dpi=300)
     plt.close(fig)
@@ -1107,7 +1206,7 @@ def compute_ic_gamma_alpha(arms=None, workers=None):
             panels.append({"vnorm": float(v), "h": h, "status": st})
         data["arms"][k] = panels
         logger.info(f"[ga] {k} done")
-    (OUT_DIR / "ic_gamma_alpha.json").write_text(json.dumps(data, indent=1))
+    dump_json(OUT_DIR / "ic_gamma_alpha.json", data, indent=1)
     logger.info("[+] ic_gamma_alpha.json written")
     return data
 
@@ -1168,7 +1267,7 @@ def compute_ic_gamma_alpha_gmax(workers=None):
         [[out[p * nG * nA + i * nA + j] for j in range(nA)]
          for i in range(nG)]
         for p in range(len(data["vnorms"]))]
-    (OUT_DIR / "ic_gamma_alpha.json").write_text(json.dumps(data, indent=1))
+    dump_json(OUT_DIR / "ic_gamma_alpha.json", data, indent=1)
     n_bad = int(np.sum(np.array(data["opt_gmax_deg"]) > GA_GMAX_MASK_DEG))
     logger.info(f"[gmax] done; {n_bad}/{len(jobs)} nodes exceed "
                 f"{GA_GMAX_MASK_DEG:.2f} deg and will be masked")
@@ -1274,6 +1373,7 @@ def make_ic_gamma_alpha_figure(data=None):
     cb.set_label(r"optimum $\Delta h$ (m)")
     cb = fig.colorbar(pcm_d, ax=axes[1, :], shrink=0.92, pad=0.02)
     cb.set_label("extra loss, FAA over CAA (m)\n(red: FAA loses less)")
+    stamp_engine(fig)
     for ext in ("png", "pdf"):
         fig.savefig(OUT_DIR / f"fig_ic_gamma_alpha.{ext}", dpi=300)
     plt.close(fig)
@@ -1379,6 +1479,7 @@ def make_ic_optimum_figure(data=None):
     axes[0].set_ylabel(r"$\gamma_0$ (deg)")
     cb = fig.colorbar(pcm, ax=axes, shrink=0.92, pad=0.02)
     cb.set_label(r"$\Delta h$ (m)")
+    stamp_engine(fig)
     for ext in ("png", "pdf"):
         fig.savefig(OUT_DIR / f"fig_ic_optimum.{ext}", dpi=300)
     plt.close(fig)
@@ -1497,6 +1598,7 @@ def make_ic_procedures_figure(data=None):
         # standalone while the three stay directly comparable.
         cb = fig.colorbar(pcm, ax=axes[i, :], shrink=0.9, pad=0.02)
         cb.set_label("excess over the\noptimum (m)", fontsize=9)
+    stamp_engine(fig)
     for ext in ("png", "pdf"):
         fig.savefig(OUT_DIR / f"fig_ic_procedures.{ext}", dpi=300)
     plt.close(fig)
@@ -1552,6 +1654,7 @@ def make_ic_gamma_lines_figure(data=None):
         ax.text(0.0, 1.02, f"({'ab'[k]})", transform=ax.transAxes,
                 fontsize=11, va="bottom", ha="left")
     axes[0].legend(frameon=False, loc="lower right")
+    stamp_engine(fig)
     for ext in ("png", "pdf"):
         fig.savefig(OUT_DIR / f"fig_ic_gamma_lines.{ext}", dpi=300)
     plt.close(fig)
@@ -1682,7 +1785,7 @@ def compute_ic_montecarlo(n=1000, seed=20260723, workers=None):
         data[key] = {"h": [float(h) for h, _ in chunk],
                      "status": [s for _, s in chunk]}
         logger.info(f"[mc] {key} done")
-    (OUT_DIR / "ic_montecarlo.json").write_text(json.dumps(data, indent=1))
+    dump_json(OUT_DIR / "ic_montecarlo.json", data, indent=1)
     logger.info("[+] ic_montecarlo.json written")
     return data
 
@@ -1733,7 +1836,7 @@ def compute_ic_heatmap_dense():
     data = {"alpha0_deg": [float(a) for a in IC_HM_ALPHAS],
             "vnorm0": [float(v) for v in IC_HM_VNORMS]}
     data.update(_sweep([k for k, _, _ in IC_HM_STRATEGIES]))
-    (OUT_DIR / "ic_heatmap_dense.json").write_text(json.dumps(data, indent=1))
+    dump_json(OUT_DIR / "ic_heatmap_dense.json", data, indent=1)
     logger.info("[+] ic_heatmap_dense.json written")
     return data
 
@@ -1796,7 +1899,7 @@ def compute_caa_ramp_dense():
     to the dense IC sweep cache."""
     data = json.loads((OUT_DIR / "ic_heatmap_dense.json").read_text())
     data.update(_sweep(["caa_ramp"], data["alpha0_deg"], data["vnorm0"]))
-    (OUT_DIR / "ic_heatmap_dense.json").write_text(json.dumps(data, indent=1))
+    dump_json(OUT_DIR / "ic_heatmap_dense.json", data, indent=1)
     logger.info("[+] caa_ramp added to ic_heatmap_dense.json")
     return data
 
@@ -1851,6 +1954,7 @@ def make_procedures_ic_figure(data=None):
     cb = fig.colorbar(pcm, ax=axes, fraction=0.03, pad=0.02)
     cb.set_label("excess loss vs. optimal (m)\n(red: beats optimal)",
                  fontsize=9)
+    stamp_engine(fig)
     for ext in ("png", "pdf"):
         fig.savefig(OUT_DIR / f"fig_procedures_ic_heatmap.{ext}", dpi=300,
                     bbox_inches="tight")
@@ -1869,7 +1973,7 @@ def compute_switch_delay_dense():
     data = json.loads((OUT_DIR / "ic_heatmap_dense.json").read_text())
     data.update(_sweep([f"switch{t:g}" for t in SWITCH_HM_TAUS],
                        data["alpha0_deg"], data["vnorm0"]))
-    (OUT_DIR / "ic_heatmap_dense.json").write_text(json.dumps(data, indent=1))
+    dump_json(OUT_DIR / "ic_heatmap_dense.json", data, indent=1)
     logger.info("[+] switch-delay arms added to ic_heatmap_dense.json")
     return data
 
@@ -1914,6 +2018,7 @@ def make_switch_delay_ic_figure(data=None):
     cb = fig.colorbar(pcm, ax=axes, fraction=0.02, pad=0.015)
     cb.set_label("excess loss vs. optimal (m)\n(red: beats optimal)",
                  fontsize=9)
+    stamp_engine(fig)
     for ext in ("png", "pdf"):
         fig.savefig(OUT_DIR / f"fig_switch_delay_ic.{ext}", dpi=300,
                     bbox_inches="tight")
@@ -1960,6 +2065,7 @@ def make_optimal_ic_figure(data=None):
     ax.set_ylabel(r"$\alpha_0$ (deg)")
     cb = fig.colorbar(pcm, ax=ax, fraction=0.046, pad=0.03)
     cb.set_label(r"$\Delta h$ (m)")
+    stamp_engine(fig)
     for ext in ("png", "pdf"):
         fig.savefig(OUT_DIR / f"fig_optimal_ic_heatmap.{ext}", dpi=300,
                     bbox_inches="tight")
@@ -1997,6 +2103,7 @@ def make_ic_heatmap_figure(data=None):
     cb2 = fig.colorbar(pcm_exc, ax=axes, fraction=0.025, pad=0.015)
     cb2.set_label("excess loss vs. optimal (m)\n(red: beats optimal)",
                   fontsize=9)
+    stamp_engine(fig)
     for ext in ("png", "pdf"):
         fig.savefig(OUT_DIR / f"fig_caa_faa_heatmap.{ext}", dpi=300,
                     bbox_inches="tight")
@@ -2085,7 +2192,7 @@ def main():
                     f"{per_ic[f'a{a0c:.0f}_v{v0c:.2f}']['h']:.2f} m")
     report["e3c_partial_pull"] = e3c
 
-    (OUT_DIR / "procedures.json").write_text(json.dumps(report, indent=2))
+    dump_json(OUT_DIR / "procedures.json", report, indent=2)
 
     # ── Figures ──────────────────────────────────────────────────────────
     ckey = f"a{a0c:.0f}_v{v0c:.2f}"

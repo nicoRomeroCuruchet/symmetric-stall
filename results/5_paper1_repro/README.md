@@ -8,6 +8,15 @@ Riley's reference quarter-chord.
 The experiments are paper 1's, unchanged in what they ask. What changed is the
 plant they ask it of.
 
+> **The engine here is ideal: throttle commands take effect instantly.** Riley's
+> aircraft has a first-order lag, eq. (A4), with τ_e ≈ 0.85 s — a constant he
+> defines and never tabulates, recovered from his own figures 16 and 18. The
+> same suite flown on the real engine is in **`../6_riley_engine/`**, and that is
+> the directory to cite for any ABSOLUTE altitude loss: the canonical entry
+> reads −9.35 m here and −19.79 m there. Differences between arms move less than
+> 12 % and can be cited from either. This directory is the τ_e = 0 end of the
+> sensitivity analysis, not superseded work.
+
     python scripts/paper1/run.py --list          # the suite and what blocks what
     python scripts/paper1/run.py trajectories    # one experiment
     python scripts/paper1/run.py procedures held_pull procedure_figs

@@ -150,6 +150,7 @@ def figure(rows, out_dir):
     ax2.legend(lines, [ln.get_label() for ln in lines], loc="lower left",
                fontsize=8.5)
     fig.tight_layout()
+    P.stamp_engine(fig)
     for ext in ("png", "pdf"):
         fig.savefig(out_dir / f"fig_cg_reach.{ext}", dpi=300,
                     bbox_inches="tight")
@@ -163,13 +164,13 @@ def main():
     out_dir = paths.out_dir()
     rows = sweep()
     x_div = figure(rows, out_dir)
-    (out_dir / "cg_reach.json").write_text(json.dumps(
-        {"x_ref": X_REF, "x_divergent": x_div,
-         "linearisation": {"alpha_deg": LIN_ALPHA_DEG, "vnorm": LIN_VNORM,
-                           "de_deg": LIN_DE_DEG},
-         "canonical_ic": {"alpha0_deg": P.CANONICAL[0],
-                          "vnorm0": P.CANONICAL[1]},
-         "rows": rows}, indent=1))
+    P.dump_json(out_dir / "cg_reach.json",
+                {"x_ref": X_REF, "x_divergent": x_div,
+                 "linearisation": {"alpha_deg": LIN_ALPHA_DEG,
+                                   "vnorm": LIN_VNORM, "de_deg": LIN_DE_DEG},
+                 "canonical_ic": {"alpha0_deg": P.CANONICAL[0],
+                                  "vnorm0": P.CANONICAL[1]},
+                 "rows": rows}, indent=1)
     logger.info("[+] cg_reach.json written")
 
 

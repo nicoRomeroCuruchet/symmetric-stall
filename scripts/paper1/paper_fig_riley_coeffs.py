@@ -23,6 +23,8 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+from symmetric_stall import paths
+
 logger = logging.getLogger(__name__)
 
 ALPHA = [-10, -5, 0, 5, 10, 12, 14, 16, 18, 20, 25, 30, 35, 40]
@@ -104,14 +106,22 @@ def main():
     axes[1, 3].axis("off")
 
     fig.tight_layout()
+    # The results copy follows --out like every other figure; it used to be
+    # pinned to results/paper, which silently wrote outside the run's own
+    # directory. The manuscript copy is written only if the manuscript tree is
+    # actually there -- it is a separate repo and is usually not, and a missing
+    # sibling directory should not abort a suite on its last experiment.
+    out_results = paths.out_dir()
     out_paper = Path("stall-paper/img")
-    out_results = Path("results/paper")
-    out_results.mkdir(parents=True, exist_ok=True)
     for ext in ("png", "pdf"):
-        fig.savefig(out_paper / f"riley_coefficients.{ext}", dpi=300,
-                    bbox_inches="tight")
         fig.savefig(out_results / f"fig_riley_coefficients.{ext}", dpi=300,
                     bbox_inches="tight")
+        if out_paper.is_dir():
+            fig.savefig(out_paper / f"riley_coefficients.{ext}", dpi=300,
+                        bbox_inches="tight")
+        else:
+            logger.info("[i] %s not present; manuscript copy skipped",
+                        out_paper)
     plt.close(fig)
     logger.info("[+] riley_coefficients.{png,pdf} written")
 

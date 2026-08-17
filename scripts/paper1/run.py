@@ -20,7 +20,7 @@ import argparse
 import logging
 import sys
 
-from symmetric_stall import runconfig
+from symmetric_stall import engine, runconfig
 
 #: name -> (module attribute path, one-line description, rough cost)
 EXPERIMENTS = {
@@ -95,6 +95,13 @@ def build_parser():
     p.add_argument("--policy", default=None,
                    help="policy .npz (default: the only one in data/policies)")
     p.add_argument("--out", default=None, help="output directory")
+    p.add_argument("--engine-tau", type=float,
+                   default=runconfig.CODE_DEFAULT_ENGINE_TAU, metavar="S",
+                   help="Riley's engine lag tau_e (s), applied to the "
+                        "EVALUATION of every experiment (the policy is always "
+                        "solved against an ideal engine). 0 = ideal engine, "
+                        f"{engine.RILEY_TAU_E} = the value identified from "
+                        "Riley's figures 16 and 18")
     return p
 
 
@@ -139,7 +146,8 @@ def main(argv=None):
 
     # Before any import that reaches the plant.
     runconfig.apply(thrust=args.thrust, cg_aft=args.cg_aft,
-                    cg_right=args.cg_right, cg_below=args.cg_below)
+                    cg_right=args.cg_right, cg_below=args.cg_below,
+                    engine_tau=args.engine_tau)
 
     import os
     if args.policy:
@@ -155,6 +163,16 @@ def main(argv=None):
     log.info("model: %s", runconfig.describe())
     log.info("policy: %s", paths.policy_path())
     log.info("output: %s", paths.out_dir())
+    # The engine gets its own line, loud. It is the parameter that moves the
+    # headline number most (-9.4 m ideal vs -19.8 m on Riley's own engine at
+    # the canonical entry) and the one least visible in an output file.
+    log.info("ENGINE: %s", runconfig.engine_label())
+    if runconfig.engine_tau() <= 0.0:
+        log.warning("[!] running on an IDEAL engine: throttle commands take "
+                    "effect instantly. Riley's aircraft does not (tau_e = %s s, "
+                    "identified from his figs. 16 and 18). Pass --engine-tau "
+                    "%s for the real one.",
+                    engine.RILEY_TAU_E, engine.RILEY_TAU_E)
 
     for name in args.experiments:
         need = REQUIRES.get(name)
@@ -165,7 +183,7 @@ def main(argv=None):
                 log.error("%s needs %s; run %r first", name, need[0], need[1])
                 return 1
         target, desc, _ = EXPERIMENTS[name]
-        log.info("=== %s — %s", name, desc)
+        log.info("=== %s — %s [%s]", name, desc, runconfig.engine_label())
         resolve(target)()
         log.info("=== %s done", name)
     return 0

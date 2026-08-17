@@ -40,7 +40,7 @@ import numpy as np
 
 from symmetric_stall.aircraft.symmetric_stall import SymmetricStall
 from symmetric_stall import paths
-from symmetric_stall.procedures import rollout, ctrl_optimal
+from symmetric_stall.procedures import rollout, ctrl_optimal, stamp_engine, dump_json
 from symmetric_stall.procedures import ALPHA_GRID_DEG, CANONICAL, VNORM_GRID
 from symmetric_stall.policy_iteration import PolicyIterationStall
 from symmetric_stall.utils.utils import get_optimal_action
@@ -188,7 +188,7 @@ def run_matrix(pi=None, workers=None):
         data["cells"][cell_key(mf, dx)] = cell
         logger.info(f"m×{mf:.3f} dx{dx:+.3f}: canonical {cell[ck]['h']:.2f} m "
                     f"({cell[ck]['status']})")
-    (OUT_DIR / "robustness.json").write_text(json.dumps(data, indent=1))
+    dump_json(OUT_DIR / "robustness.json", data, indent=1)
     logger.info("[+] robustness.json written")
     return data
 
@@ -275,7 +275,7 @@ def normalization_gap(long_horizon_s: float = 60.0):
     out = {"h_nominal": round(h_nom, 3), "grid_vnorm_floor": floor,
            "long_horizon_s": long_horizon_s, "canonical": list(CANONICAL),
            "rows": rows}
-    (OUT_DIR / "normalization_gap.json").write_text(json.dumps(out, indent=1))
+    dump_json(OUT_DIR / "normalization_gap.json", out, indent=1)
     logger.info("[+] normalization_gap.json written")
     return out
 
@@ -390,6 +390,7 @@ def make_matrix_figure(data=None):
     cb.set_label("altitude loss (varied aircraft)\n"
                  "$-$ altitude loss (nominal aircraft)   (m)",
                  fontsize=10)
+    stamp_engine(fig)
     for ext in ("png", "pdf"):
         fig.savefig(OUT_DIR / f"fig_robustness_matrix.{ext}", dpi=300,
                     bbox_inches="tight")
@@ -674,7 +675,7 @@ def thrust_sensitivity():
             can = data["cells"][f"eta{eta:.2f}"][
                 f"a{ALPHA_GRID_DEG[-1]:.0f}_v{VNORM_GRID[-1]:.2f}"]["h"]
             logger.info(f"  eta={eta:.2f}: {can - base:+.3f} m")
-    (OUT_DIR / "thrust_sensitivity.json").write_text(json.dumps(data, indent=1))
+    dump_json(OUT_DIR / "thrust_sensitivity.json", data, indent=1)
     logger.info("[+] thrust_sensitivity.json written")
 
 

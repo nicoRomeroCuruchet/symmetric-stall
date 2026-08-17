@@ -1,0 +1,23 @@
+{
+ "1.05": {
+  "v_ss_nom": 0.9575,
+  "feasible_at_v_ss": false,
+  "v_star_nom": 0.96,
+  "v_star_over_vs_real": 0.937,
+  "v_star_thr13_nom": 0.96
+ },
+ "1.1": {
+  "v_ss_nom": 0.9845,
+  "feasible_at_v_ss": false,
+  "v_star_nom": 0.99,
+  "v_star_over_vs_real": 0.944,
+  "v_star_thr13_nom": 0.99
+ },
+ "1.15": {
+  "v_ss_nom": 1.0108,
+  "feasible_at_v_ss": false,
+  "v_star_nom": 1.02,
+  "v_star_over_vs_real": 0.951,
+  "v_star_thr13_nom": 1.02
+ }
+}
