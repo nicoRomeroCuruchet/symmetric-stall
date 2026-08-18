@@ -1,0 +1,16 @@
+
+=================================================================
+  PROFILING REPORT — CUDA Event Timing
+=================================================================
+  GPU:                  NVIDIA GeForce RTX 4090
+  State space:          31,948,500 states
+  Action space:         91 actions
+  Convergence:          67 iterations
+-----------------------------------------------------------------
+  Setup (CPU):                32.25 ms
+  Policy Evaluation:    891.3 s (14.9 min)  (avg 13.302 s/iter)
+  Policy Improvement:          3.232 s  (avg 48.24 ms/iter)
+  GPU->CPU Transfer:          41.33 ms
+-----------------------------------------------------------------
+  TOTAL WALL TIME:      894.6 s (14.9 min)
+=================================================================
