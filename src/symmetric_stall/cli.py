@@ -38,6 +38,14 @@ def build_parser() -> argparse.ArgumentParser:
              "code default is 'paper1'; here the default is '%(default)s' "
              "because that is the paper's.",
     )
+    p.add_argument(
+        "--mass-factor", type=float, default=1.0,
+        help="Multiplier on Riley's published mass (715.3152 kg). Perturbs the "
+             "aircraft the policy is SOLVED FOR: the stall speed and the "
+             "throttle calibration follow, and the CUDA kernel is compiled "
+             "with it. The .npz name carries it (massNNN), so a retrained "
+             "policy can never overwrite the nominal one. Default: %(default)s.",
+    )
     p.add_argument("--cg-aft", type=float, default=0.0,
                    help="CG offset towards the tail [m]. Default: %(default)s.")
     p.add_argument("--cg-right", type=float, default=0.0,
@@ -86,6 +94,7 @@ def main(argv: list[str] | None = None) -> None:
     # BEFORE importing the plant. See the module docstring.
     runconfig.apply(
         thrust=args.thrust,
+        mass_factor=args.mass_factor,
         cg_aft=args.cg_aft,
         cg_right=args.cg_right,
         cg_below=args.cg_below,

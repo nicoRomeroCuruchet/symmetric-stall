@@ -169,7 +169,15 @@ class Grumman:
         # 1.35581795 kg-m2. MASS and CHORD used to be 715.21 and 1.22, which
         # are mistranscriptions -- 1577 lb is 715.3152, not 715.21, and the
         # comment itself already said 0.453592.
-        self.MASS = 715.3152  # Mass (m) [kg] — Riley Table I: 1577 lb
+        # MASS_FACTOR (class attribute below, from the environment) is 1.0 for
+        # Riley's published aircraft. Scaling it here rather than after
+        # construction is deliberate: STALL_AIRSPEED, MAX_CRUISE_AIRSPEED and
+        # the throttle calibration are all derived from the mass further down
+        # this __init__, so they follow. Assigning to .MASS on a built object
+        # -- as paper_robustness.py does on purpose -- changes the weight and
+        # leaves Vs stale, which is the normalisation mismatch that study
+        # isolates. Do not "fix" that one by using this.
+        self.MASS = 715.3152 * self.MASS_FACTOR  # [kg] — Riley Table I: 1577 lb
         self.WING_SURFACE_AREA = 9.114717  # (S) [m2] — Table I: 98.11 ft2
         self.CHORD = 1.2192  # Chord (c) [m] — Table I: 4.00 ft, rectangular
         # wing, so root = tip = mean aerodynamic chord = 4.00 ft
@@ -322,6 +330,11 @@ class Grumman:
     CG_AFT = float(os.environ.get("CG_AFT_M", 0.0))      # m, towards the tail
     CG_RIGHT = float(os.environ.get("CG_RIGHT_M", 0.0))  # m, towards the right wing
     CG_BELOW = float(os.environ.get("CG_BELOW_M", 0.0))  # m, downwards
+
+    # Multiplies Riley's published mass. Read at import time, like the CG, and
+    # compiled into the CUDA kernel too (policy_iteration.py), so the plant and
+    # the kernel are the same aircraft. See runconfig.MASS_FACTOR.
+    MASS_FACTOR = float(os.environ.get("MASS_FACTOR", 1.0))
 
     @property
     def DXCG_OVER_CHORD(self):

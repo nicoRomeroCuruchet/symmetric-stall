@@ -13,6 +13,18 @@ and both the Python plant and the CUDA kernel read them:
     CG_RIGHT_M     CLASS LEVEL, i.e. AT IMPORT TIME: setting them after the
     CG_BELOW_M     plant has been imported has no effect whatsoever.
 
+    MASS_FACTOR    multiplies Riley's 715.3152 kg. Read at import time by the
+                   plant and compiled into the CUDA kernel, so it perturbs the
+                   aircraft the policy is SOLVED FOR, not merely the one it is
+                   flown on. That is the difference from the THRUST_SCALE and
+                   the `env.airplane.MASS *= f` of paper_robustness.py, which
+                   are evaluation-only. Everything grumman.py derives from the
+                   mass in __init__ follows: the stall speed, hence the V/Vs
+                   grid axis, hence the throttle calibration. Use it to answer
+                   "would a policy retrained for this mass do better?"; use the
+                   evaluation-only knobs to answer "how does the nominal policy
+                   degrade?". They are different questions.
+
     ENGINE_TAU_S   Riley's engine-response time constant [s], eq. (A4). Unlike
                    the three above it is read per ROLLOUT rather than at import,
                    because it belongs to the evaluation and not to the solved
@@ -41,6 +53,10 @@ CODE_DEFAULT_THRUST = "paper1"
 #: them exactly rather than silently switching plant underneath old commands.
 CODE_DEFAULT_ENGINE_TAU = 0.0
 
+#: Riley's aircraft at its published mass. Anything else is a perturbation and
+#: has to say so in the filename -- see slug().
+CODE_DEFAULT_MASS_FACTOR = 1.0
+
 
 def apply(
     thrust: str = DEFAULT_THRUST,
@@ -48,6 +64,7 @@ def apply(
     cg_right: float = 0.0,
     cg_below: float = 0.0,
     engine_tau: float = CODE_DEFAULT_ENGINE_TAU,
+    mass_factor: float = CODE_DEFAULT_MASS_FACTOR,
 ) -> None:
     """Set the model's environment variables.
 
@@ -61,16 +78,24 @@ def apply(
         )
     if float(engine_tau) < 0.0:
         raise ValueError(f"engine_tau must be >= 0, got {engine_tau!r}")
+    if float(mass_factor) <= 0.0:
+        raise ValueError(f"mass_factor must be > 0, got {mass_factor!r}")
     os.environ["THRUST_MODEL"] = thrust
     os.environ["CG_AFT_M"] = repr(float(cg_aft))
     os.environ["CG_RIGHT_M"] = repr(float(cg_right))
     os.environ["CG_BELOW_M"] = repr(float(cg_below))
     os.environ["ENGINE_TAU_S"] = repr(float(engine_tau))
+    os.environ["MASS_FACTOR"] = repr(float(mass_factor))
 
 
 def engine_tau() -> float:
     """Riley's tau_e for THIS run, in seconds. 0 means the ideal engine."""
     return float(os.environ.get("ENGINE_TAU_S", CODE_DEFAULT_ENGINE_TAU))
+
+
+def mass_factor() -> float:
+    """Multiplier on Riley's published mass for THIS run. 1.0 is his aircraft."""
+    return float(os.environ.get("MASS_FACTOR", CODE_DEFAULT_MASS_FACTOR))
 
 
 def describe() -> dict[str, str]:
@@ -81,6 +106,7 @@ def describe() -> dict[str, str]:
         "cg_right_m": os.environ.get("CG_RIGHT_M", "0.0"),
         "cg_below_m": os.environ.get("CG_BELOW_M", "0.0"),
         "engine_tau_s": repr(engine_tau()),
+        "mass_factor": repr(mass_factor()),
     }
 
 
@@ -101,6 +127,12 @@ def slug() -> str:
         parts.append("cg-{:g}_{:g}_{:g}".format(*cg))
     if engine_tau() > 0.0:
         parts.append(f"tau{round(engine_tau() * 100):03d}")
+    if mass_factor() != CODE_DEFAULT_MASS_FACTOR:
+        # Without this the retrained policies of the mass study would all land
+        # on the reference policy's filename, and train.py would either load it
+        # instead of training (silently answering the wrong question) or
+        # overwrite four hours of GPU with a perturbed aircraft.
+        parts.append(f"mass{round(mass_factor() * 100):03d}")
     return "_".join(parts)
 
 

@@ -82,6 +82,12 @@ class PolicyIterationStallConfig:
         default_factory=lambda: float(os.environ.get("CG_RIGHT_M", 0.0)))
     cg_below_m: float = field(
         default_factory=lambda: float(os.environ.get("CG_BELOW_M", 0.0)))
+    # Same reasoning, for the mass: the kernel must solve for the aircraft the
+    # plant is built as. Note that v_stall reaches the kernel as an argument
+    # (self.v_stall = airplane.STALL_AIRSPEED), so it already follows the
+    # perturbed mass; only the MASS constant below has to be told.
+    mass_factor: float = field(
+        default_factory=lambda: float(os.environ.get("MASS_FACTOR", 1.0)))
 
 
 class PolicyIterationStall:
@@ -198,11 +204,12 @@ class PolicyIterationStall:
         #define CG_AFT_M {self.config.cg_aft_m + self.config.dxcg_over_chord * 1.22!r}f
         #define CG_RIGHT_M {self.config.cg_right_m!r}f
         #define CG_BELOW_M {self.config.cg_below_m!r}f
+        #define MASS_FACTOR {self.config.mass_factor!r}f
         '''
         cuda_source = reward_defines + r'''
         extern "C" {
 
-        __device__ const float MASS = 715.3152f; // Riley Table I: 1577 lb x 0.45359237
+        __device__ const float MASS = 715.3152f * MASS_FACTOR; // Riley Table I: 1577 lb x 0.45359237, times the mass perturbation
         __device__ const float S = 9.114717f;   // Table I: 98.11 ft2
         __device__ const float CHORD = 1.2192f; // Table I: 4.00 ft x 0.3048
         __device__ const float RHO = 1.225f;

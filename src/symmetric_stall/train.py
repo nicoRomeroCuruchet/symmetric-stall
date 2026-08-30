@@ -187,6 +187,30 @@ def setup_symmetric_stall_experiment(grid: str = DEFAULT_GRID) -> tuple[
 # ── Policy Training / Loading ────────────────────────────────────────────
 
 
+def assert_mass_matches(pi, source=None) -> None:
+    """Fail if the loaded policy was solved for a different mass than this run.
+
+    The filename already separates them (runconfig.slug() carries `massNNN`),
+    so reaching here means someone passed an explicit --out or moved a file.
+    The check is cheap and the failure it prevents is not: a policy solved for
+    643 kg, flown on 786 kg, still produces a plausible-looking trajectory.
+
+    Archives trained before MASS_FACTOR existed carry no such key; they are
+    Riley's published mass by construction, so absent reads as 1.0.
+    """
+    meta = getattr(pi, "run_metadata", None) or {}
+    trained = float(meta.get("mass_factor", 1.0))
+    current = runconfig.mass_factor()
+    if trained != current:
+        where = f" ({source})" if source else ""
+        raise ValueError(
+            f"The policy{where} was solved for mass_factor {trained:g} "
+            f"({715.3152 * trained:.1f} kg) but this run is configured for "
+            f"{current:g} ({715.3152 * current:.1f} kg). Pass "
+            f"--mass-factor {trained:g}, or use the policy for {current:g}."
+        )
+
+
 def assert_grid_matches(pi, grid: str = DEFAULT_GRID, source=None) -> None:
     """Fail if the loaded policy was not trained on grid preset `grid`.
 
@@ -256,6 +280,7 @@ def train_or_load_policy(
         try:
             pi = PolicyIterationStall.load(policy_path, env=env)
             assert_grid_matches(pi, grid, policy_path)
+            assert_mass_matches(pi, policy_path)
             pi.states_space = states
             logger.info("[+] Policy loaded successfully. Skipping training.")
             return pi
