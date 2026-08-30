@@ -1,0 +1,126 @@
+{
+ "run_config": {
+  "thrust_model": "riley",
+  "cg_aft_m": "0.0",
+  "cg_right_m": "0.0",
+  "cg_below_m": "0.0",
+  "engine_tau_s": "0.85",
+  "mass_factor": "1.0",
+  "elevator_tau_s": "0.0"
+ },
+ "engine_tau_s": 0.85,
+ "canonical_ic": {
+  "alpha0_deg": 20.0,
+  "v0_over_vs": 0.85
+ },
+ "rows": [
+  {
+   "elevator_tau_s": 0.0,
+   "DP": -19.78572280326509,
+   "DP_t": 6.29999999999991,
+   "DP_status": "recovered",
+   "CAA": -32.168195091709755,
+   "CAA_t": 6.729999999999901,
+   "CAA_status": "recovered",
+   "FAA": -36.116394980841164,
+   "FAA_t": 6.909999999999897,
+   "FAA_status": "recovered"
+  },
+  {
+   "elevator_tau_s": 0.1,
+   "DP": -20.071419399853916,
+   "DP_t": 6.29999999999991,
+   "DP_status": "recovered",
+   "CAA": -32.91353222852347,
+   "CAA_t": 6.729999999999901,
+   "CAA_status": "recovered",
+   "FAA": -37.27455785153805,
+   "FAA_t": 6.919999999999897,
+   "FAA_status": "recovered"
+  },
+  {
+   "elevator_tau_s": 0.15,
+   "DP": -20.31884404538924,
+   "DP_t": 6.30999999999991,
+   "DP_status": "recovered",
+   "CAA": -33.52711011405662,
+   "CAA_t": 6.719999999999901,
+   "CAA_status": "recovered",
+   "FAA": -38.06085728710247,
+   "FAA_t": 6.909999999999897,
+   "FAA_status": "recovered"
+  },
+  {
+   "elevator_tau_s": 0.2,
+   "DP": -20.74178347592185,
+   "DP_t": 6.349999999999909,
+   "DP_status": "recovered",
+   "CAA": -34.08157432209455,
+   "CAA_t": 6.719999999999901,
+   "CAA_status": "recovered",
+   "FAA": -38.69206015113482,
+   "FAA_t": 6.909999999999897,
+   "FAA_status": "recovered"
+  },
+  {
+   "elevator_tau_s": 0.3,
+   "DP": -22.720009108364305,
+   "DP_t": 6.659999999999902,
+   "DP_status": "recovered",
+   "CAA": -35.62618608134704,
+   "CAA_t": 6.739999999999901,
+   "CAA_status": "recovered",
+   "FAA": -40.45738561555169,
+   "FAA_t": 6.929999999999897,
+   "FAA_status": "recovered"
+  },
+  {
+   "elevator_tau_s": 0.4,
+   "DP": -24.622540003197727,
+   "DP_t": 6.829999999999899,
+   "DP_status": "recovered",
+   "CAA": -37.29449360135033,
+   "CAA_t": 6.819999999999899,
+   "CAA_status": "recovered",
+   "FAA": -42.36563993831946,
+   "FAA_t": 6.999999999999895,
+   "FAA_status": "recovered"
+  },
+  {
+   "elevator_tau_s": 0.5,
+   "DP": -25.643808735448815,
+   "DP_t": 6.729999999999901,
+   "DP_status": "recovered",
+   "CAA": -38.611417548186935,
+   "CAA_t": 6.859999999999898,
+   "CAA_status": "recovered",
+   "FAA": -43.81047083167684,
+   "FAA_t": 7.0299999999998946,
+   "FAA_status": "recovered"
+  },
+  {
+   "elevator_tau_s": 0.75,
+   "DP": -26.718467011170144,
+   "DP_t": 6.869999999999898,
+   "DP_status": "recovered",
+   "CAA": -40.04148236463763,
+   "CAA_t": 6.859999999999898,
+   "CAA_status": "recovered",
+   "FAA": -45.393941854921515,
+   "FAA_t": 7.049999999999894,
+   "FAA_status": "recovered"
+  },
+  {
+   "elevator_tau_s": 1.0,
+   "DP": -26.629820009963552,
+   "DP_t": 6.619999999999903,
+   "DP_status": "recovered",
+   "CAA": -40.13350108853729,
+   "CAA_t": 6.909999999999897,
+   "CAA_status": "recovered",
+   "FAA": -45.54249799935642,
+   "FAA_t": 7.0799999999998935,
+   "FAA_status": "recovered"
+  }
+ ]
+}
