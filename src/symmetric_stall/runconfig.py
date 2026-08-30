@@ -25,6 +25,14 @@ and both the Python plant and the CUDA kernel read them:
                    evaluation-only knobs to answer "how does the nominal policy
                    degrade?". They are different questions.
 
+    ELEVATOR_TAU_S elevator-channel time constant [s]. Same role as
+                   ENGINE_TAU_S and read the same way, per rollout, but it is
+                   NOT one of Riley's constants -- he models no elevator
+                   dynamics. See engine.DEFAULT_ELEVATOR_TAU before quoting a
+                   value. It tags filenames as `de###`, deliberately NOT as
+                   `tau###`: that tag already means the engine, and two
+                   channels sharing it would make `..._tau085.png` ambiguous.
+
     ENGINE_TAU_S   Riley's engine-response time constant [s], eq. (A4). Unlike
                    the three above it is read per ROLLOUT rather than at import,
                    because it belongs to the evaluation and not to the solved
@@ -53,6 +61,10 @@ CODE_DEFAULT_THRUST = "paper1"
 #: them exactly rather than silently switching plant underneath old commands.
 CODE_DEFAULT_ENGINE_TAU = 0.0
 
+#: Elevator lag off unless asked for, for the same reason as the engine: every
+#: published result was produced with an instantaneous elevator.
+CODE_DEFAULT_ELEVATOR_TAU = 0.0
+
 #: Riley's aircraft at its published mass. Anything else is a perturbation and
 #: has to say so in the filename -- see slug().
 CODE_DEFAULT_MASS_FACTOR = 1.0
@@ -65,6 +77,7 @@ def apply(
     cg_below: float = 0.0,
     engine_tau: float = CODE_DEFAULT_ENGINE_TAU,
     mass_factor: float = CODE_DEFAULT_MASS_FACTOR,
+    elevator_tau: float = CODE_DEFAULT_ELEVATOR_TAU,
 ) -> None:
     """Set the model's environment variables.
 
@@ -78,6 +91,8 @@ def apply(
         )
     if float(engine_tau) < 0.0:
         raise ValueError(f"engine_tau must be >= 0, got {engine_tau!r}")
+    if float(elevator_tau) < 0.0:
+        raise ValueError(f"elevator_tau must be >= 0, got {elevator_tau!r}")
     if float(mass_factor) <= 0.0:
         raise ValueError(f"mass_factor must be > 0, got {mass_factor!r}")
     os.environ["THRUST_MODEL"] = thrust
@@ -86,11 +101,17 @@ def apply(
     os.environ["CG_BELOW_M"] = repr(float(cg_below))
     os.environ["ENGINE_TAU_S"] = repr(float(engine_tau))
     os.environ["MASS_FACTOR"] = repr(float(mass_factor))
+    os.environ["ELEVATOR_TAU_S"] = repr(float(elevator_tau))
 
 
 def engine_tau() -> float:
     """Riley's tau_e for THIS run, in seconds. 0 means the ideal engine."""
     return float(os.environ.get("ENGINE_TAU_S", CODE_DEFAULT_ENGINE_TAU))
+
+
+def elevator_tau() -> float:
+    """Elevator time constant for THIS run, in seconds. 0 means instantaneous."""
+    return float(os.environ.get("ELEVATOR_TAU_S", CODE_DEFAULT_ELEVATOR_TAU))
 
 
 def mass_factor() -> float:
@@ -107,15 +128,22 @@ def describe() -> dict[str, str]:
         "cg_below_m": os.environ.get("CG_BELOW_M", "0.0"),
         "engine_tau_s": repr(engine_tau()),
         "mass_factor": repr(mass_factor()),
+        "elevator_tau_s": repr(elevator_tau()),
     }
 
 
 def engine_label() -> str:
-    """One phrase naming the engine, for logs and figure annotations."""
+    """One phrase naming BOTH lagged channels, for logs and figure stamps.
+
+    Both are named even when one is off, because "which plant flew this?" is
+    the question the stamp exists to answer, and silence about a channel reads
+    as "not modelled" rather than "ideal".
+    """
     tau = engine_tau()
-    if tau <= 0.0:
-        return "ideal engine (no lag)"
-    return f"Riley (A4) lag, tau_e = {tau:g} s"
+    eng = f"Riley (A4) lag, tau_e = {tau:g} s" if tau > 0.0 else "ideal engine (no lag)"
+    de = elevator_tau()
+    elev = f"elevator tau = {de:g} s" if de > 0.0 else "instantaneous elevator"
+    return f"{eng} | {elev}"
 
 
 def slug() -> str:
@@ -133,6 +161,8 @@ def slug() -> str:
         # instead of training (silently answering the wrong question) or
         # overwrite four hours of GPU with a perturbed aircraft.
         parts.append(f"mass{round(mass_factor() * 100):03d}")
+    if elevator_tau() > 0.0:
+        parts.append(f"de{round(elevator_tau() * 100):03d}")
     return "_".join(parts)
 
 

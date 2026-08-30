@@ -42,7 +42,7 @@ print("IC: gamma=0, V=%.2f Vs, alpha=%.0f deg, q=0\n" % (V0, ALPHA0))
 
 # the optimum first: its deepest pull caps the alpha_hold arms
 r_opt = rollout(env, pi, ctrl_optimal, ALPHA0, V0, record=True)
-cap = float(np.min(r_opt["hist"]["de"]))
+cap = float(np.min(r_opt["hist"]["de_cmd"]))   # command, not achieved: see procedures.cap_en
 print("optimum's deepest pull: %.2f deg  (caps the alpha_hold arms)\n"
       % np.rad2deg(cap))
 

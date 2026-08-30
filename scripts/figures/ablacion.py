@@ -44,7 +44,7 @@ env = SymmetricStall()
 pi = PolicyIterationStall.load(POLICY, env=env)
 
 r_opt = rollout(env, pi, ctrl_optimal, A0, V0, record=True)
-CAP = float(np.min(r_opt["hist"]["de"]))
+CAP = float(np.min(r_opt["hist"]["de_cmd"]))   # command, not achieved: see procedures.cap_en
 
 
 def pilot(alpha_trigger_deg, power):

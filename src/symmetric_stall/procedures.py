@@ -47,7 +47,7 @@ import numpy as np
 
 from symmetric_stall import paths
 from symmetric_stall import runconfig
-from symmetric_stall.engine import EngineLag
+from symmetric_stall.engine import ActuatorLag, EngineLag
 from symmetric_stall.aircraft.symmetric_stall import SymmetricStall
 # Shared evaluation grid. It used to be imported from the paper-1 script
 # paper_table_dp_vs_ppo.py, which only resolved because the two files were
@@ -141,7 +141,8 @@ def stamp_engine(fig):
 # ── Rollout engine with a time/state-aware controller ────────────────────
 
 def rollout(env, pi, controller, alpha0_deg, vnorm0, record=False,
-            gamma0_deg=0.0, q0_deg=0.0, policy_action=None, engine_tau=None):
+            gamma0_deg=0.0, q0_deg=0.0, policy_action=None, engine_tau=None,
+            elevator_tau=None):
     """Closed-loop rollout; controller(obs, t, opt_action, ctx) -> action.
 
     `opt_action` is the policy's own (delta_e, delta_t) at the current obs;
@@ -181,18 +182,25 @@ def rollout(env, pi, controller, alpha0_deg, vnorm0, record=False,
     policy_action = policy_action or get_optimal_action
     engine = EngineLag(runconfig.engine_tau() if engine_tau is None
                        else engine_tau)
+    # The elevator starts NEUTRAL rather than at the first command. Seeding it
+    # with the command would let the first deflection appear instantly and
+    # erase exactly the transient being measured -- the pilot cannot be already
+    # holding the recovery input at the instant the recovery begins.
+    elevator = ActuatorLag(runconfig.elevator_tau() if elevator_tau is None
+                           else elevator_tau)
 
     obs, _ = env.specific_reset(np.deg2rad(gamma0_deg), vnorm0,
                                 np.deg2rad(alpha0_deg), np.deg2rad(q0_deg))
     t, h = 0.0, 0.0
     stop = RecoveryMonitor(dt)
     ctx = {}
-    hist = {"t": [], "h": [], "de": [], "dt_ctrl": [], "dt_eff": [],
+    hist = {"t": [], "h": [], "de": [], "de_cmd": [], "dt_ctrl": [], "dt_eff": [],
             "alpha": [], "gamma": [], "v_norm": [], "q": []} if record else None
 
     while t < MAX_TIME:
         opt_action = policy_action(obs, pi)[0]
         action = np.asarray(controller(obs, t, opt_action, ctx), dtype=np.float32)
+        de_cmd = float(action[0])
         dt_cmd = float(action[1])
         # The engine advances on the COMMAND, and the plant is stepped with what
         # comes out of it. Order matters: the lag is applied before env.step, so
@@ -200,11 +208,13 @@ def rollout(env, pi, controller, alpha0_deg, vnorm0, record=False,
         # commanded one.
         dt_eff = engine.step(dt_cmd, dt)
         action[1] = dt_eff
+        de_eff = elevator.step(de_cmd, dt)
+        action[0] = de_eff
 
         if record:
             hist["t"].append(t); hist["h"].append(h)
-            hist["de"].append(float(action[0])); hist["dt_ctrl"].append(dt_cmd)
-            hist["dt_eff"].append(dt_eff)
+            hist["de"].append(de_eff); hist["de_cmd"].append(de_cmd)
+            hist["dt_ctrl"].append(dt_cmd); hist["dt_eff"].append(dt_eff)
             hist["alpha"].append(float(obs[2])); hist["gamma"].append(float(obs[0]))
             hist["v_norm"].append(float(obs[1])); hist["q"].append(float(obs[3]))
 
@@ -385,8 +395,12 @@ def run_maneuvers(pi, env):
     happens when the pilot pulls to the actuator stop.
     """
     def cap_en(alpha0, v0):
+        # The cap is on what the pilot COMMANDS, not on what the elevator
+        # reaches: with a lagged elevator the two differ, and capping the arms
+        # at the optimum's achieved deflection would quietly hand them less
+        # authority than the optimum asked for. Identical when the lag is off.
         r = rollout(env, pi, ctrl_optimal, alpha0, v0, record=True)
-        return float(np.min(r["hist"]["de"]))
+        return float(np.min(r["hist"]["de_cmd"]))
 
     arms = {
         "caa_alpha_hold": ("t0", "alpha_hold", True),
@@ -767,7 +781,7 @@ def make_trajectory_greedy_figure():
     logger.info("[+] fig_trajectories_greedy.{png,pdf} written")
 
 
-def make_trajectory_comparison_figure(engine_tau=None):
+def make_trajectory_comparison_figure(engine_tau=None, elevator_tau=None):
     """Time-domain comparison at the canonical IC: DP optimum vs the
     scripted CAA and FAA procedures (alpha-hold pilot, 2 s power ramp).
     Same paired-panel layout as the single-trajectory figure; one color
@@ -780,20 +794,31 @@ def make_trajectory_comparison_figure(engine_tau=None):
     the one solved for an ideal engine -- so the lagged run is the honest
     evaluation of that policy, not a re-optimisation. All three arms get the
     same engine, which is what keeps the CAA/FAA comparison a comparison of
-    TIMING rather than of hardware."""
+    TIMING rather than of hardware.
+
+    `elevator_tau > 0` does the same for the elevator channel, and the two tags
+    compose in the filename: `_tau085` is the engine alone, `_tau085-010` is the
+    engine at 0.85 s with the elevator at 0.10 s. The elevator constant is NOT
+    Riley's -- see engine.DEFAULT_ELEVATOR_TAU before quoting it."""
     pi = paths.load_policy(env=SymmetricStall())
     a0c, v0c = CANONICAL
     engine_tau = runconfig.engine_tau() if engine_tau is None else float(engine_tau)
+    elevator_tau = (runconfig.elevator_tau() if elevator_tau is None
+                    else float(elevator_tau))
     lagged = engine_tau > 0.0
     r_opt = rollout(pi.env, pi, ctrl_optimal, a0c, v0c, record=True,
-                    engine_tau=engine_tau)
+                    engine_tau=engine_tau, elevator_tau=elevator_tau)
 
     # Hold pull authority fixed across the three arms: the scripted pilots may
     # not haul back harder than the optimum does at this same entry. Otherwise
     # the figure shows the procedures pulling to the -25 deg stop while the
     # optimum stops at -17.98 deg, and the visible gap mixes the timing of the
     # power application with a pull the optimum never commands.
-    de_cap = float(np.min(r_opt["hist"]["de"]))
+    # Commanded, not achieved: same reasoning as procedures.cap_en. With a
+    # lagged elevator the optimum never quite reaches what it asks for, and
+    # capping the procedures at the achieved value would charge them for
+    # authority the optimum did request. Identical when the lag is off.
+    de_cap = float(np.min(r_opt["hist"]["de_cmd"]))
     logger.info(f"[traj] scripted pilots' pull capped at "
                 f"{np.rad2deg(de_cap):.2f} deg (the optimum's minimum)")
 
@@ -801,10 +826,10 @@ def make_trajectory_comparison_figure(engine_tau=None):
         ("DP optimum", "#2C4B9E", "-", r_opt),
         ("CAA ($\\alpha$-hold pilot)", "#E8742A", "--",
          rollout(pi.env, pi, make_maneuver("t0", "alpha_hold", de_cap),
-                 a0c, v0c, record=True, engine_tau=engine_tau)),
+                 a0c, v0c, record=True, engine_tau=engine_tau, elevator_tau=elevator_tau)),
         ("FAA ($\\alpha$-hold pilot)", "#2CA02C", "-.",
          rollout(pi.env, pi, make_maneuver("unstall", "alpha_hold", de_cap),
-                 a0c, v0c, record=True, engine_tau=engine_tau)),
+                 a0c, v0c, record=True, engine_tau=engine_tau, elevator_tau=elevator_tau)),
     ]
 
     rc = {
@@ -912,8 +937,13 @@ def make_trajectory_comparison_figure(engine_tau=None):
         # The ideal-engine figure keeps the bare name the manuscript cites; a
         # lagged run is a different plant and gets a different file, tagged
         # with the tau it was flown at, so the two can never be confused.
-        stem = ("fig_trajectories_procedures" if not lagged
-                else f"fig_trajectories_procedures_tau{round(engine_tau*100):03d}")
+        stem = "fig_trajectories_procedures"
+        if lagged:
+            stem += f"_tau{round(engine_tau * 100):03d}"
+        if elevator_tau > 0.0:
+            # Appended with a hyphen to the engine tag so the pair reads as one
+            # plant: tau085-010 is "engine 0.85, elevator 0.10".
+            stem += f"{'' if lagged else '_tau000'}-{round(elevator_tau * 100):03d}"
         stamp_engine(fig)
         for ext in ("png", "pdf"):
             fig.savefig(OUT_DIR / f"{stem}.{ext}", dpi=300, bbox_inches="tight")

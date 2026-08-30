@@ -85,6 +85,24 @@ import numpy as np
 RILEY_TAU_E = 0.85
 
 
+#: Time constant of the elevator channel, seconds. UNLIKE RILEY_TAU_E this is
+#: not a property of Riley's aeroplane recovered from his data: Riley models no
+#: elevator dynamics at all (his only first-order lag is the engine's, eq. A4),
+#: and neither Gratton's flight tests nor either thesis in refs/ report one.
+#:
+#: The AA-1 has a REVERSIBLE, directly linked control system -- stick to cable
+#: to elevator, no servo -- so what limits the elevator is not an actuator but
+#: the pilot's neuromuscular system plus control-system compliance. The
+#: quasi-linear pilot models put that lag near 0.1 s (omega ~ 10 rad/s).
+#:
+#: TREAT THIS NUMBER AS UNVERIFIED. It is an order of magnitude taken from the
+#: pilot-dynamics literature, not a measurement, and the primary result should
+#: be a sweep over tau rather than a single value: if the loss is flat across
+#: 0.05-0.2 s the choice does not matter, and if it is not, the value has to be
+#: argued from a source that has been read rather than cited from memory.
+DEFAULT_ELEVATOR_TAU = 0.10
+
+
 class EngineLag:
     """First-order lag on the throttle, per Riley eq. (A4).
 
@@ -123,3 +141,31 @@ class EngineLag:
                 1.0 - np.exp(-float(dt) / self.tau)
             )
         return self.value
+
+
+class ActuatorLag(EngineLag):
+    """First-order lag on the elevator command. Evaluation only.
+
+    Same mathematics as EngineLag -- the exact discretisation of a first-order
+    response -- but a different physical claim, and it is worth keeping the two
+    classes apart so a reader is not misled into thinking Riley published this
+    one too. See DEFAULT_ELEVATOR_TAU.
+
+    Like the engine lag, this belongs to the EVALUATION and never to the solve:
+    the policy is computed against an instantaneous elevator and then flown on
+    a lagged one. That is a real approximation and the paper has to say so, but
+    it errs in the safe direction. A policy optimal for the ideal plant, flown
+    on the lagged plant, can only do WORSE than the policy that is optimal for
+    the lagged plant, so every altitude loss reported this way is an upper
+    bound on what internalising the lag would achieve. Conclusions of the form
+    "the optimum still beats the certified procedures" therefore survive; a
+    conclusion of the form "the optimum loses exactly X metres" does not.
+
+    Internalising it would mean carrying delta_e as a fifth state. The obstacle
+    is NOT memory -- 21 elevator bins take the grid to 312 M states, 1.2 GB for
+    V in float32, comfortable on a 24 GB card, and saying otherwise would
+    contradict this work's own O(N_s) claim. The obstacle is time: 21x the
+    states is ~37 h on an RTX 4090 at the measured rate of the 4-DOF solve.
+    """
+
+    __slots__ = ()
