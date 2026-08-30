@@ -22,8 +22,12 @@ the DP-vs-CasADi validation, none of them in the DP").
 | `banked_glider_L4_mca_validation_guided_Fig{3,4}.png` | L4 | idem |
 | `profiling_report_L4.txt`, `profiling_table_L4.tex` | L4 | idem |
 
-The L4 policy itself is **not** here: it is 255 MB. It stays on the machine
-that produced it, `a1554-ubu:~/trabajo-L4/repo/results/`.
+The L4 policy itself is **not** in this folder: it is 255 MB. It lives at
+`data/policies/ReducedBankedGliderPullout_L4_mca_full.npz`, which `.gitignore`
+excludes, so it is on this laptop but not in the repository. A second copy
+stays on the machine that produced it,
+`a1554-ubu:~/trabajo-L4/repo/results/`. The laptop copy is covered by the
+restic backup (snapshot `4f8b7cd0`, 2026-08-18); the remote one is not.
 
 ## The L4 re-solve
 
