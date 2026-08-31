@@ -47,10 +47,9 @@ leading cause of fatal accidents in general aviation. A recovery is
 measured by the altitude it costs, and the certified procedures do not
 agree on how to fly one. Cast as an
 undiscounted infinite-horizon problem, that recovery admits a globally
-optimal solution by dynamic programming, and it is that guarantee ---
-optimality over the whole entry envelope, rather than a local minimum
-or a learned approximation --- that the method developed here is built
-to keep. Exact DP has been held to coarse grids by memory, not
+optimal solution by dynamic programming. That guarantee, optimality
+over the whole entry envelope rather than a local minimum or a learned
+approximation, is what the method developed here is built to keep. Exact DP has been held to coarse grids by memory, not
 arithmetic: integrating the flight dynamics inside the GPU kernel
 rather than storing them trades the one for the other, and because the
 barycentric interpolation this requires is non-expansive, the guarantee
