@@ -47,19 +47,14 @@ leading cause of fatal accidents in general aviation, and the recovery
 that matters is the one that concedes least altitude. Cast as an
 undiscounted infinite-horizon problem, that recovery admits a globally
 optimal solution by dynamic programming, but exact DP has been confined
-to coarse grids on reduced-order models by memory rather than by
-arithmetic: the precomputed transition tables scale as
-$\mathcal{O}(N_s N_a 2^D)$. This paper removes them. Integrating the
-flight dynamics inside the GPU kernel, once per backup rather than once
-per grid, bounds the footprint at $\mathcal{O}(N_s)$ and makes the
-solver compute-bound. Because that choice forces every successor state
-to be read by interpolation, the properties of the backup operator must
-be re-established rather than assumed: barycentric interpolation is
-non-expansive in the supremum norm, so the interpolated operator
-inherits the convergence of the exact one under the
-stochastic-shortest-path structure of the undiscounted problem. The
-complexity reduction and the convergence guarantee are one result, and
-neither is available without the other. On a 3-DOF banked-pullout
+to coarse grids on reduced-order models by the memory its precomputed
+transition tables demand. Here the flight dynamics are integrated
+inside the GPU kernel instead of tabulated, leaving only the value
+function and the policy in memory. What that costs is that every
+successor state must be read by interpolation; the barycentric scheme
+used is non-expansive, so the interpolated backup keeps the convergence
+of the exact one, and the memory is bought without giving up the
+guarantee. On a 3-DOF banked-pullout
 benchmark the published baseline is reproduced in $0.38$~s on a single
 GPU, closed-loop trajectories agree with direct collocation to within
 $1.4\%$ of the deepest altitude loss of each sweep, and a
