@@ -46,13 +46,14 @@ Loss of control in-flight, most often initiated by a stall, remains the
 leading cause of fatal accidents in general aviation, and the recovery
 that matters is the one that concedes least altitude. Cast as an
 undiscounted infinite-horizon problem, that recovery admits a globally
-optimal solution by dynamic programming, but conventional solvers must
-compute and store where every state--action pair lands before they can
-iterate, and it is that stored map, not the arithmetic, that has
-confined exact DP to coarse grids on reduced-order models. Integrating
-the flight dynamics on the fly inside the GPU kernel removes it, and
-the barycentric interpolation this requires is non-expansive, so the
-far larger grids cost nothing in convergence. The solver is verified
+optimal solution by dynamic programming, and it is that guarantee ---
+optimality over the whole entry envelope, rather than a local minimum
+or a learned approximation --- that the method developed here is built
+to keep. Exact DP has been held to coarse grids by memory, not
+arithmetic: integrating the flight dynamics inside the GPU kernel
+rather than storing them trades the one for the other, and because the
+barycentric interpolation this requires is non-expansive, the guarantee
+survives the trade. The solver is verified
 against a published 3-DOF banked-pullout benchmark and then applied to a
 4-DOF symmetric stall (states $\gamma, V, \alpha, q$; controls
 $\delta_e, \delta_t$) over $14.9$ million states, with the
