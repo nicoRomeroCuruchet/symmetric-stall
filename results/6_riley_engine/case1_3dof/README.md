@@ -91,3 +91,47 @@ grid and was killed by the OOM killer at 29.6 GB of host RAM on a 31 GB
 machine. The paper does not use that figure at L4. Worth a sentence in the
 scaling section, since the solve is compute-bound and scales while the
 post-processing does not.
+
+## The benchmark, as a number
+
+`scripts/paper1/casadi_benchmark.py` parses `diagnostics/casadi.log` and
+writes `casadi_benchmark.json` and `table_casadi_benchmark.tex`. On the
+agreed metric — the disagreement as a fraction of the deepest altitude loss
+of each sweep, `|h_DP - h_NLP| / max_j |h_NLP,j|` — the nine valid points
+give:
+
+| | worst | mean |
+|---|---|---|
+| gamma_0 = -30 deg (5 points) | 1.37 % | 0.87 % |
+| gamma_0 = -60 deg (4 points) | 0.91 % | 0.88 % |
+| **overall** | **1.37 %** | 0.87 % |
+
+Pointwise (dividing by each point's own loss) the worst is 3.6 %, which is
+the shallowest entry of the shallowest sweep and is why that normalisation
+was not the one chosen.
+
+**The gap is not CasADi's tuning.** It is the rollout accumulating altitude
+with forward Euler at dt = 0.10 s while the NLP integrates with RK4 at
+T/150. Over a pullout gamma rises monotonically to zero, so `|h_dot|` falls
+monotonically and the rectangle rule always takes the larger endpoint: the
+error is one-signed — the DP appears to lose more at all nine points — and
+telescopes to
+
+    bias = -(dt/2) * V_0 * sin(gamma_0)
+
+which depends on gamma_0 and on nothing else, not even mu_0. That predicts
+one number per sweep before looking at the data:
+
+| gamma_0 | predicted | smallest observed gap | ratio |
+|---|---|---|---|
+| -30 deg | 0.96 m | 0.96 m | 1.002 |
+| -60 deg | 1.66 m | 1.66 m | 1.000 |
+
+So the floor of the disagreement is an artefact of the evaluation script,
+not of either optimiser, and re-integrating the same policy with a
+trapezoid would move the DP DOWN towards the NLP. Tightening Ipopt would
+move the NLP down as well and make the gap slightly worse, not better.
+
+What remains above that floor is real: 0.06-1.18 m, all of it at
+gamma_0 = -30 deg, and that part is the genuine price of holding each
+control for 0.10 s against an NLP free to switch at every node.
