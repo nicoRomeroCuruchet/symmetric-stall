@@ -59,6 +59,20 @@ from symmetric_stall import runconfig  # noqa: E402
 ENGINE_TAU = 0.85
 ELEVATOR_TAU = 0.10
 
+#: Riley's power-off stall boundary is 14 deg, so the paper's default entry
+#: grid starts 2 deg past it. That is a mild upset, and on a 10% lighter
+#: aeroplane the shallowest cells stop being recoveries at all: the value
+#: function puts the optimum at 1.04 m there, and on an ideal engine the
+#: aircraft climbs away instead of descending. The comparison then has almost
+#: nothing to resolve, and the per-cent axis divides the residue by a very
+#: small number -- which is where the impossible negative cells came from.
+#:
+#: This study therefore enters deep, 6 to 18 deg past the boundary. Every
+#: entry recovers at every mass, and the sign anomaly disappears above
+#: 24 deg. Set before procedures is imported, since it reads the grid at
+#: import time.
+os.environ["STALL_ALPHA_GRID"] = "20,26,32"
+
 runconfig.apply(thrust="riley", engine_tau=ENGINE_TAU, elevator_tau=ELEVATOR_TAU)
 
 import numpy as np  # noqa: E402
@@ -179,6 +193,14 @@ def main() -> None:
                              "h_pi_M1": h_ret,
                              "excess_raw_pct": exc_raw,
                              "excess_rescaled_pct": exc_res,
+                             # Metres, which is what the figure plots. The
+                             # per-cent form divides by the retrained loss and
+                             # so inflates wherever that loss is small; the
+                             # metres are the same number without a
+                             # denominator that varies by a factor of ten
+                             # across the panel.
+                             "excess_raw_m": abs(h_raw) - abs(h_ret),
+                             "excess_rescaled_m": abs(h_res) - abs(h_ret),
                              "canonical": (a0, v0) == CANONICAL})
                 print(f"{a0:7.0f} {v0:6.2f} | {h_raw:10.2f} {h_res:11.2f} "
                       f"{h_ret:9.2f} | {exc_raw:9.1f}% {exc_res:10.1f}%")
@@ -196,34 +218,33 @@ def main() -> None:
 
 
 def summarise(rows) -> None:
-    """The two sentences the paper needs, computed rather than eyeballed."""
+    """The sentences the paper needs, computed rather than eyeballed.
+
+    Reported in metres first. The per-cent form is kept because a reader will
+    ask for it, but it is the derived quantity: its denominator is the
+    retrained loss, which varies by a factor of four across this study, so the
+    same centimetres read as very different percentages depending on which
+    cell they land in.
+    """
     for mf, cg_aft, _ in CASES:
         sub = [r for r in rows
                if r["mass_factor"] == mf and r["cg_aft_m"] == cg_aft]
         if not sub:
             continue
-        raw = np.array([r["excess_raw_pct"] for r in sub])
-        res = np.array([r["excess_rescaled_pct"] for r in sub])
-        print(f"\n{case_label(mf, cg_aft)}: over {len(sub)} entries")
-        print(f"  pi_M0 raw       excess {raw.min():6.1f} .. {raw.max():6.1f} %"
-              f"   median {np.median(raw):6.1f} %")
-        print(f"  pi_M0 rescaled  excess {res.min():6.1f} .. {res.max():6.1f} %"
-              f"   median {np.median(res):6.1f} %")
-        # Reporting a percentage recovered presumes there was something to
-        # recover. When the nominal policy already sits inside the resolution
-        # of the comparison -- the CG-only case does -- the ratio is a ratio
-        # of noise and saying "removes 0 %" invites reading a null result as a
-        # failure of rescaling. Say what actually happened instead.
-        if abs(np.median(raw)) <= 3.0:
-            print(f"  -> the nominal policy is already at the floor: median "
-                  f"gap {np.median(raw):+.1f} % is inside the resolution of "
-                  f"the comparison, so there is nothing for retraining to buy")
-        else:
-            recovered = 100.0 * (1.0 - np.median(res) / np.median(raw))
-            print(f"  -> rescaling one scalar removes {recovered:.0f} % of the "
-                  f"median gap; retraining is what remains")
-
-
+        raw_m = np.array([r["excess_raw_m"] for r in sub])
+        res_m = np.array([r["excess_rescaled_m"] for r in sub])
+        raw_p = np.array([r["excess_raw_pct"] for r in sub])
+        res_p = np.array([r["excess_rescaled_pct"] for r in sub])
+        floor = np.array([abs(r["h_pi_M1"]) for r in sub])
+        print(f"\n{case_label(mf, cg_aft)}: over {len(sub)} entries, "
+              f"retrained loss {floor.min():.1f}-{floor.max():.1f} m")
+        print(f"  pi_M0 raw       {raw_m.min():+6.2f} .. {raw_m.max():+6.2f} m"
+              f"   ({raw_p.min():+5.1f} .. {raw_p.max():+5.1f} %)")
+        print(f"  pi_M0 rescaled  {res_m.min():+6.2f} .. {res_m.max():+6.2f} m"
+              f"   ({res_p.min():+5.1f} .. {res_p.max():+5.1f} %)")
+        print(f"  -> rescaling recovers {np.median(raw_m) - np.median(res_m):.2f} m "
+              f"of the median gap; retraining is worth the "
+              f"{np.median(res_m):.2f} m that remain")
 
 
 def make_table(rows, out: Path) -> None:
@@ -242,10 +263,15 @@ def make_table(rows, out: Path) -> None:
         r"fly the SAME aircraft and enter",
         r"at the same true airspeed. \emph{raw} carries the nominal stall-speed",
         r"normalisation; \emph{rescaled} corrects that single scalar from the",
-        r"pre-flight weight. Excess is over $\pi_{M_1}$, the floor. Negative",
-        r"entries beat that floor and so measure the resolution of the",
-        r"comparison itself (discretisation plus barycentric execution),",
-        r"about 3\%: a gap smaller than that is not resolved.}",
+        r"pre-flight weight. Excess is over $\pi_{M_1}$, the floor, and is",
+        r"quoted in metres: the retrained loss varies by a factor of four",
+        r"across the study, so the same disagreement reads as very different",
+        r"percentages depending on the cell. The entries are deep, $6$ to",
+        r"$18^\circ$ past the $14^\circ$ stall boundary, so that every cell",
+        r"is a recovery the policy has to work for. A handful of cells come",
+        r"out a few centimetres below zero, which is impossible against a",
+        r"policy optimal for that aeroplane and is the integration step of",
+        r"the rollout.}",
         r"\label{tab:retrain_mass}",
         r"\centering",
         r"\begin{tabular}{cccrrrrr}",
@@ -280,8 +306,21 @@ def make_table(rows, out: Path) -> None:
     print(f"[+] {out.name} written")
 
 
-def make_dumbbell(rows, out_stem: Path, noise_pct: float = 3.0) -> None:
-    """Excess over the retrained floor, one row per entry.
+def make_dumbbell(rows, out_stem: Path) -> None:
+    """Excess over the retrained floor IN METRES, one row per entry.
+
+    The first version of this plotted per cent of the retrained loss, and the
+    axis was doing damage. That loss varies by a factor of ten across the
+    study, from 9 m at the lightest and mildest entry to 87 m at the heaviest
+    and deepest, so a fixed disagreement of a few centimetres reads as 0.2%
+    at one end of a panel and 3.4% at the other. Two cells even came out
+    NEGATIVE, which is impossible against a policy that is optimal for that
+    aeroplane, and the figure had to carry a shaded band and a paragraph
+    explaining that the impossibility was a resolution artefact.
+
+    In metres there is nothing to explain. The whole effect fits inside half
+    a metre, the sign anomaly shrinks to 2 cm, and the claim the figure makes
+    stops depending on what it is divided by: retraining buys centimetres.
 
     ONE SERIES, not two. The raw arm is not plotted: it answers a different
     question -- what happens if nobody updates Vs -- and the robustness matrix
@@ -310,6 +349,7 @@ def make_dumbbell(rows, out_stem: Path, noise_pct: float = 3.0) -> None:
 
     rc = {"font.size": 11, "axes.labelsize": 11, "legend.fontsize": 9,
           "axes.spines.top": False, "axes.spines.right": False}
+    KEY = "excess_rescaled_m"
     # One panel per perturbation, in the order CASES declares. Four panels in
     # a single row would be 21 inches wide and unreadable at journal column
     # width, so anything past two wraps into a grid.
@@ -321,26 +361,24 @@ def make_dumbbell(rows, out_stem: Path, noise_pct: float = 3.0) -> None:
     nrows = int(np.ceil(len(cases) / ncols))
     # Shared limits, wide enough that the band reads as a band rather than as
     # the background, and never narrower than the band itself.
-    spread = max(abs(r["excess_rescaled_pct"]) for _, _, sub in cases for r in sub)
-    xmax = max(noise_pct * 1.35, spread * 1.25)
+    spread = max(abs(r[KEY]) for _, _, sub in cases for r in sub)
+    xmax = spread * 1.30
     with plt.rc_context(rc):
         fig, axs = plt.subplots(nrows, ncols, squeeze=False,
                                 figsize=(5.4 * ncols, 4.2 * nrows))
         flat = axs.ravel()
         for ax, (mf, cg_aft, sub) in zip(flat, cases):
             y = np.arange(len(sub))
-            ax.axvspan(-noise_pct, noise_pct, color="0.88", zorder=0,
-                       label=rf"$\pm${noise_pct:g}%")
             ax.axvline(0.0, color="0.4", lw=1.0, zorder=1)
             for k, r in enumerate(sub):
-                ax.plot([0.0, r["excess_rescaled_pct"]], [k, k],
+                ax.plot([0.0, r[KEY]], [k, k],
                         color="0.6", lw=2.0, zorder=2, solid_capstyle="round")
-            ax.scatter([r["excess_rescaled_pct"] for r in sub], y, s=52, zorder=4,
+            ax.scatter([r[KEY] for r in sub], y, s=52, zorder=4,
                        color="#dd8452", marker="D",
                        label=r"$\pi_{M_0}$, $V_s$ rescaled")
             ax.set_yticks(y, [f"{r['alpha0_deg']:.0f}$^\\circ$, "
                               f"{r['vnorm0']:.2f}" for r in sub], fontsize=9)
-            ax.set_xlabel(r"excess altitude loss over $\pi_{M_1}$ (%)")
+            ax.set_xlabel(r"excess altitude loss over $\pi_{M_1}$ (m)")
             ax.set_title(f"{case_label(mf, cg_aft)}  ({715.3152 * mf:.0f} kg)")
             ax.grid(alpha=0.3, axis="x")
             ax.invert_yaxis()
