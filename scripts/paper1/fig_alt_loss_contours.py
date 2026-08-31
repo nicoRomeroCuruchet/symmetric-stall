@@ -45,8 +45,22 @@ SPEEDS = (1.2, 2.0, 3.0, 4.0)
 #: The quadrant the published figure crops to.
 GAMMA_WINDOW = (-90.0, 0.0)
 MU_WINDOW = (0.0, 180.0)
-#: Labelled contour lines, matching the levels legible on the archived page.
-LINES = (30, 60, 90, 120, 150, 180, 210, 240)
+#: Contour levels, 30 m apart, as read off the archived page: the labelled
+#: lines there are 30 apart AND each one separates two filled bands. Filling
+#: on a different set from the lines -- which the first version of this script
+#: did -- leaves bands and lines crossing each other at nothing in particular,
+#: and the figure reads as noise even though the field is identical.
+LEVELS = tuple(range(0, 271, 30))
+#: Tolerance for deciding whether a grid node is inside the plotted window.
+#:
+#: It is not cosmetic. The archive stores the bounds in float32, so
+#: bounds_low[0] is -3.1415927, which widens to -180.0000005 deg and shifts
+#: every node by -2.5e-6 deg. A bare `gamma >= -90.0` then rejects the node at
+#: -90.00000250 and `mu <= 180.0` rejects the one at 180.00000096, dropping a
+#: whole row and a whole column -- 5 deg each -- of the solver's own output.
+#: It shows up as a white strip along the bottom and right of every panel,
+#: which is how it was caught.
+EDGE_TOL_DEG = 1e-3
 
 
 def load():
@@ -64,9 +78,16 @@ def load():
 def main() -> None:
     dh, gamma, vnorm, mu = load()
 
-    gsel = (gamma >= GAMMA_WINDOW[0]) & (gamma <= GAMMA_WINDOW[1])
-    msel = (mu >= MU_WINDOW[0]) & (mu <= MU_WINDOW[1])
+    gsel = ((gamma >= GAMMA_WINDOW[0] - EDGE_TOL_DEG)
+            & (gamma <= GAMMA_WINDOW[1] + EDGE_TOL_DEG))
+    msel = ((mu >= MU_WINDOW[0] - EDGE_TOL_DEG)
+            & (mu <= MU_WINDOW[1] + EDGE_TOL_DEG))
     g, m = gamma[gsel], mu[msel]
+    # The window is a whole number of grid steps on both axes, so anything
+    # else means the tolerance is wrong or the grid is not the one assumed.
+    assert len(g) == 19 and len(m) == 37, (
+        f"expected a 19 x 37 window, got {len(g)} x {len(m)}: "
+        f"gamma {g[0]:.4f}..{g[-1]:.4f}, mu {m[0]:.4f}..{m[-1]:.4f}")
 
     # One shared colour scale across the four panels: the point of the figure
     # is that the loss grows with entry speed, and per-panel autoscaling would
@@ -81,26 +102,37 @@ def main() -> None:
         slices.append(dh[np.ix_(np.where(gsel)[0], [k], np.where(msel)[0])]
                       .squeeze(axis=1))
     vmax = max(s.max() for s in slices)
-    fill = np.linspace(0.0, vmax, 13)
+    assert vmax < LEVELS[-1], (
+        f"the deepest loss is {vmax:.1f} m but the levels stop at "
+        f"{LEVELS[-1]}; the top band would be clipped")
 
     rc = {"font.size": 9, "axes.labelsize": 9, "axes.titlesize": 9}
     with plt.rc_context(rc):
         fig, axs = plt.subplots(2, 2, figsize=(8.0, 5.2), sharex=True,
                                 sharey=True)
         for ax, v, s in zip(axs.ravel(), SPEEDS, slices):
-            cf = ax.contourf(m, g, s, levels=fill, cmap="jet")
-            cs = ax.contour(m, g, s, levels=LINES, colors="k",
+            # Same levels for the fill and the lines, and a fixed set rather
+            # than one derived from the data, so the four panels share a scale
+            # without a colourbar having to assert it.
+            ax.contourf(m, g, s, levels=LEVELS, cmap="jet")
+            cs = ax.contour(m, g, s, levels=LEVELS[1:], colors="k",
                             linewidths=0.5)
             ax.clabel(cs, inline=True, fontsize=6, fmt="%d")
             ax.set_title(rf"$V/V_s = {v:.1f}$")
             ax.set_xticks([0, 45, 90, 135, 180])
             ax.set_yticks([-90, -60, -30, 0])
+            # Matplotlib pads the data range by 5% by default, which leaves a
+            # white strip along the top and bottom of every panel. The
+            # archived figure has none: the field is defined on the whole box.
+            ax.set_xlim(MU_WINDOW)
+            ax.set_ylim(GAMMA_WINDOW)
         for ax in axs[-1, :]:
             ax.set_xlabel("Bank angle (deg)")
         for ax in axs[:, 0]:
             ax.set_ylabel("Flight path angle (deg)")
-        cb = fig.colorbar(cf, ax=axs, fraction=0.030, pad=0.02)
-        cb.set_label(r"$\Delta h_{min}$ (m)")
+        # No colourbar: the archived figure has none, and every band boundary
+        # is already a labelled line, so one would only repeat the labels.
+        fig.tight_layout()
         for ext in ("png", "pdf"):
             fig.savefig(CASE1 / f"combined_alt_loss_contours.{ext}",
                         dpi=300, bbox_inches="tight")
