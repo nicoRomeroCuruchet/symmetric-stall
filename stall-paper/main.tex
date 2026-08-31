@@ -46,15 +46,12 @@ Loss of control in-flight, most often initiated by a stall, remains the
 leading cause of fatal accidents in general aviation, and the recovery
 that matters is the one that concedes least altitude. Cast as an
 undiscounted infinite-horizon problem, that recovery admits a globally
-optimal solution by dynamic programming, but exact DP has been confined
-to coarse grids on reduced-order models by the memory its precomputed
-transition tables demand. Here the flight dynamics are integrated
-inside the GPU kernel instead of tabulated, leaving only the value
-function and the policy in memory. What that costs is that every
-successor state must be read by interpolation; the barycentric scheme
-used is non-expansive, so the interpolated backup keeps the convergence
-of the exact one, and the memory is bought without giving up the
-guarantee. On a 3-DOF banked-pullout
+optimal solution by dynamic programming, which memory rather than
+arithmetic has confined to coarse grids on reduced-order models.
+Integrating the flight dynamics inside the GPU kernel removes the
+precomputed transition tables responsible, and the barycentric
+interpolation this requires is non-expansive, so the enlarged grids
+cost nothing in convergence. On a 3-DOF banked-pullout
 benchmark the published baseline is reproduced in $0.38$~s on a single
 GPU, closed-loop trajectories agree with direct collocation to within
 $1.4\%$ of the deepest altitude loss of each sweep, and a
