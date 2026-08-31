@@ -63,7 +63,10 @@ ENGINE_TAU = 0.85
 #: enters the paper as a sensitivity study, not as the baseline, and this
 #: study was the only artefact still flying a different aeroplane than the
 #: ones it is printed beside.
-ELEVATOR_TAU = 0.0
+#: Overridable so the sensitivity can be re-run without editing the file,
+#: which is how the 0.10 and 0.15 variants were produced. The DEFAULT is
+#: what the paper uses; do not change it to make a figure look better.
+ELEVATOR_TAU = float(os.environ.get("STALL_ELEVATOR_TAU", 0.0))
 
 #: Riley's power-off stall boundary is 14 deg, so the paper's default entry
 #: grid starts 2 deg past it. That is a mild upset, and on a 10% lighter
