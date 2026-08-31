@@ -24,6 +24,14 @@ Riley, D.~R., \enquote{Simulator Study of the Stall Departure Characteristics
   Modification,} Tech. Rep. NASA-TM-86309, NASA Langley Research Center,
   Hampton, VA, 1985.
 
+\bibitem[{Gratton et~al.(2014)Gratton, Hoff, Bromfield, Rahman, Harbour, and
+  Williams}]{Gratton2014}
+Gratton, G.~B., Hoff, R.~I., Bromfield, M., Rahman, A., Harbour, S., and
+  Williams, S., \enquote{Evaluating a Set of Stall Recovery Actions for Single
+  Engine Light Aeroplanes,} \emph{The Aeronautical Journal}, Vol. 118, No.
+  1203, 2014, pp. 461--480.
+\newblock \doi{10.1017/S0001924000009313}.
+
 \bibitem[{Belcastro and Foster(2010)}]{Belcastro2010}
 Belcastro, C.~M., and Foster, J.~V., \enquote{Aircraft loss-of-control accident
   analysis,} \emph{AIAA Guidance, Navigation, and Control Conference}, 2010.
@@ -52,14 +60,6 @@ Stough, I., H.~Paul, DiCarlo, D.~J., and Patton, J., James~M., \enquote{Flight
 \bibitem[{{UK Civil Aviation Authority}(2009)}]{CAA2009}
 {UK Civil Aviation Authority}, \enquote{Stall/Spin Awareness,} Handling Sense
   Leaflet 02, v2, Civil Aviation Authority, 2009.
-
-\bibitem[{Gratton et~al.(2014)Gratton, Hoff, Bromfield, Rahman, Harbour, and
-  Williams}]{Gratton2014}
-Gratton, G.~B., Hoff, R.~I., Bromfield, M., Rahman, A., Harbour, S., and
-  Williams, S., \enquote{Evaluating a Set of Stall Recovery Actions for Single
-  Engine Light Aeroplanes,} \emph{The Aeronautical Journal}, Vol. 118, No.
-  1203, 2014, pp. 461--480.
-\newblock \doi{10.1017/S0001924000009313}.
 
 \bibitem[{Bellman(1957)}]{Bellman1957}
 Bellman, R., \emph{Dynamic Programming}, Princeton University Press, Princeton,
