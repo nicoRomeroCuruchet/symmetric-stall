@@ -57,7 +57,13 @@ sys.path.insert(0, str(REPO / "src"))
 from symmetric_stall import runconfig  # noqa: E402
 
 ENGINE_TAU = 0.85
-ELEVATOR_TAU = 0.10
+#: Instantaneous, which is the plant every other result in the paper is
+#: computed on: procedures.json, the four tables, both initial-condition heat
+#: maps and the robustness matrix all carry tau_de = 0. The elevator lag
+#: enters the paper as a sensitivity study, not as the baseline, and this
+#: study was the only artefact still flying a different aeroplane than the
+#: ones it is printed beside.
+ELEVATOR_TAU = 0.0
 
 #: Riley's power-off stall boundary is 14 deg, so the paper's default entry
 #: grid starts 2 deg past it. That is a mild upset, and on a 10% lighter
