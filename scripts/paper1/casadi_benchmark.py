@@ -223,45 +223,65 @@ def report(scen) -> None:
 
 
 def make_table(scen, out: Path) -> None:
-    lines = [
-        r"\begin{table}[H]",
-        r"\caption{Case I benchmark: closed-loop execution of the dynamic-",
-        r"programming policy against a continuous-time NLP optimum solved",
-        r"with CasADi/Ipopt on the same manoeuvre. $e$ is the disagreement",
-        r"as a fraction of the deepest altitude loss of each sweep. The DP",
-        r"loses more at every point, which is the expected direction: it",
-        r"executes a policy optimal for a control held over "
-        rf"${DP_ROLLOUT_DT_S:.2f}$~s",
-        rf"against an NLP free to switch at every one of {NLP_NODES} nodes.",
-        r"The entry at $\gamma_0=-60^\circ$, $\mu_0=150^\circ$ is omitted:",
-        r"its rollout leaves the grid and reports a loss below the global",
-        r"minimum of $V^\ast$, so neither arm of it measures anything.}",
-        r"\label{tab:casadi_benchmark}",
-        r"\centering",
-        r"\begin{tabular}{rrrrrr}",
-        r"\hline",
-        r"$\gamma_0$ & $\mu_0$ & DP & NLP & gap & $e$ \\",
-        r"(deg) & (deg) & (m) & (m) & (m) & (\%) \\",
-        r"\hline",
-    ]
-    for s in scen:
-        for r in s["rows"]:
-            lines.append(
-                f"{r['gamma0_deg']:.0f} & {r['mu0_deg']:.0f} & "
-                f"{r['h_dp_m']:.2f} & {r['h_nlp_m']:.2f} & "
-                f"{r['gap_m']:+.2f} & {r['err_vs_max_pct']:.2f} \\\\")
-        lines.append(r"\hline")
+    """The table that replaces the two trajectory figures.
+
+    The figures were dropped on the directors' advice, and measuring them
+    says why: the two curves are separated by about 1 m against a plotted
+    line width of 1.5 m, and because each method reconstructs its own
+    horizontal coordinate, equal x is not equal time -- so over most of the
+    dive the NLP is drawn BELOW the DP, which reads as the DP winning, while
+    the endpoint comparison the numbers make has the opposite sign. A figure
+    that inverts its own conclusion over two thirds of its width is not
+    evidence. The table is.
+
+    booktabs and caption-before-tabular, to match tables/ of the manuscript.
+    """
     allrows = [r for s in scen for r in s["rows"]]
     worst = max(r["err_vs_max_pct"] for r in allrows)
+    mean = sum(r["err_vs_max_pct"] for r in allrows) / len(allrows)
+    worst_abs = max(abs(r["gap_m"]) for r in allrows)
+    worst_pt = max(r["err_pointwise_pct"] for r in allrows)
+    best_pt = min(r["err_pointwise_pct"] for r in allrows)
+
+    lines = [
+        r"\begin{table}[H]",
+        r"    \centering",
+        r"    \caption{Trajectory-level validation of the DP policy against "
+        r"direct continuous-time optimal control, at the initial conditions "
+        r"published by Bunge et al.\ \cite{Bunge2018} ($V_0/V_s = 1.2$). "
+        r"Closed-loop DP rollouts are compared with CasADi/IPOPT solutions of "
+        r"Eq.~\eqref{eq:ocp_free_tf} warm-started from the DP trajectory. "
+        r"Both arms terminate at the level-flight recovery $\gamma = 0$ --- "
+        r"the NLP by its terminal constraint, the DP because the level-flight "
+        r"set is absorbing --- so the two endpoints are directly comparable. "
+        rf"The error $e$ is normalized by the deepest loss of each sweep. The "
+        rf"near-inverted $\gamma_0 = -60^\circ$, $\mu_0 = 150^\circ$ entry "
+        rf"is excluded: the policy does not return it to level flight within "
+        rf"the horizon.}}",
+        r"    \label{tab:casadi_benchmark}",
+        r"    \begin{tabular}{c c r r r r}",
+        r"        \toprule",
+        r"        $\gamma_0$ (deg) & $\mu_0$ (deg) & DP (m) & NLP (m) & "
+        r"gap (m) & $e$ (\%) \\",
+        r"        \midrule",
+    ]
+    for i, sc in enumerate(scen):
+        for r in sc["rows"]:
+            lines.append(
+                f"        ${r['gamma0_deg']:.0f}$ & ${r['mu0_deg']:.0f}$ & "
+                f"${r['h_dp_m']:.2f}$ & ${r['h_nlp_m']:.2f}$ & "
+                f"${r['gap_m']:+.2f}$ & ${r['err_vs_max_pct']:.2f}$ \\\\")
+        if i < len(scen) - 1:
+            lines.append(r"        \midrule")
     lines += [
-        rf"\multicolumn{{6}}{{l}}{{Worst case over the "
-        rf"{len(allrows)} points: {worst:.2f}\%}} \\",
-        r"\hline",
-        r"\end{tabular}",
+        r"        \bottomrule",
+        r"    \end{tabular}",
         r"\end{table}",
     ]
     out.write_text("\n".join(lines) + "\n")
     print(f"[+] {out.name} written")
+    print(f"    worst {worst:.2f}%, mean {mean:.2f}%, worst absolute "
+          f"{worst_abs:.2f} m, pointwise spread {best_pt:.1f}-{worst_pt:.1f}%")
 
 
 def main() -> None:
@@ -286,6 +306,12 @@ def main() -> None:
     (CASE1 / "casadi_benchmark.json").write_text(json.dumps(payload, indent=1))
     print(f"[+] casadi_benchmark.json written to {CASE1}")
     make_table(scen, CASE1 / "table_casadi_benchmark.tex")
+    # The manuscript \input{}s from its own tables/ directory; writing both
+    # keeps the results folder self-describing without a manual copy that
+    # would silently go stale.
+    paper = REPO / "stall-paper" / "tables"
+    if paper.is_dir():
+        make_table(scen, paper / "table_casadi_benchmark.tex")
 
 
 if __name__ == "__main__":

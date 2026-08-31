@@ -646,65 +646,40 @@ complementary, and their agreement is a bidirectional check:
 the NLP confirms the local optimality of the DP trajectory, and the
 DP certifies that the NLP converged to the \emph{global} basin.
 
-Figure~\ref{fig:casadi_validation} overlays the closed-loop DP
-rollouts and the converged NLP solutions in the altitude--range plane.
-The trajectories coincide through the dive and pullout at every
-initial condition the policy recovers, and the qualitative structure
-published by
-\cite{Bunge2018} is reproduced exactly: at $\gamma_0 = -30^\circ$ the
-altitude loss grows roughly threefold with initial bank (from
-$49$\,m at $\mu_0 = 30^\circ$ to $156$\,m at
-$\mu_0 = 150^\circ$), and at the near-inverted entry the optimum
-performs an \emph{inverted} pullout (negative commanded lift) rather
-than rolling upright first; at $\gamma_0 = -60^\circ$ the
-near-inverted trajectory instead rolls through the vertical before
-pulling to an upright recovery. The comparison is run on the refined
-grid of Sec.~\ref{sec:scaling}, and the agreement is quantitative: over the
-nine entries the DP recovers, the two methods differ by
-$0.6$--$3.5\%$, with the continuous solution always the marginally
-better of the two, as the discretized policy requires. Matching the
-integration of the two --- holding each policy action for the control
-interval but integrating it at $\mathrm{d}t = 10^{-3}$\,s --- closes
-seven of the nine to within $7$\,cm, so the residual percentage
-measures the rollout's step size rather than any difference in what
-the two methods compute. The tenth entry, the near-inverted
+The qualitative structure published by \cite{Bunge2018} is
+reproduced exactly: at $\gamma_0 = -30^\circ$ the altitude loss grows
+roughly threefold with initial bank (from $49$\,m at
+$\mu_0 = 30^\circ$ to $156$\,m at $\mu_0 = 150^\circ$), and at the
+near-inverted entry the optimum performs an \emph{inverted} pullout
+(negative commanded lift) rather than rolling upright first; at
+$\gamma_0 = -60^\circ$ the near-inverted trajectory instead rolls
+through the vertical before pulling to an upright recovery.
+
+Table~\ref{tab:casadi_benchmark} reports the comparison
+quantitatively, on the refined grid of Sec.~\ref{sec:scaling}. Over
+the nine entries the policy recovers, the two methods differ by at
+most $1.4\%$ of the deepest altitude loss of each sweep and by
+$0.9\%$ on average, the largest absolute disagreement being
+$2.1$\,m. Referred instead to each entry's own loss the spread is
+$0.7$--$3.6\%$, and the maximum falls on the shallowest entry of the
+shallowest sweep, where the same ${\approx}1$\,m disagreement is
+divided by the smallest denominator in the set; that is why the
+comparison is normalized by the deepest loss. The continuous solution
+is the better of the two at every entry, as the discretized policy
+requires: a policy holding each control over a finite interval cannot
+outperform one free to switch continuously, so a reversed sign
+anywhere would indicate that the NLP had missed its own optimum
+rather than that the DP had beaten it.
+
+What remains is the rollout's step size rather than any difference in
+what the two methods compute. Matching the integration --- holding
+each policy action for the control interval but integrating it at
+$\mathrm{d}t = 10^{-3}$\,s --- closes seven of the nine entries to
+within $7$\,cm. The tenth entry, the near-inverted
 $\gamma_0 = -60^\circ$, $\mu_0 = 150^\circ$ case, is excluded: the
 policy does not return it to level flight within the horizon.
 
-\begin{figure}[H]
-    \centering
-    \begin{subfigure}[b]{0.49\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{img/banked_glider_L4_validation_guided_Fig3.png}
-        \caption{$\gamma_0 = -30^\circ$ (initial conditions of Fig.~3
-        of \cite{Bunge2018}).}
-        \label{fig:casadi_fig3}
-    \end{subfigure}
-    \hfill
-    \begin{subfigure}[b]{0.49\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{img/banked_glider_L4_validation_guided_Fig4.png}
-        \caption{$\gamma_0 = -60^\circ$ (initial conditions of Fig.~4
-        of \cite{Bunge2018}).}
-        \label{fig:casadi_fig4}
-    \end{subfigure}
-    \caption{Trajectory-level validation of the DP policy against
-    direct continuous-time optimal control at the initial conditions
-    published by Bunge et al.\ \cite{Bunge2018}: closed-loop DP
-    rollouts (solid) vs.\ CasADi direct-collocation solutions of
-    Eq.~\eqref{eq:ocp_free_tf} warm-started from the DP trajectory
-    (dashed), for $V_0/V_s = 1.2$ and initial bank angles
-    $\mu_0 \in \{30, 60, 90, 120, 150\}^\circ$. Both families of curves
-    end at the level-flight recovery $\gamma = 0$: the NLP by its
-    terminal constraint, the DP rollout because the level-flight set is
-    absorbing, so the two endpoints are directly comparable. The one
-    exception is the near-inverted $\gamma_0 = -60^\circ$,
-    $\mu_0 = 150^\circ$ entry, the leftmost pair of~(b), which leaves
-    the plotted window: there the policy does not return the aircraft
-    to level flight within the horizon, and that entry is excluded from
-    the quantitative comparison.}
-    \label{fig:casadi_validation}
-\end{figure}
+\input{tables/table_casadi_benchmark}
 
 \section{Case II: 4-DOF Symmetric Stall Recovery with Riley (1985) Aerodynamics}
 

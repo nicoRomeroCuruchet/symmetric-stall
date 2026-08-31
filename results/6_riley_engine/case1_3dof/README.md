@@ -135,3 +135,31 @@ move the NLP down as well and make the gap slightly worse, not better.
 What remains above that floor is real: 0.06-1.18 m, all of it at
 gamma_0 = -30 deg, and that part is the genuine price of holding each
 control for 0.10 s against an NLP free to switch at every node.
+
+## Why the trajectory figures are no longer in the paper
+
+On the directors' advice the two validation figures were dropped and
+replaced by `table_casadi_benchmark.tex`. Measuring the published PNG says
+why they were not evidence.
+
+Classifying the pixels of `banked_glider_L4_mca_validation_guided_Fig3.png`
+by colour and comparing the two curves column by column gives, in metres of
+plotted altitude (positive = the cyan NLP drawn BELOW the dark-red DP):
+
+| section | cyan minus red (median) | what a reader sees |
+|---|---|---|
+| dive, x < ~45 m | **+1.07 m** | NLP below the DP — "the DP loses less" |
+| level-off, x > ~45 m | **-0.89 m** | NLP above the DP — the DP loses more |
+
+The curves cross near x = 45 m, so the figure supports opposite readings in
+its two halves, and the half a reader spends most time looking at is the one
+that contradicts the table. The cause is the horizontal axis: each method
+reconstructs its own `x` with its own integrator and step, so equal x is not
+equal time, and on a 30 deg dive a ~1.9 m horizontal registration difference
+draws as ~1.1 m of vertical separation. The comparison is only defined at
+gamma = 0, where both arms terminate, and there the sign is unambiguous.
+
+Both separations are also smaller than the DP line width itself (1.47 m at
+that figure's scale), so neither is resolved by the plot in the first place.
+
+`diagnostics/fig3_curve_separation.png` records the measurement.
