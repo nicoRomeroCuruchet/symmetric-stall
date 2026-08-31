@@ -52,12 +52,8 @@ iterate, and it is that stored map, not the arithmetic, that has
 confined exact DP to coarse grids on reduced-order models. Integrating
 the flight dynamics on the fly inside the GPU kernel removes it, and
 the barycentric interpolation this requires is non-expansive, so the
-far larger grids cost nothing in convergence. On a 3-DOF banked-pullout
-benchmark the published baseline is reproduced in $0.38$~s on a single
-GPU, closed-loop trajectories agree with direct collocation to within
-$1.4\%$ of the deepest altitude loss of each sweep, and a
-$32$-million-state refinement --- $600$ times the baseline grid ---
-converges in under $15$ minutes. The framework is then applied to a
+far larger grids cost nothing in convergence. The solver is verified
+against a published 3-DOF banked-pullout benchmark and then applied to a
 4-DOF symmetric stall (states $\gamma, V, \alpha, q$; controls
 $\delta_e, \delta_t$) over $14.9$ million states, with the
 propulsion-coupled wind-tunnel aerodynamics of Riley (1985), explicit
