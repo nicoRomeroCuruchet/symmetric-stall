@@ -132,16 +132,17 @@ def describe() -> dict[str, str]:
     }
 
 
-def engine_label() -> str:
+def engine_label(engine_tau_s: float | None = None,
+                 elevator_tau_s: float | None = None) -> str:
     """One phrase naming BOTH lagged channels, for logs and figure stamps.
 
     Both are named even when one is off, because "which plant flew this?" is
     the question the stamp exists to answer, and silence about a channel reads
     as "not modelled" rather than "ideal".
     """
-    tau = engine_tau()
+    tau = engine_tau() if engine_tau_s is None else float(engine_tau_s)
     eng = f"Riley (A4) lag, tau_e = {tau:g} s" if tau > 0.0 else "ideal engine (no lag)"
-    de = elevator_tau()
+    de = elevator_tau() if elevator_tau_s is None else float(elevator_tau_s)
     elev = f"elevator tau = {de:g} s" if de > 0.0 else "instantaneous elevator"
     return f"{eng} | {elev}"
 

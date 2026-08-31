@@ -124,8 +124,15 @@ def dump_json(path, obj, indent=1):
     return path
 
 
-def stamp_engine(fig):
-    """Write the run's engine into the corner of a figure.
+def stamp_engine(fig, label=None, engine_tau=None, elevator_tau=None):
+    """Write the run's plant into the corner of a figure.
+
+    Pass `engine_tau`/`elevator_tau` whenever the figure flew values given as
+    ARGUMENTS rather than set through runconfig.apply(). Without them the stamp
+    reports the environment instead, which is how the first elevator sweep came
+    out labelled "instantaneous elevator" on all nine plots while flying lags
+    from 0.10 to 1.00 s -- only the filename told the truth. `label` replaces
+    the whole string, for a figure that flies several plants at once.
 
     Figures get pasted into slides and manuscripts far from the directory that
     produced them, and altitude loss is the number the engine moves most: the
@@ -133,7 +140,9 @@ def stamp_engine(fig):
     A figure that does not name its engine is a number without units. Small and
     grey so it never competes with the content, but present on every one.
     """
-    fig.text(0.995, 0.004, runconfig.engine_label(), ha="right", va="bottom",
+    if label is None:
+        label = runconfig.engine_label(engine_tau, elevator_tau)
+    fig.text(0.995, 0.004, label, ha="right", va="bottom",
              fontsize=7, color="0.55")
     return fig
 
@@ -944,7 +953,7 @@ def make_trajectory_comparison_figure(engine_tau=None, elevator_tau=None):
             # Appended with a hyphen to the engine tag so the pair reads as one
             # plant: tau085-010 is "engine 0.85, elevator 0.10".
             stem += f"{'' if lagged else '_tau000'}-{round(elevator_tau * 100):03d}"
-        stamp_engine(fig)
+        stamp_engine(fig, engine_tau=engine_tau, elevator_tau=elevator_tau)
         for ext in ("png", "pdf"):
             fig.savefig(OUT_DIR / f"{stem}.{ext}", dpi=300, bbox_inches="tight")
         plt.close(fig)

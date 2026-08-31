@@ -68,6 +68,11 @@ MASS_FACTORS = [round(0.85 + 0.025 * i, 4) for i in range(13)]     # 0.85 .. 1.1
 # stops being true, and the figure draws it.
 DXCG_LIST = [round(-0.100 + 0.025 * i, 4) for i in range(14)]      # aft-positive
 CERT_DXCG = 0.075
+
+#: Aft edge of the plotted matrix, in chord fractions (aft-positive, as the
+#: data are stored). 0.150 is 15 % of chord, which the axis labels show as
+#: -15 % under the forward-positive convention.
+DX_PLOT_MAX_AFT = 0.150
 X_CG_REF = 0.25                      # Riley's tables are referenced here
 X_CG_DIVERGENT = 0.453               # from cg_reach.py
 # CANONICAL comes from procedures.py: it used to be redeclared here as
@@ -288,7 +293,13 @@ def make_matrix_figure(data=None):
     if data is None:
         data = json.loads((OUT_DIR / "robustness.json").read_text())
     ck = f"a{CANONICAL[0]:.0f}_v{CANONICAL[1]:.2f}"
-    M = data["mass_factors"]; DX = data["dxcg"]
+    M = data["mass_factors"]
+    # The stored sweep runs out to +0.225 aft to locate the divergence
+    # boundary, but the figure stops at 15 % of chord either side. Past that
+    # the aeroplane is outside anything a loading sheet can produce, and the
+    # extra columns spent width arguing about an aircraft nobody flies. The
+    # DATA keeps them: this is a display crop, not a re-run.
+    DX = [dx for dx in data["dxcg"] if dx <= DX_PLOT_MAX_AFT]
     H = np.array([[data["cells"][cell_key(mf, dx)][ck]["h"]
                    for dx in DX] for mf in M])
     h_nom = data["cells"][NOMINAL_KEY][ck]["h"]
@@ -347,50 +358,47 @@ def make_matrix_figure(data=None):
     # %+.0f turned the 2.5 % steps into "+2%" and "+8%": one decimal, with
     # the trailing .0 trimmed so whole percentages stay clean.
     def pct(x):
-        return f"{x:+.1f}%".replace(".0%", "%")
+        # `x + 0.0` collapses negative zero: flipping the CG axis to
+        # forward-positive turns the 0.0 cell into -0.0, which formats as
+        # "-0%" and reads like a real negative offset.
+        return f"{x + 0.0:+.1f}%".replace(".0%", "%").replace("-0%", "0%")
 
-    ax.set_xticks(range(len(DX)), [pct(d * 100) for d in DX],
+    # FORWARD-POSITIVE on the axis, hence the minus: Riley's figure 1 puts the
+    # body X axis out the nose ("Arrows indicate positive directions"), and
+    # this paper adopts that frame, so a displacement measured in it is
+    # positive forward. The plant keeps its own aft-positive CG_AFT and DX
+    # untouched -- the sign is flipped HERE, at the presentation layer only, so
+    # no stored result changes meaning and no sign can leak into the kernel.
+    #
+    # The cells are NOT mirrored: the nose stays left and x_cg/c above still
+    # runs 0.15 -> 0.50 rightward, as a weight-and-balance chart does. The
+    # consequence is an axis that increases leftward, which is exactly what
+    # forward-positive means when the aeroplane is drawn nose-left.
+    ax.set_xticks(range(len(DX)), [pct(-d * 100) for d in DX],
                   rotation=45, ha="right", fontsize=8.5)
     ax.set_yticks(range(len(M)), [pct((m - 1) * 100) for m in M], fontsize=8.5)
-    ax.set_xlabel(r"CG shift (% of $\bar{c}$, aft positive)")
+    # Both directions go INSIDE the label rather than at the axis ends: an
+    # annotation pinned to the right-hand end collides with the plant stamp in
+    # the figure's bottom-right corner.
+    # The datum lives in the label because the top x_cg/c axis that used to
+    # carry it is gone, and "CG shift" alone invites the question "from what?".
+    # Naming it here costs no extra element and answers that at the moment the
+    # reader asks it.
+    ax.set_xlabel(r"$\leftarrow$ nose      CG shift from $0.25\,\bar{c}$ "
+                  r"(% chord, forward positive)      tail $\rightarrow$")
     ax.set_ylabel("Mass change vs. nominal")
 
-    # The CG axis now runs past what a day's loading can do, so it has to say
-    # where each regime ends: a boundary the reader cannot see is a boundary
-    # the figure implicitly denies.
-    def _edge(dx_value):
-        """x position of a CG value on the cell-index axis, or None."""
-        if dx_value < DX[0] or dx_value > DX[-1]:
-            return None
-        j = float(np.interp(dx_value, DX, np.arange(len(DX))))
-        return j
-
-    j_cert = _edge(CERT_DXCG)
-    if j_cert is not None:
-        ax.axvline(j_cert, color="0.15", lw=1.2, ls="--")
-        ax.annotate("day-to-day loading", xy=(j_cert, 1.0),
-                    xycoords=("data", "axes fraction"), xytext=(-6, 22),
-                    textcoords="offset points", fontsize=8.5, color="0.15",
-                    ha="right", va="bottom")
-    j_div = _edge(X_CG_DIVERGENT - X_CG_REF)
-    if j_div is not None:
-        ax.axvline(j_div, color="#7B1113", lw=1.4, ls="--")
-        ax.annotate("airframe divergent\n(open loop)", xy=(j_div, 1.0),
-                    xycoords=("data", "axes fraction"), xytext=(6, 22),
-                    textcoords="offset points", fontsize=8.5, color="#7B1113",
-                    ha="left", va="bottom")
-
-    ax2 = ax.secondary_xaxis("top", functions=(
-        lambda j: np.interp(j, np.arange(len(DX)), np.array(DX)) + X_CG_REF,
-        lambda x: np.interp(x - X_CG_REF, DX, np.arange(len(DX)))))
-    ax2.set_xlabel(r"$x_{cg}/\bar{c}$", fontsize=10, labelpad=8,
-                   loc="left")
+    # The secondary x_cg/c axis on top is gone. Besides the clutter, it ran the
+    # opposite way to the bottom axis once that became forward-positive -- two
+    # x axes on one figure pointing in opposite directions, which is the very
+    # confusion the sign change was meant to remove. The reference remains
+    # x_cg = 0.25 c (Riley's moment reference), stated in the caption, so an
+    # absolute position is still one subtraction away.
     sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
-    cb = fig.colorbar(sm, ax=ax, fraction=0.046, pad=0.03)
+    cb = fig.colorbar(sm, ax=ax, fraction=0.026, pad=0.02)
     cb.set_label("altitude loss (varied aircraft)\n"
                  "$-$ altitude loss (nominal aircraft)   (m)",
                  fontsize=10)
-    stamp_engine(fig)
     for ext in ("png", "pdf"):
         fig.savefig(OUT_DIR / f"fig_robustness_matrix.{ext}", dpi=300,
                     bbox_inches="tight")

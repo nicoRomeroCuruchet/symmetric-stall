@@ -129,7 +129,12 @@ def summary_figure(rows) -> None:
             rf"Elevator bandwidth at Riley's engine ($\tau_e={ENGINE_TAU}$ s), "
             "canonical entry", fontsize=12)
         fig.tight_layout()
-        P.stamp_engine(fig)
+        # This figure flies NINE plants, so it cannot name one: the stamp
+        # gives the range instead. Left to the default it would read
+        # "instantaneous elevator", which is the one thing it certainly is not.
+        P.stamp_engine(fig, label=(
+            f"Riley (A4) lag, tau_e = {ENGINE_TAU} s | elevator tau swept "
+            f"{min(ELEVATOR_TAUS):g}-{max(ELEVATOR_TAUS):g} s"))
         for ext in ("png", "pdf"):
             fig.savefig(OUT / f"fig_elevator_lag_sweep.{ext}",
                         dpi=300, bbox_inches="tight")
