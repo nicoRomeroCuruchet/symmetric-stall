@@ -1,0 +1,25 @@
+% Reconstructed 2026-08-31 from the rendered Table 2 of stall-paper/main.pdf
+% (build of 2026-08-17 20:38), the only surviving copy: the generated .tex was
+% lost with the rest of img/ and is not in either repository or on any node.
+% Numbers transcribed from the PDF text layer, not retyped by eye.
+% Keeps \label{tab:profiling}, which is the label main.tex cites for the
+% BASELINE grid; the L4 table carries tab:profiling_L4 (see that file).
+\begin{table}[h]
+\centering
+\caption{Computational cost of Policy Iteration on 53,280 states, 91 actions (NVIDIA GeForce RTX 4090).}
+\label{tab:profiling}
+\begin{tabular}{l r r}
+\toprule
+Phase & Total (ms) & Per Iteration (ms) \\
+\midrule
+State grid construction (CPU) & 0.48 & -- \\
+Policy Evaluation (GPU)       & 375.48 & 12.11 \\
+Policy Improvement (GPU)      & 4.95 & 0.16 \\
+GPU $\to$ CPU Transfer        & 0.20 & -- \\
+\midrule
+\textbf{Total}              & \textbf{381.11} & -- \\
+\bottomrule
+\end{tabular}
+\\[4pt]
+\footnotesize Converged in 31 iterations. Timing via CUDA events.
+\end{table}
