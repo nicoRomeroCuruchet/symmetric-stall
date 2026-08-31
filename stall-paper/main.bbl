@@ -7,6 +7,23 @@
   \providecommand{\doi}[1]{\discretionary{}{}{}https://doi.org/#1}\else
   \providecommand{\doi}[1]{\discretionary{}{}{}\urlstyle{rm}\url{https://doi.org/#1}}\fi
 
+\bibitem[{Munos and Moore(1998)}]{Munos1998}
+Munos, R., and Moore, A.~W., \enquote{Barycentric Interpolators for Continuous
+  Space and Time Reinforcement Learning,} \emph{Advances in Neural Information
+  Processing Systems}, Vol.~11, 1998.
+
+\bibitem[{Bunge and Kroo(2018)}]{Bunge2018}
+Bunge, R.~A., and Kroo, I.~M., \enquote{Automatic Spin Recovery with Minimal
+  Altitude Loss,} \emph{2018 AIAA Guidance, Navigation, and Control
+  Conference}, Kissimmee, FL, 2018, pp. 1--13.
+\newblock \doi{10.2514/6.2018-1866}.
+
+\bibitem[{Riley(1985)}]{Riley1985}
+Riley, D.~R., \enquote{Simulator Study of the Stall Departure Characteristics
+  of a Light General Aviation Airplane with and without a Wing-Leading-Edge
+  Modification,} Tech. Rep. NASA-TM-86309, NASA Langley Research Center,
+  Hampton, VA, 1985.
+
 \bibitem[{Belcastro and Foster(2010)}]{Belcastro2010}
 Belcastro, C.~M., and Foster, J.~V., \enquote{Aircraft loss-of-control accident
   analysis,} \emph{AIAA Guidance, Navigation, and Control Conference}, 2010.
@@ -44,12 +61,6 @@ Gratton, G.~B., Hoff, R.~I., Bromfield, M., Rahman, A., Harbour, S., and
   1203, 2014, pp. 461--480.
 \newblock \doi{10.1017/S0001924000009313}.
 
-\bibitem[{Bunge and Kroo(2018)}]{Bunge2018}
-Bunge, R.~A., and Kroo, I.~M., \enquote{Automatic Spin Recovery with Minimal
-  Altitude Loss,} \emph{2018 AIAA Guidance, Navigation, and Control
-  Conference}, Kissimmee, FL, 2018, pp. 1--13.
-\newblock \doi{10.2514/6.2018-1866}.
-
 \bibitem[{Bellman(1957)}]{Bellman1957}
 Bellman, R., \emph{Dynamic Programming}, Princeton University Press, Princeton,
   NJ, 1957.
@@ -77,22 +88,11 @@ Grillo, A., Torre, G.~G., and Bunge, R.~A., \enquote{Optimal Stall Recovery via
   SCITECH 2024 Forum}, Orlando, FL, 2024.
 \newblock \doi{10.2514/6.2024-1280}.
 
-\bibitem[{Munos and Moore(1998)}]{Munos1998}
-Munos, R., and Moore, A.~W., \enquote{Barycentric Interpolators for Continuous
-  Space and Time Reinforcement Learning,} \emph{Advances in Neural Information
-  Processing Systems}, Vol.~11, 1998.
-
 \bibitem[{Munos and Moore(2002)}]{Munos2002}
 Munos, R., and Moore, A.~W., \enquote{Variable Resolution Discretization in
   Optimal Control,} \emph{Machine Learning}, Vol.~49, No. 2--3, 2002, pp.
   291--323.
 \newblock \doi{10.1023/A:1017992615625}.
-
-\bibitem[{Riley(1985)}]{Riley1985}
-Riley, D.~R., \enquote{Simulator Study of the Stall Departure Characteristics
-  of a Light General Aviation Airplane with and without a Wing-Leading-Edge
-  Modification,} Tech. Rep. NASA-TM-86309, NASA Langley Research Center,
-  Hampton, VA, 1985.
 
 \bibitem[{Bui et~al.(2022)Bui, Hu, He, Lu, Giovanis, Shriraman, and
   Chen}]{Bui2022}

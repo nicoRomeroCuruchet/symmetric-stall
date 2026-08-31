@@ -52,12 +52,14 @@ over the whole entry envelope rather than a local minimum or a learned
 approximation, is what the method developed here is built to keep. Exact DP has been held to coarse grids by memory, not
 arithmetic: integrating the flight dynamics inside the GPU kernel
 rather than storing them trades the one for the other, and because the
-barycentric interpolation this requires is non-expansive, the guarantee
-survives the trade. The solver is verified
-against a published 3-DOF banked-pullout benchmark and then applied to a
+barycentric interpolation this requires is non-expansive
+\cite{Munos1998}, the guarantee survives the trade. The solver is verified
+against the 3-DOF banked-pullout benchmark of Bunge et al.
+\cite{Bunge2018} and then applied to a
 4-DOF symmetric stall (states $\gamma, V, \alpha, q$; controls
 $\delta_e, \delta_t$) over $14.9$ million states, with the
-propulsion-coupled wind-tunnel aerodynamics of Riley (1985), explicit
+propulsion-coupled wind-tunnel aerodynamics of Riley \cite{Riley1985},
+explicit
 pitch dynamics and his first-order engine lag, removing the
 perfect-inner-loop and instantaneous-thrust assumptions together. The
 optimal policy reproduces the UK CAA's simultaneous
