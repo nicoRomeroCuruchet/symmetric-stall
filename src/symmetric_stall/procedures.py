@@ -499,7 +499,7 @@ def main_maneuvers():
         r"$\delta_e=+15^\circ$ until $\alpha<14^\circ$; pull-up holds "
         r"$\alpha\approx13^\circ$ ($\alpha$-hold pilot); power ramps to full "
         r"over 2\,s from $t=0$ (CAA) or from the unstall event (FAA). "
-        r"In parentheses: the same maneuver with the pull-up instead flown open loop at full deflection ($\delta_e=-25^\circ$ held): the overdone pull re-stalls the wing into a secondary stall at every entry, driving $\alpha$ to $33$--$35^\circ$ against the $14^\circ$ boundary. "
+        r"In parentheses: the same maneuver with the pull-up instead flown open loop at full deflection ($\delta_e=-25^\circ$ held). The overdone pull re-stalls the wing at every one of the nine entries, driving $\alpha$ to $33$--$35^\circ$ against the $14^\circ$ boundary, and none of them recovers: the parenthesized figures are the altitude lost when the $15$\,s horizon expires with the aircraft still stalled, not a recovery cost. "
         r"The canonical entry is set in \textbf{bold}: it is the maneuver "
         r"resolved in the time domain in Fig.~\ref{fig:4dof_trajectory_riley}.}",
         r"    \label{tab:maneuvers}", r"    \begin{tabular}{ccccc}",
@@ -516,11 +516,15 @@ def main_maneuvers():
         b = (r"\bfseries " if (a0, v0) == CANONICAL else "")
         lines.append(f"        {b}{a0:.0f} & {b}{v0:.2f} & {b}{o:.2f}{m} & "
                      f"{b}{c:.2f} ({cfp:.2f}) & {b}{f:.2f} ({ffp:.2f}) \\\\")
-    lines += [r"        \hline",
-              r"        \multicolumn{5}{l}{\footnotesize\textsuperscript{t}\,"
-              r"DP optimum settles into a shallow powered descent (no "
-              r"$\gamma=0$ crossing in 15\,s).}\\",
-              r"    \end{tabular}", r"\end{table}"]
+    lines += [r"        \hline"]
+    # Only emit the footnote if a row actually carries its marker. Under Riley's
+    # thrust the optimum recovers at every entry, so an unconditional footnote
+    # printed a note about a case the table does not contain.
+    if any(st != "recovered" for *_, st in rows_tex):
+        lines.append(r"        \multicolumn{5}{l}{\footnotesize"
+                     r"\textsuperscript{t}\,DP optimum settles into a shallow "
+                     r"powered descent (no $\gamma=0$ crossing in 15\,s).}\\")
+    lines += [r"    \end{tabular}", r"\end{table}"]
     (OUT_DIR / "table_maneuvers.tex").write_text("\n".join(lines) + "\n")
 
     report = {"maneuvers": man, "optimal_ref": opt}

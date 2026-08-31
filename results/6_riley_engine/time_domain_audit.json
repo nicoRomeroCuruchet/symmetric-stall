@@ -1,0 +1,102 @@
+{
+ "run_config": {
+  "thrust_model": "riley",
+  "cg_aft_m": "0.0",
+  "cg_right_m": "0.0",
+  "cg_below_m": "0.0",
+  "engine_tau_s": "0.85",
+  "mass_factor": "1.0",
+  "elevator_tau_s": "0.0"
+ },
+ "canonical": {
+  "alpha0_deg": 20.0,
+  "vnorm0": 0.85
+ },
+ "arms": [
+  {
+   "arm": "DP optimum",
+   "h_m": -19.78572280326509,
+   "t_s": 6.29999999999991,
+   "status": "recovered",
+   "t_reach_alpha_s": 0.4100000000000002,
+   "alpha_min_deg": 11.776759869776786,
+   "alpha_max_deg": 20.08657718855763,
+   "gamma_min_deg": -9.647964929081294,
+   "alpha_mean_arc_deg": 13.30467763716822,
+   "alpha_max_arc_deg": 14.101494154739727,
+   "de_mean_arc_deg": -6.4417543999829885,
+   "de_min_deg": -17.50408778601769,
+   "de_max_deg": 15.000000417413029,
+   "t_cmd_full_s": 0.0,
+   "t_eff_90pct_s": 1.9500000000000015
+  },
+  {
+   "arm": "CAA (alpha-hold)",
+   "h_m": -32.168195091709755,
+   "t_s": 6.729999999999901,
+   "status": "recovered",
+   "t_reach_alpha_s": 0.37000000000000016,
+   "alpha_min_deg": 8.237293516400003,
+   "alpha_max_deg": 20.086846981029847,
+   "gamma_min_deg": -14.297583763168916,
+   "alpha_mean_arc_deg": 11.952824436146201,
+   "alpha_max_arc_deg": 13.845768457119865,
+   "de_mean_arc_deg": -6.060809847560045,
+   "de_min_deg": -17.50408778601769,
+   "de_max_deg": 15.000000417413029,
+   "t_cmd_full_s": 2.0000000000000013,
+   "t_eff_90pct_s": 3.139999999999977
+  },
+  {
+   "arm": "FAA (alpha-hold)",
+   "h_m": -36.116394980841164,
+   "t_s": 6.909999999999897,
+   "status": "recovered",
+   "t_reach_alpha_s": 0.37000000000000016,
+   "alpha_min_deg": 8.127490541529232,
+   "alpha_max_deg": 20.086846981029847,
+   "gamma_min_deg": -15.745179178503296,
+   "alpha_mean_arc_deg": 11.917179760282929,
+   "alpha_max_arc_deg": 13.847314641193227,
+   "de_mean_arc_deg": -6.2421354888099545,
+   "de_min_deg": -17.50408778601769,
+   "de_max_deg": 15.000000417413029,
+   "t_cmd_full_s": 2.3699999999999934,
+   "t_eff_90pct_s": 3.509999999999969
+  },
+  {
+   "arm": "CAA (full pull)",
+   "h_m": -105.49630992948249,
+   "t_s": 15.009999999999724,
+   "status": "timeout",
+   "t_reach_alpha_s": 0.37000000000000016,
+   "alpha_min_deg": 9.661161708331404,
+   "alpha_max_deg": 34.8081193312457,
+   "gamma_min_deg": -19.165860858250742,
+   "alpha_mean_arc_deg": 29.63490211901133,
+   "alpha_max_arc_deg": 34.8081193312457,
+   "de_mean_arc_deg": -25.00000012650594,
+   "de_min_deg": -25.00000012650595,
+   "de_max_deg": 15.000000417413029,
+   "t_cmd_full_s": 2.0000000000000013,
+   "t_eff_90pct_s": 3.139999999999977
+  },
+  {
+   "arm": "FAA (full pull)",
+   "h_m": -108.92407788712228,
+   "t_s": 15.009999999999724,
+   "status": "timeout",
+   "t_reach_alpha_s": 0.37000000000000016,
+   "alpha_min_deg": 9.593650411027706,
+   "alpha_max_deg": 34.15451803899967,
+   "gamma_min_deg": -21.057235862075654,
+   "alpha_mean_arc_deg": 29.373015955829995,
+   "alpha_max_arc_deg": 34.15451803899967,
+   "de_mean_arc_deg": -25.00000012650594,
+   "de_min_deg": -25.00000012650595,
+   "de_max_deg": 15.000000417413029,
+   "t_cmd_full_s": 2.3699999999999934,
+   "t_eff_90pct_s": 3.509999999999969
+  }
+ ]
+}

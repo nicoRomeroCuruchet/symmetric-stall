@@ -1,21 +1,20 @@
 \begin{table}[!ht]
     \centering
-    \caption{Altitude loss $\Delta h$ (m): exact DP optimum vs.\ the scripted CAA and FAA recovery procedures, simulated on the Riley model as defined by Gratton et al. (all values are simulation results of this work). Nose-down $\delta_e=+15^\circ$ until $\alpha<14^\circ$; pull-up holds $\alpha\approx13^\circ$ ($\alpha$-hold pilot); power ramps to full over 2\,s from $t=0$ (CAA) or from the unstall event (FAA). In parentheses: the same maneuver with the pull-up instead flown open loop at full deflection ($\delta_e=-25^\circ$ held): the overdone pull re-stalls the wing into a secondary stall at every entry, driving $\alpha$ to $33$--$35^\circ$ against the $14^\circ$ boundary. The canonical entry is set in \textbf{bold}: it is the maneuver resolved in the time domain in Fig.~\ref{fig:4dof_trajectory_riley}.}
+    \caption{Altitude loss $\Delta h$ (m): exact DP optimum vs.\ the scripted CAA and FAA recovery procedures, simulated on the Riley model as defined by Gratton et al. (all values are simulation results of this work). Nose-down $\delta_e=+15^\circ$ until $\alpha<14^\circ$; pull-up holds $\alpha\approx13^\circ$ ($\alpha$-hold pilot); power ramps to full over 2\,s from $t=0$ (CAA) or from the unstall event (FAA). In parentheses: the same maneuver with the pull-up instead flown open loop at full deflection ($\delta_e=-25^\circ$ held). The overdone pull re-stalls the wing at every one of the nine entries, driving $\alpha$ to $33$--$35^\circ$ against the $14^\circ$ boundary, and none of them recovers: the parenthesized figures are the altitude lost when the $15$\,s horizon expires with the aircraft still stalled, not a recovery cost. The canonical entry is set in \textbf{bold}: it is the maneuver resolved in the time domain in Fig.~\ref{fig:4dof_trajectory_riley}.}
     \label{tab:maneuvers}
     \begin{tabular}{ccccc}
         \hline
         $\alpha_0$ & $V_0/V_s$ & DP optimum & CAA & FAA \\
         \hline
-        16 & 0.90 & -17.19 & -24.68 (-135.35) & -26.32 (-136.09) \\
-        16 & 0.95 & -6.57 & -15.73 (-131.10) & -17.17 (-131.83) \\
-        16 & 1.00 & -0.62 & -6.91 (-126.87) & -8.08 (-127.51) \\
-        18 & 0.90 & -16.37 & -24.99 (-134.81) & -27.18 (-135.84) \\
-        18 & 0.95 & -7.16 & -16.09 (-130.60) & -18.00 (-131.54) \\
-        18 & 1.00 & -0.82 & -7.32 (-126.31) & -9.04 (-127.16) \\
-        20 & 0.90 & -15.85 & -25.64 (-134.69) & -28.25 (-135.95) \\
-        \bfseries 20 & \bfseries 0.95 & \bfseries -7.80 & \bfseries -16.74 (-130.45) & \bfseries -19.06 (-131.58) \\
-        20 & 1.00 & -1.07 & -8.05 (-126.16) & -10.22 (-127.21) \\
+        16 & 0.80 & -26.30 & -38.82 (-110.74) & -42.07 (-113.55) \\
+        16 & 0.85 & -18.46 & -30.59 (-106.28) & -33.19 (-108.66) \\
+        16 & 0.90 & -10.95 & -22.32 (-101.49) & -24.54 (-103.58) \\
+        18 & 0.80 & -26.91 & -39.57 (-110.33) & -43.57 (-113.67) \\
+        18 & 0.85 & -19.07 & -31.26 (-105.57) & -34.69 (-108.62) \\
+        18 & 0.90 & -11.51 & -22.98 (-100.79) & -25.92 (-103.48) \\
+        20 & 0.80 & -27.63 & -40.49 (-110.31) & -45.01 (-114.00) \\
+        \bfseries 20 & \bfseries 0.85 & \bfseries -19.79 & \bfseries -32.17 (-105.50) & \bfseries -36.12 (-108.92) \\
+        20 & 0.90 & -12.19 & -23.88 (-100.67) & -27.33 (-103.76) \\
         \hline
-        \multicolumn{5}{l}{\footnotesize\textsuperscript{t}\,DP optimum settles into a shallow powered descent (no $\gamma=0$ crossing in 15\,s).}\\
     \end{tabular}
 \end{table}
