@@ -376,10 +376,19 @@ def make_dumbbell(rows, out_stem: Path) -> None:
             ax.scatter([r[KEY] for r in sub], y, s=52, zorder=4,
                        color="#dd8452", marker="D",
                        label=r"$\pi_{M_0}$, $V_s$ rescaled")
+            # The floor goes in the tick label. Plotting the excess in metres
+            # removes the denominator the per-cent axis carried implicitly, and
+            # without it 0.4 m is uncalibrated: a reader cannot tell whether it
+            # is a fifth of the manoeuvre or a hundredth. Each row now shows
+            # what its own excess is an excess OVER.
             ax.set_yticks(y, [f"{r['alpha0_deg']:.0f}$^\\circ$, "
-                              f"{r['vnorm0']:.2f}" for r in sub], fontsize=9)
+                              f"{r['vnorm0']:.2f}   ({abs(r['h_pi_M1']):.0f} m)"
+                              for r in sub], fontsize=8)
             ax.set_xlabel(r"excess altitude loss over $\pi_{M_1}$ (m)")
-            ax.set_title(f"{case_label(mf, cg_aft)}  ({715.3152 * mf:.0f} kg)")
+            floor = [abs(r["h_pi_M1"]) for r in sub]
+            ax.set_title(f"{case_label(mf, cg_aft)}  ({715.3152 * mf:.0f} kg)\n"
+                         f"retrained policy loses {min(floor):.0f} to "
+                         f"{max(floor):.0f} m", fontsize=10)
             ax.grid(alpha=0.3, axis="x")
             ax.invert_yaxis()
             ax.set_xlim(-xmax, xmax)
@@ -391,7 +400,8 @@ def make_dumbbell(rows, out_stem: Path) -> None:
         for ax in flat[len(cases):]:     # an odd case count leaves a hole
             ax.set_visible(False)
         for row in range(nrows):
-            axs[row, 0].set_ylabel(r"entry $(\alpha_0,\ V_0/V_s)$")
+            axs[row, 0].set_ylabel(r"entry $(\alpha_0,\ V_0/V_s)$, "
+                                   r"and its $\pi_{M_1}$ loss", fontsize=10)
         flat[len(cases) - 1].legend(loc="lower right", framealpha=0.95)
         fig.suptitle(r"Excess of the nominal policy over one retrained "
                      r"for the same aircraft", fontsize=12)
