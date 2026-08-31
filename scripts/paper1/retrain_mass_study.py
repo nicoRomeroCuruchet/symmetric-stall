@@ -30,6 +30,15 @@ scaled by sqrt(mass_factor): its model carries the nominal Vs, so reaching the
 same true speed takes a different vnorm. Getting this wrong makes the raw arm
 start somewhere else entirely and the comparison meaningless.
 
+FOUR PERTURBATIONS, NOT ONE. Mass alone is the weakest form of the
+objection, because it is the one parameter the policy already sees through
+Vs. The centre of gravity is the harder case: nothing in the observation
+carries it, so a CG-shifted aeroplane is invisible to the nominal policy and
+there is no scalar to correct. The cases are ordered so the two effects can
+be separated -- mass alone, CG alone, then both at once -- and the combined
+case is the loading the paper should be judged on: heaviest permitted weight
+with the CG at the forward limit.
+
 Engine and elevator both lagged, as everywhere else in the current results.
 
 Usage:
@@ -64,17 +73,39 @@ POLICY_DIR = REPO / "data" / "policies"
 STEM = "SymmetricStall_riley_56x81x80x41_thrust-riley"
 NOMINAL = POLICY_DIR / f"{STEM}.npz"
 
-#: Retrained policies, by mass factor. Add a row as each solve lands.
-RETRAINED = {
-    0.90: POLICY_DIR / f"{STEM}_mass090.npz",
-    1.10: POLICY_DIR / f"{STEM}_mass110.npz",
-}
+#: Chord of the AA-1 (m). The CG offsets below are quoted in metres because
+#: that is what the plant and the .npz metadata carry; this converts them to
+#: the per-cent-of-chord the paper and the figures speak in.
+CHORD_M = 1.2192
+
+#: One entry per retrained policy: (mass factor, CG offset in metres AFT of
+#: Riley's reference, path). Negative CG is FORWARD, towards the nose --
+#: the plant variable is aft-positive, the figures are not, and the sign is
+#: converted at the presentation layer only.
+#:
+#: Ordered mass -> CG -> both, which is the order the argument is made in.
+CASES = [
+    (0.90, 0.0, POLICY_DIR / f"{STEM}_mass090.npz"),
+    (1.10, 0.0, POLICY_DIR / f"{STEM}_mass110.npz"),
+    (1.00, -0.12192, POLICY_DIR / f"{STEM}_cg--0.12192_0_0.npz"),
+    (1.15, -0.12192, POLICY_DIR / f"{STEM}_cg--0.12192_0_0_mass115.npz"),
+]
+
+
+def case_label(mf: float, cg_aft: float) -> str:
+    """Panel and table label for one perturbation, CG forward-positive."""
+    cg_pct = -100.0 * cg_aft / CHORD_M
+    if abs(cg_pct) < 1e-9:
+        return rf"$m/m_0={mf:.2f}$, CG nominal"
+    where = "fwd" if cg_pct > 0 else "aft"
+    return rf"$m/m_0={mf:.2f}$, CG {abs(cg_pct):.0f}% {where}"
 
 OUT = REPO / "results" / "6_riley_engine" / "retrain-mass"
 
 
-def perturbed_plant(mass_factor: float, rescale_vs: bool) -> SymmetricStall:
-    """The aeroplane at `mass_factor`, with or without a corrected Vs.
+def perturbed_plant(mass_factor: float, cg_aft: float,
+                    rescale_vs: bool) -> SymmetricStall:
+    """The aeroplane at `mass_factor` and `cg_aft`, with or without a corrected Vs.
 
     MASS is scaled AFTER construction on purpose: STALL_AIRSPEED is derived
     from the mass in __init__, so assigning here leaves it at the nominal
@@ -84,9 +115,20 @@ def perturbed_plant(mass_factor: float, rescale_vs: bool) -> SymmetricStall:
     Do NOT reach for the MASS_FACTOR environment variable here. That rebuilds
     the whole aeroplane consistently, which is what TRAINING wants and what
     makes the un-rescaled arm impossible to express.
+
+    CG_AFT is assigned on the INSTANCE, shadowing the class attribute that
+    grumman.py reads from the environment at import time. That is the only way
+    to fly several centres of gravity in one process; setting CG_AFT_M in the
+    environment here would be silently ignored, the plant having been imported
+    already.
+
+    There is no rescaling counterpart for the CG. Vs is a function of weight,
+    so a mass change leaves a correctable trace in the observation; a CG
+    change leaves none, which is exactly why it is the harder case.
     """
     env = SymmetricStall()
     env.airplane.MASS = env.airplane.MASS * mass_factor
+    env.airplane.CG_AFT = float(cg_aft)
     if rescale_vs:
         env.airplane.STALL_AIRSPEED *= float(np.sqrt(mass_factor))
     return env
@@ -97,34 +139,42 @@ def main() -> None:
     pi_nom = paths.load_policy(NOMINAL, env=SymmetricStall())
 
     rows = []
-    for mf in sorted(RETRAINED):
-        path = RETRAINED[mf]
+    for mf, cg_aft, path in CASES:
         if not path.exists():
-            print(f"[!] no retrained policy for mass {mf}: {path.name} -- skipped")
+            print(f"[!] no retrained policy for {case_label(mf, cg_aft)}: "
+                  f"{path.name} -- skipped")
             continue
         pi_ret = paths.load_policy(path, env=SymmetricStall())
-        meta = json.loads(str(np.load(path)["run_metadata"]))
-        assert float(meta["mass_factor"]) == mf, (
-            f"{path.name} says mass_factor={meta['mass_factor']}, expected {mf}")
+        # The .npz records what it was SOLVED for. Checking both parameters
+        # here is what stops a mislabelled file from being read as the floor
+        # for an aeroplane it was never trained on -- the failure this whole
+        # study would report as a result rather than a bug.
+        meta = json.loads(str(np.load(path)["run_metadata"].ravel()[0]))
+        assert float(meta.get("mass_factor", 1.0)) == mf, (
+            f"{path.name} says mass_factor={meta.get('mass_factor')}, expected {mf}")
+        assert abs(float(meta.get("cg_aft_m", 0.0)) - cg_aft) < 1e-9, (
+            f"{path.name} says cg_aft_m={meta.get('cg_aft_m')}, expected {cg_aft}")
 
-        print(f"\n=== mass factor {mf}  ({715.3152 * mf:.1f} kg) ===")
+        print(f"\n=== {case_label(mf, cg_aft)}  ({715.3152 * mf:.1f} kg, "
+              f"cg_aft {cg_aft:+.5f} m) ===")
         print(f"{'alpha0':>7} {'v0/Vs':>6} | {'pi_M0 raw':>10} {'pi_M0 resc':>11} "
               f"{'pi_M1':>9} | {'raw vs M1':>10} {'resc vs M1':>11}")
         for a0 in ALPHA_GRID_DEG:
             for v0 in VNORM_GRID:
                 # Same physical entry speed in all three arms.
-                h_raw = rollout(perturbed_plant(mf, False), pi_nom, ctrl_optimal,
-                                a0, v0 * float(np.sqrt(mf)))["h"]
-                h_res = rollout(perturbed_plant(mf, True), pi_nom, ctrl_optimal,
-                                a0, v0)["h"]
-                h_ret = rollout(perturbed_plant(mf, True), pi_ret, ctrl_optimal,
-                                a0, v0)["h"]
+                h_raw = rollout(perturbed_plant(mf, cg_aft, False), pi_nom,
+                                ctrl_optimal, a0, v0 * float(np.sqrt(mf)))["h"]
+                h_res = rollout(perturbed_plant(mf, cg_aft, True), pi_nom,
+                                ctrl_optimal, a0, v0)["h"]
+                h_ret = rollout(perturbed_plant(mf, cg_aft, True), pi_ret,
+                                ctrl_optimal, a0, v0)["h"]
                 # Excess over the retrained floor, per cent of the floor's own
                 # loss. Losses are negative, so the ratio is written on
                 # magnitudes to keep "more loss" positive.
                 exc_raw = 100.0 * (abs(h_raw) - abs(h_ret)) / abs(h_ret)
                 exc_res = 100.0 * (abs(h_res) - abs(h_ret)) / abs(h_ret)
-                rows.append({"mass_factor": mf, "alpha0_deg": a0, "vnorm0": v0,
+                rows.append({"mass_factor": mf, "cg_aft_m": cg_aft,
+                             "alpha0_deg": a0, "vnorm0": v0,
                              "h_pi_M0_raw": h_raw, "h_pi_M0_rescaled": h_res,
                              "h_pi_M1": h_ret,
                              "excess_raw_pct": exc_raw,
@@ -147,19 +197,31 @@ def main() -> None:
 
 def summarise(rows) -> None:
     """The two sentences the paper needs, computed rather than eyeballed."""
-    for mf in sorted({r["mass_factor"] for r in rows}):
-        sub = [r for r in rows if r["mass_factor"] == mf]
+    for mf, cg_aft, _ in CASES:
+        sub = [r for r in rows
+               if r["mass_factor"] == mf and r["cg_aft_m"] == cg_aft]
+        if not sub:
+            continue
         raw = np.array([r["excess_raw_pct"] for r in sub])
         res = np.array([r["excess_rescaled_pct"] for r in sub])
-        print(f"\nmass {mf}: over {len(sub)} entries")
+        print(f"\n{case_label(mf, cg_aft)}: over {len(sub)} entries")
         print(f"  pi_M0 raw       excess {raw.min():6.1f} .. {raw.max():6.1f} %"
               f"   median {np.median(raw):6.1f} %")
         print(f"  pi_M0 rescaled  excess {res.min():6.1f} .. {res.max():6.1f} %"
               f"   median {np.median(res):6.1f} %")
-        recovered = 100.0 * (1.0 - np.median(res) / np.median(raw)) \
-            if abs(np.median(raw)) > 1e-9 else float("nan")
-        print(f"  -> rescaling one scalar removes {recovered:.0f} % of the "
-              f"median gap; retraining is what remains")
+        # Reporting a percentage recovered presumes there was something to
+        # recover. When the nominal policy already sits inside the resolution
+        # of the comparison -- the CG-only case does -- the ratio is a ratio
+        # of noise and saying "removes 0 %" invites reading a null result as a
+        # failure of rescaling. Say what actually happened instead.
+        if abs(np.median(raw)) <= 3.0:
+            print(f"  -> the nominal policy is already at the floor: median "
+                  f"gap {np.median(raw):+.1f} % is inside the resolution of "
+                  f"the comparison, so there is nothing for retraining to buy")
+        else:
+            recovered = 100.0 * (1.0 - np.median(res) / np.median(raw))
+            print(f"  -> rescaling one scalar removes {recovered:.0f} % of the "
+                  f"median gap; retraining is what remains")
 
 
 
@@ -173,9 +235,11 @@ def make_table(rows, out: Path) -> None:
     """
     lines = [
         r"\begin{table}[H]",
-        r"\caption{Retraining the optimum for a perturbed mass. $\pi_{M_0}$ is",
-        r"the nominal policy (715.3~kg); $\pi_{M_1}$ is re-solved for the mass",
-        r"in the first column. All three arms fly the SAME aircraft and enter",
+        r"\caption{Retraining the optimum for a perturbed loading. $\pi_{M_0}$",
+        r"is the nominal policy (715.3~kg, reference CG); $\pi_{M_1}$ is",
+        r"re-solved for the mass and centre of gravity in the first two",
+        r"columns, $\Delta x_{cg}$ positive towards the nose. All three arms",
+        r"fly the SAME aircraft and enter",
         r"at the same true airspeed. \emph{raw} carries the nominal stall-speed",
         r"normalisation; \emph{rescaled} corrects that single scalar from the",
         r"pre-flight weight. Excess is over $\pi_{M_1}$, the floor. Negative",
@@ -184,18 +248,28 @@ def make_table(rows, out: Path) -> None:
         r"about 3\%: a gap smaller than that is not resolved.}",
         r"\label{tab:retrain_mass}",
         r"\centering",
-        r"\begin{tabular}{ccrrrrr}",
+        r"\begin{tabular}{cccrrrrr}",
         r"\hline",
-        r"$m/m_0$ & $(\alpha_0,\,V_0/V_s)$ & $\pi_{M_0}$ raw & "
-        r"$\pi_{M_0}$ resc. & $\pi_{M_1}$ & raw & resc. \\",
-        r" & (deg, --) & (m) & (m) & (m) & (\%) & (\%) \\",
+        r"$m/m_0$ & $\Delta x_{cg}$ & $(\alpha_0,\,V_0/V_s)$ & "
+        r"$\pi_{M_0}$ raw & $\pi_{M_0}$ resc. & $\pi_{M_1}$ & raw & resc. \\",
+        r" & (\% $\bar{c}$) & (deg, --) & (m) & (m) & (m) & (\%) & (\%) \\",
         r"\hline",
     ]
-    for mf in sorted({r["mass_factor"] for r in rows}):
-        for r in [x for x in rows if x["mass_factor"] == mf]:
+    # Grouped in the order CASES declares -- mass, CG, both -- not sorted, so
+    # the table reads as the argument is made rather than as the floats sort.
+    for mf, cg_aft, _ in CASES:
+        block = [x for x in rows
+                 if x["mass_factor"] == mf and x["cg_aft_m"] == cg_aft]
+        if not block:
+            continue
+        # -0.0 formats as "-0", which reads as a CG offset that is not there.
+        cg_pct = -100.0 * cg_aft / CHORD_M
+        cg_pct = 0.0 if cg_pct == 0.0 else cg_pct
+        for r in block:
             star = r"$^\ast$" if r["canonical"] else ""
             lines.append(
-                f"{mf:.2f} & $({r['alpha0_deg']:.0f},\\,{r['vnorm0']:.2f})${star} & "
+                f"{mf:.2f} & {cg_pct:+.0f} & "
+                f"$({r['alpha0_deg']:.0f},\\,{r['vnorm0']:.2f})${star} & "
                 f"{r['h_pi_M0_raw']:.2f} & {r['h_pi_M0_rescaled']:.2f} & "
                 f"{r['h_pi_M1']:.2f} & {r['excess_raw_pct']:+.1f} & "
                 f"{r['excess_rescaled_pct']:+.1f} \\\\")
@@ -208,6 +282,16 @@ def make_table(rows, out: Path) -> None:
 
 def make_dumbbell(rows, out_stem: Path, noise_pct: float = 3.0) -> None:
     """Excess over the retrained floor, one row per entry.
+
+    ONE SERIES, not two. The raw arm is not plotted: it answers a different
+    question -- what happens if nobody updates Vs -- and the robustness matrix
+    already covers that case, since perturbed_env leaves the nominal Vs in
+    place. Here the question is whether the optimum holds away from the point
+    it was solved at, and for that the honest pi_M0 is the rescaled one: no
+    aeroplane flies without a weight and balance, so the raw arm charges the
+    policy for an error the procedure it is compared against would not make.
+    It stays in the table, where a reader who asks "and if you did not
+    rescale?" finds the answer without the figure having to carry it.
 
     The first version of this plotted absolute Delta h and was useless: the
     spread BETWEEN entries is 15 m while the gap WITHIN an entry is under 1 m,
@@ -226,33 +310,53 @@ def make_dumbbell(rows, out_stem: Path, noise_pct: float = 3.0) -> None:
 
     rc = {"font.size": 11, "axes.labelsize": 11, "legend.fontsize": 9,
           "axes.spines.top": False, "axes.spines.right": False}
-    masses = sorted({r["mass_factor"] for r in rows})
+    # One panel per perturbation, in the order CASES declares. Four panels in
+    # a single row would be 21 inches wide and unreadable at journal column
+    # width, so anything past two wraps into a grid.
+    cases = [(mf, cg, [r for r in rows
+                       if r["mass_factor"] == mf and r["cg_aft_m"] == cg])
+             for mf, cg, _ in CASES]
+    cases = [c for c in cases if c[2]]
+    ncols = 2 if len(cases) > 2 else max(len(cases), 1)
+    nrows = int(np.ceil(len(cases) / ncols))
+    # Shared limits, wide enough that the band reads as a band rather than as
+    # the background, and never narrower than the band itself.
+    spread = max(abs(r["excess_rescaled_pct"]) for _, _, sub in cases for r in sub)
+    xmax = max(noise_pct * 1.35, spread * 1.25)
     with plt.rc_context(rc):
-        fig, axs = plt.subplots(1, len(masses), figsize=(5.4 * len(masses), 4.2))
-        axs = np.atleast_1d(axs)
-        for ax, mf in zip(axs, masses):
-            sub = [r for r in rows if r["mass_factor"] == mf]
+        fig, axs = plt.subplots(nrows, ncols, squeeze=False,
+                                figsize=(5.4 * ncols, 4.2 * nrows))
+        flat = axs.ravel()
+        for ax, (mf, cg_aft, sub) in zip(flat, cases):
             y = np.arange(len(sub))
             ax.axvspan(-noise_pct, noise_pct, color="0.88", zorder=0,
-                       label=f"$\pm${noise_pct:g}%")
+                       label=rf"$\pm${noise_pct:g}%")
             ax.axvline(0.0, color="0.4", lw=1.0, zorder=1)
             for k, r in enumerate(sub):
-                ax.plot([r["excess_rescaled_pct"], r["excess_raw_pct"]], [k, k],
+                ax.plot([0.0, r["excess_rescaled_pct"]], [k, k],
                         color="0.6", lw=2.0, zorder=2, solid_capstyle="round")
-            ax.scatter([r["excess_raw_pct"] for r in sub], y, s=46, zorder=3,
-                       color="#c44e52", label=r"$\pi_{M_0}$ raw")
-            ax.scatter([r["excess_rescaled_pct"] for r in sub], y, s=46, zorder=4,
-                       color="#dd8452", marker="D", label=r"$\pi_{M_0}$ rescaled")
+            ax.scatter([r["excess_rescaled_pct"] for r in sub], y, s=52, zorder=4,
+                       color="#dd8452", marker="D",
+                       label=r"$\pi_{M_0}$, $V_s$ rescaled")
             ax.set_yticks(y, [f"{r['alpha0_deg']:.0f}$^\\circ$, "
                               f"{r['vnorm0']:.2f}" for r in sub], fontsize=9)
             ax.set_xlabel(r"excess altitude loss over $\pi_{M_1}$ (%)")
-            ax.set_title(rf"$m/m_0 = {mf:.2f}$  (${715.3152 * mf:.0f}$ kg)")
+            ax.set_title(f"{case_label(mf, cg_aft)}  ({715.3152 * mf:.0f} kg)")
             ax.grid(alpha=0.3, axis="x")
             ax.invert_yaxis()
-        axs[0].set_ylabel(r"entry $(\alpha_0,\ V_0/V_s)$")
-        axs[-1].legend(loc="lower right", framealpha=0.95)
-        fig.suptitle(r"Retraining buys what rescaling one scalar does not",
-                     fontsize=12)
+            ax.set_xlim(-xmax, xmax)
+            # the retrained policy IS the origin, so say so
+            ax.annotate(r"$\pi_{M_1}$", xy=(0.0, 1.0),
+                        xycoords=("data", "axes fraction"),
+                        xytext=(4, -10), textcoords="offset points",
+                        ha="left", va="top", fontsize=9, color="0.35")
+        for ax in flat[len(cases):]:     # an odd case count leaves a hole
+            ax.set_visible(False)
+        for row in range(nrows):
+            axs[row, 0].set_ylabel(r"entry $(\alpha_0,\ V_0/V_s)$")
+        flat[len(cases) - 1].legend(loc="lower right", framealpha=0.95)
+        fig.suptitle(r"Excess of the nominal policy over one retrained "
+                     r"for the same aircraft", fontsize=12)
         fig.tight_layout()
         from symmetric_stall.procedures import stamp_engine
         stamp_engine(fig, engine_tau=ENGINE_TAU, elevator_tau=ELEVATOR_TAU)
