@@ -59,16 +59,19 @@ guarantee survives the grid; integrating the flight dynamics inside the
 GPU kernel is what lets that grid be fine enough to resolve the
 recovery. On
 the 3-DOF banked pullout of Bunge et al. \cite{Bunge2018} the solver
-resolves $31.9$ million states in $15$ minutes on a single GPU and
+resolves $31.9$ million states and $91$ actions in $15$ minutes on a
+single GPU and
 agrees with a direct-collocation benchmark to within $1.4\%$ of the
 maximum altitude lost. Applied to a 4-DOF symmetric stall over $14.9$
-million states, with the propulsion-coupled wind-tunnel aerodynamics
+million states and $451$ actions, with the propulsion-coupled
+wind-tunnel aerodynamics
 and first-order engine lag of Riley \cite{Riley1985}, the optimal
 policy reproduces the shape of current doctrine: full throttle over
 $99\%$ of the recovery envelope, an elevator switching surface pinned
 to the stall boundary rather than to a clock, and a pull that holds the
-angle of attack within a degree of that boundary. Across $1000$ samples
-of the stalled-entry set the ordering optimum, then simultaneous power,
+angle of attack within a degree of that boundary. Across $1000$ initial
+conditions of the stalled-entry set the ordering optimum, then
+simultaneous power,
 then unstall-gated power, then power-delayed holds at every entry,
 consistent with the flight-test ranking of Gratton et al.
 \cite{Gratton2014}, and the exact solution decomposes the margin: most
