@@ -930,11 +930,6 @@ def make_trajectory_comparison_figure(engine_tau=None, elevator_tau=None):
         axs[3].axhline(0.0, color="0.45", linestyle="--", linewidth=0.9)
         axs[4].axhline(0.0, color="0.45", linestyle="--", linewidth=0.9)
         axs[5].set_ylim([-0.05, 1.05])
-        if lagged:
-            axs[5].annotate(r"dotted: commanded $\quad$ solid: engine "
-                            rf"($\tau_e = {engine_tau:g}$ s)",
-                            xy=(0.98, 0.06), xycoords="axes fraction",
-                            ha="right", fontsize=9, color="0.35")
         for label, color, _, r in runs:
             axs[6].plot(r["hist"]["t"][-1], r["hist"]["h"][-1], marker="o",
                         ms=5, color=color)
@@ -957,7 +952,8 @@ def make_trajectory_comparison_figure(engine_tau=None, elevator_tau=None):
             # Appended with a hyphen to the engine tag so the pair reads as one
             # plant: tau085-010 is "engine 0.85, elevator 0.10".
             stem += f"{'' if lagged else '_tau000'}-{round(elevator_tau * 100):03d}"
-        stamp_engine(fig, engine_tau=engine_tau, elevator_tau=elevator_tau)
+        # No corner stamp on this one: it is a manuscript figure and its
+        # caption names the plant; the stem still carries it in the filename.
         for ext in ("png", "pdf"):
             fig.savefig(OUT_DIR / f"{stem}.{ext}", dpi=300, bbox_inches="tight")
         plt.close(fig)
