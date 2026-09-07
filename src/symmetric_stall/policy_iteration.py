@@ -328,6 +328,10 @@ class PolicyIterationStall:
         };
 
         // CL_q: pitch damping, CT=0
+        // NOTE: Riley Table IIIa prints 5.15 at alpha=20; 5.16 here is a
+        // one-digit transcription slip (0.2%). The reference policy was
+        // trained with 5.16 -- fix together with the next retrain, not
+        // before (grumman.py carries the same value; keep them in step).
         __device__ const float CL_Q_TBL_CT0[14] = {
              2.41f,  2.41f,  2.42f,  2.46f,  2.59f,
              2.96f,  3.72f,  4.73f,  5.29f,  5.16f,
