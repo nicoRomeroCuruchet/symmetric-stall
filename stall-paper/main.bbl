@@ -45,18 +45,6 @@ Belcastro, C.~M., and Foster, J.~V., \enquote{Aircraft loss-of-control accident
 \newblock
   \url{https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/airplane_handbook}.
 
-\bibitem[{{Federal Aviation Administration}(2000)}]{FAA2000}
-{Federal Aviation Administration}, \enquote{Stall and Spin Awareness Training,}
-  Tech. Rep. Advisory Circular AC 61-67C, U.S. Department of Transportation,
-  Federal Aviation Administration, Washington, DC, 2000.
-\newblock With Changes 1--2.
-
-\bibitem[{Stough et~al.(1985)Stough, DiCarlo, and Patton}]{Stough1985}
-Stough, I., H.~Paul, DiCarlo, D.~J., and Patton, J., James~M., \enquote{Flight
-  investigation of stall, spin, and recovery characteristics of a low-wing,
-  single-engine, {T}-tail light airplane,} Tech. Rep. NASA TP-2427, NASA
-  Langley Research Center, 1985.
-
 \bibitem[{{UK Civil Aviation Authority}(2009)}]{CAA2009}
 {UK Civil Aviation Authority}, \enquote{Stall/Spin Awareness,} Handling Sense
   Leaflet 02, v2, Civil Aviation Authority, 2009.
@@ -93,6 +81,18 @@ Munos, R., and Moore, A.~W., \enquote{Variable Resolution Discretization in
   Optimal Control,} \emph{Machine Learning}, Vol.~49, No. 2--3, 2002, pp.
   291--323.
 \newblock \doi{10.1023/A:1017992615625}.
+
+\bibitem[{{Federal Aviation Administration}(2000)}]{FAA2000}
+{Federal Aviation Administration}, \enquote{Stall and Spin Awareness Training,}
+  Tech. Rep. Advisory Circular AC 61-67C, U.S. Department of Transportation,
+  Federal Aviation Administration, Washington, DC, 2000.
+\newblock With Changes 1--2.
+
+\bibitem[{Stough et~al.(1985)Stough, DiCarlo, and Patton}]{Stough1985}
+Stough, I., H.~Paul, DiCarlo, D.~J., and Patton, J., James~M., \enquote{Flight
+  investigation of stall, spin, and recovery characteristics of a low-wing,
+  single-engine, {T}-tail light airplane,} Tech. Rep. NASA TP-2427, NASA
+  Langley Research Center, 1985.
 
 \bibitem[{Bui et~al.(2022)Bui, Hu, He, Lu, Giovanis, Shriraman, and
   Chen}]{Bui2022}

@@ -47,27 +47,31 @@ leading cause of fatal accidents in general aviation. A stall recovery
 is a two-phase maneuver: a nose-down input to restore attached flow,
 then a pullout that arrests the descent. It is measured by the altitude
 it costs, and the certified procedures do not agree on how to fly it:
-current doctrine commands full power and nose-down together, while an
-older tradition delays power until the wing is flying again. Cast as an
+one commands full power and nose-down together, the other delays
+power until the wing is flying again. Cast as an
 undiscounted infinite-horizon problem, the recovery admits a globally
 optimal solution by dynamic programming (DP), optimal over the whole entry
-envelope rather than at a nominal condition, and that guarantee is what
-the method developed here is built to keep. Discretizing the state
-space forces the value function to be interpolated, and because
+envelope rather than at a nominal condition, and that guarantee is
+what the method is built to keep. Discretizing the state
+space forces the value function to be interpolated; because
 barycentric interpolation is non-expansive \cite{Munos1998}, the
-guarantee survives the grid; integrating the flight dynamics inside the
-GPU kernel is what lets that grid be fine enough to resolve the
-recovery. On
+backup retains the convergence of the exact recursion and delivers
+the exact optimum of the
+discretized problem: the policies reported here carry a guarantee, not
+a heuristic's promise. Integrating the flight dynamics inside the GPU
+kernel lets that grid be fine enough to resolve the recovery. On
 the 3-DOF banked pullout of Bunge et al. \cite{Bunge2018} the solver
 resolves $31.9$ million states and $91$ actions in $15$ minutes on a
 single GPU and
 agrees with a direct-collocation benchmark to within $1.4\%$ of the
-maximum altitude lost. Applied to a 4-DOF symmetric stall over $14.9$
-million states and $451$ actions, with the propulsion-coupled
-wind-tunnel aerodynamics
-and first-order engine lag of Riley \cite{Riley1985}, the optimal
-policy reproduces the shape of current doctrine: full throttle over
-$99\%$ of the recovery envelope, an elevator switching surface pinned
+maximum altitude lost. Applied to a realistic recovery problem, a
+4-DOF symmetric stall over $14.9$ million states and $451$ actions
+with aerodynamic coefficients measured in the wind tunnel through
+stall and post-stall, their coupling to propulsion, and the
+first-order engine lag of Riley \cite{Riley1985}, the optimal
+policy reproduces the shape of the simultaneous-power procedure: full
+throttle across essentially the entire recovery envelope, an elevator
+switching surface pinned
 to the stall boundary rather than to a clock, and a pull that holds the
 angle of attack within a degree of that boundary. Across $1000$ initial
 conditions of the stalled-entry set the ordering optimum, then
@@ -121,8 +125,8 @@ $M_x, M_y, M_z$ & aerodynamic rolling, pitching and yawing moment about the c.g.
 $C_L, C_D, C_Y$ & aerodynamic lift, drag and side force coefficient \\
 $C_l, C_m, C_n$ & aerodynamic rolling, pitching and yawing moment coefficient about the c.g. \\
 $f$ & system dynamic equation of motion \\
-$J$ & value function \\
-$g$ & stage cost \\
+$V(\mathbf{x})$ & value function \\
+$g$ & stage reward, non-positive during descent \\
 $a$ & vector of actions \\
 \end{longtable}
 
@@ -130,38 +134,37 @@ $a$ & vector of actions \\
 
 \newpage
 \section{Introduction}
-Recovery from an in-flight upset (loss of control in flight remains
-the largest single category of fatal aviation accidents
-\cite{Belcastro2010}) is governed by procedures that predate
-any capacity to verify them. For a developed spin, the PARE technique
-(power to idle, ailerons neutral, rudder full opposite to the spin,
-elevator forward) is taught uniformly and embedded in flight manuals
-and type-certification guidance \cite{FAA2021, FAA2000}. It was distilled from
-flight test, spin-tunnel campaigns, and accumulated pilot experience
-\cite{Stough1985} rather than derived from a verified optimum. Whether PARE is optimal, or
-merely adequate, is not known: the question has never been posed against
-the true optimal recovery policy, because that policy was never
-available.
+Loss of control in flight remains the largest single category of
+fatal aviation accidents \cite{Belcastro2010}, and its most common
+precursor is the aerodynamic stall: the wing driven past the angle of
+attack at which the flow can no longer stay attached, so that lift
+falls, drag rises, and the aircraft descends. Recovery is a two-phase
+maneuver, a nose-down input to restore attached flow followed by a
+pullout that arrests the descent, and its cost is measured in
+altitude: at pattern height, tens of meters separate a recovery from
+an accident.
 
-The stall, the most common upset precursor, exposes the same gap more
-starkly: the certified guidance is not even mutually consistent.
-The U.S. Federal Aviation Administration (FAA) prescribes a sequential
-recovery (pitch nose-down first, power restored once the wing is
-unstalled \cite{FAA2021}), whereas the United Kingdom Civil Aviation
-Authority (CAA) commands full power \emph{simultaneously} with the
-nose-down input \cite{CAA2009}. The two authorities cannot both be
-teaching the optimum. Throughout this paper the two doctrines are
-named after their authorities: the \emph{CAA sequence} applies full
-power together with the nose-down input, and the \emph{FAA sequence}
-withholds power until the angle of attack falls back below the stall
-angle. The labels name these power-timing skeletons as modeled here
-(the element on which the two publications genuinely differ),
-not the complete published procedures. The only systematic
-empirical comparison to date, the flight-test campaign of Gratton et
-al.\ \cite{Gratton2014} across fourteen single-engine types, favored
-the simultaneous sequence (roughly two thirds of the height loss of
-the sequential one), but flight test can rank candidate procedures,
-not certify any of them as optimal.
+For this maneuver the certified guidance is not mutually consistent.
+The U.S. Federal Aviation Administration (FAA) prescribes a
+sequential recovery, pitch nose-down first and power restored once
+the wing is unstalled \cite{FAA2021}, whereas the United Kingdom
+Civil Aviation Authority (CAA) commands full power
+\emph{simultaneously} with the nose-down input \cite{CAA2009}.
+Throughout this paper the two doctrines are named after their
+authorities, the \emph{CAA sequence} and the \emph{FAA sequence},
+labels that name the power-timing skeletons as modeled here (the
+element on which the two publications genuinely differ) rather than
+the complete published procedures. A third tradition, deliberately
+delaying power until the pullout is complete (hereafter the
+\emph{power-delayed} recovery), survives in training
+practice and was flown as a control arm in the only systematic
+empirical comparison to date, the fourteen-type flight-test campaign
+of Gratton et al.\ \cite{Gratton2014}, which favored the simultaneous
+sequence (roughly two thirds of the height loss of the sequential
+one, which in turn cost about $90\%$ of the deliberately delayed
+recovery). Flight test, however, can rank candidate procedures; it cannot
+say how far any of them stands from the optimum, because the optimum
+has never been available.
 
 A parallel and equally unexamined gap exists in recovery \emph{design}.
 Minimum-altitude-loss pullout and stall recovery are routinely posed as
@@ -197,31 +200,50 @@ form: rather than storing precomputed transition tables, the system
 dynamics are integrated on the fly within GPU registers, reducing the
 memory footprint from $\mathcal{O}(N_s N_a 2^D)$ to $\mathcal{O}(N_s)$
 and bringing grids of up to $\sim\!10^{8}$ states within reach of a
-single GPU. Consistency of the discretized Bellman operator is preserved
-through a branchless barycentric interpolation scheme, which is
-non-expansive and therefore preserves the consistency of the
-discretized Bellman operator, which converges to the exact optimum of
-the discretized process \cite{Munos1998, Munos2002}. This
+single GPU. The interpolation that discretization forces is
+barycentric, hence non-expansive in the supremum norm, so the
+discretized Bellman backup retains the convergence of the exact one
+and the computed policy is the exact optimum of the discretized
+process \cite{Munos1998, Munos2002}. This
 formulation is summarized in Section~II; it is the instrument of the
 present study rather than its subject.
 
 This paper makes two contributions. \emph{First}, the method: the
 compute-bound GPU formulation of exact dynamic programming, validated
-by reproducing the published value function and switching surfaces of
-the 3-DOF banked pullout of Bunge et al.\ \cite{Bunge2018}.
-\emph{Second}, the first exact optimal stall-recovery policy computed
-on propulsion-coupled wind-tunnel aerodynamics: a 4-DOF symmetric
-stall model of a light general-aviation aircraft built on the tables
-of Riley \cite{Riley1985}. From this exact solution the simultaneous
-full-power sequence taught by the CAA \emph{emerges} as the optimum,
-settling the power-timing question for this model without pilot or
-protocol confounds, and the altitude cost of the delayed-power
-alternatives is quantified across initial conditions. The same
-solution exposes a sharp sliding-mode pull riding the stall boundary,
-and proves robust to the aircraft's entire achievable loading
-envelope. The developed-spin question that opens this
-Introduction requires an eight-state model and is deferred to a
-companion paper; the present framework is sized to reach it.
+on the 3-DOF banked pullout of Bunge et al.\ \cite{Bunge2018} both
+qualitatively, reproducing the published value function and switching
+surfaces, and quantitatively, agreeing with a direct-collocation
+solution of the same optimal control problem to within $1.4\%$ of the
+maximum altitude lost while resolving $31.9$ million states in $15$
+minutes on a single GPU. \emph{Second}, the first exact optimal
+stall-recovery policy computed on propulsion-coupled wind-tunnel
+aerodynamics: a 4-DOF symmetric stall model of a light
+general-aviation aircraft built on the tables of Riley
+\cite{Riley1985}, including his first-order engine lag with the time
+constant identified from his published throttle transients. The stall
+is \emph{symmetric} by design, wings level and slip-free: the regime
+in which the certified procedures differ on power timing, and the one
+the flight-test comparison of Gratton et al.\ addressed. From this
+exact solution the simultaneous full-power sequence taught by the CAA
+\emph{emerges} as the optimum for this model, the altitude cost of
+the delayed-power alternatives is quantified across the stalled-entry
+set, and the pull is exposed as a sliding-mode arc riding the stall
+boundary. The policy remains effective across the aircraft's
+achievable loading envelope, and re-solving it for the perturbed
+aircraft buys $0.1$ to $0.4$\,m on recoveries costing $9$ to
+$46$\,m: nearly all of the degradation is removed by re-scaling a
+single pre-flight scalar.
+
+The question this framework is ultimately sized for lies one model
+beyond. For the developed spin, the PARE technique (power to idle,
+ailerons neutral, rudder opposite, elevator forward) is taught
+uniformly and embedded in flight manuals and type-certification
+guidance \cite{FAA2021, FAA2000}, yet it was distilled from flight
+test, spin-tunnel campaigns, and accumulated pilot experience
+\cite{Stough1985} rather than measured against a verified optimum,
+and posing that question requires an eight-state model. It is
+deferred to a companion paper; the present study establishes the
+method and answers the power-timing question one rung below.
 
 The remainder of the paper is organized as follows. Section~II
 presents the compute-bound GPU formulation, and Section~III formalizes
@@ -236,42 +258,36 @@ certified procedures flight-tested by Gratton et al.\
 \cite{Gratton2014} and quantifying its robustness to the mass and CG
 variations of day-to-day operation.
 
-\section{Computational Methodology and Hardware Acceleration}
-\subsection{The General $n$-DOF Memory-Bound Limitation}
-Traditional global optimal control methods, such as Policy Iteration, rely heavily on the discretization of continuous state and action spaces \cite{Bellman1957, Bertsekas2017}. Historically, standard implementations precompute the system dynamics to construct static transition and reward matrices to avoid redundant physics integration during the iterative process. For a general $n$-degree-of-freedom ($n$-DOF) flight dynamics model with a state space size $N_s$ and action space $N_a$, storing the transition indices and weights for multilinear interpolation requires $\mathcal{O}(N_s \times N_a \times 2^D)$ memory allocations \footnote{This spatial complexity arises from the need to precompute and store the interpolation parameters for every state-action transition. For any given state $s \in N_s$ and action $a \in N_a$, the kinematic integration yields a continuous next state $s'$ bounded by a $D$-dimensional hypercube. To perform barycentric interpolation without recalculating dynamics, the solver must permanently store the integer memory indices and the floating-point weights of all $2^D$ adjacent vertices. Consequently, the static transition tables require exactly $N_s \times N_a \times 2^D$ index-weight pairs, causing the VRAM footprint to scale exponentially with the state dimensionality.}, where $D$ represents the number of dimensions in the state vector \cite{Bertsekas2017}. High-performance grid-based toolboxes accelerate these sweeps \cite{Bui2022}, but the tabular arrays they must hold in memory remain the binding constraint.
+\section{Computational Method}
+\subsection{The Memory Bottleneck of Tabular Dynamic Programming}
+Grid-based dynamic programming discretizes the continuous state and action spaces and iterates a Bellman backup over the resulting finite Markov decision process \cite{Bellman1957, Bertsekas2017}. Standard implementations precompute the dynamics once: for every state--action pair, the integrated next state is stored as the $2^D$ vertex indices and interpolation weights of the grid cell that contains it, so that the iterative sweeps reduce to table lookups. The stored tables occupy $\mathcal{O}(N_s N_a 2^D)$ memory, where $N_s$ is the number of states, $N_a$ the number of actions, and $D$ the state dimension. High-performance grid-based toolboxes accelerate the sweeps \cite{Bui2022}, but the tabular arrays they must hold in memory remain the binding constraint. The number is concrete: for the refined Case~I grid of Sec.~\ref{sec:scaling} ($31.9$ million states, $91$ actions, $D=3$), the transition tables alone would occupy roughly $186$~GB, beyond the memory of any single GPU, while the value function and policy arrays occupy about $0.25$~GB.
 
-\subsection{Transition to a Compute-Bound GPU Architecture}
-To overcome the curse of dimensionality, this study introduces a strictly compute-bound architecture utilizing custom Just-In-Time (JIT) compiled CUDA C++ kernels. Instead of precomputing and storing transition states in massive tensors, the environment dynamics are integrated procedurally on-the-fly.
+\subsection{In-Kernel Integration}
+The present solver stores no transition tables. During every sweep, each GPU thread is mapped to one state index, integrates the flight dynamics over the control interval with a fourth-order Runge--Kutta scheme held in registers, and evaluates the interpolated value of the resulting next state directly. The memory footprint falls to $\mathcal{O}(N_s)$, the value and policy arrays themselves, at the price of recomputing the dynamics on every sweep. Trading stored transitions for arithmetic is a standard move in GPU computing; what makes it worth stating here is that the recomputed backup is identical to the tabular one (Sec.~\ref{sec:guarantee}), and that the arithmetic lands where the hardware is strongest: the profiling of Table~\ref{tab:profiling_L4} shows the solve remains compute-bound at scale, with policy evaluation accounting for $99.6\%$ of the runtime and $41$~ms of device-to-host traffic in a $15$-minute run.
 
-During the policy evaluation and improvement phases, each GPU thread is mapped to a unique state index $s_i$. The threads independently execute a 4th-order Runge-Kutta (RK4) integration step entirely within the GPU's ultra-fast L1 cache and hardware registers. The next state $s_{t+1}$ is derived as follows:
-
+One implementation detail is essential for throughput. Locating the grid cell that contains the next state, and weighting its vertices, is naturally written with conditional logic, which makes threads within a CUDA warp diverge. The kernel instead uses a branchless formulation. Let $x'_j$ be the $j$-th coordinate of the integrated next state and
 \begin{equation}
-    s_{t+1} = s_t + \frac{\Delta t}{6}(k_1 + 2k_2 + 2k_3 + k_4)
+    n_j = \frac{x'_j - x_j^{\min}}{x_j^{\max} - x_j^{\min}} \, (N_j - 1)
 \end{equation}
-By shifting the complexity from spatial memory to temporal Arithmetic Logic Unit (ALU) operations, the algorithmic memory footprint is reduced by over 99.9\%, strictly bounded to $\mathcal{O}(N_s)$. This paradigm shift successfully exploits TeraFLOP-scale parallel processing, allowing the evaluation of grids exceeding $10^8$ states on a single NVIDIA GeForce RTX 4090 GPU.
-
-\subsection{Branchless $D$-Dimensional Barycentric Interpolation: A Paradigm Shift}
-Because the continuous RK4 integration propagates the aircraft into inter-nodal states, barycentric interpolation is required to evaluate the expected value from the discrete value function grid. This class of interpolators is particularly suited for approximating the value function in continuous reinforcement learning, as they provide a consistent approximation scheme that ensures convergence to the optimal solution \cite{Munos1998, Munos2002}.
-
-Historically, the implementation of such methods has been \textit{memory-bound}, relying on the precomputation of transition and reward matrices to be stored in VRAM. This traditional approach imposes a spatial complexity of $\mathcal{O}(N_s \times N_a \times 2^D)$, which quickly becomes prohibitive as the state dimensionality $D$ or the action resolution $N_a$ increases \cite{Bunge2018}. In contrast, this work proposes a paradigm shift toward a \textit{compute-bound} architecture. By replacing precomputed look-up tables with on-the-fly procedural calculations, we effectively reduce the spatial complexity to $\mathcal{O}(N_s)$, utilizing the GPU's VRAM solely for the primary value function and policy grids.
-
-This trade-off (increasing temporal complexity in exchange for minimal spatial overhead) is specifically designed to exploit the massively parallel throughput of modern GPU Arithmetic Logic Units (ALUs). To ensure that this high-frequency computation does not suffer from hardware stalls, a branchless $D$-dimensional multilinear interpolation algorithm was engineered. Traditional multidimensional lookup operations often involve conditional logic to identify neighbor nodes, which triggers severe branch divergence across CUDA warps, heavily degrading parallel performance.
-
-Let $n_j$ be the normalized fractional index for each dimension $j \in \{1, \dots, D\}$:
+its fractional grid index, where $N_j$ is the number of nodes of dimension $j$. For each vertex $\mathbf{v} \in \{0, 1\}^D$ of the enclosing cell, the barycentric weight is
 \begin{equation}
-    n_j = \frac{s'_j - \text{bound}_{low,j}}{\text{bound}_{high,j} - \text{bound}_{low,j}} \times (\text{shape}_j - 1)
-\end{equation}
-The aircraft state is contained within a hypercube defined by $2^D$ surrounding vertices. For each vertex $\mathbf{v} \in \{0, 1\}^D$, the barycentric weight $W_{\mathbf{v}}$ is calculated as:
-\begin{equation}
-    W_{\mathbf{v}} = \prod_{j=1}^{D} \left[ v_j \cdot \delta_j + (1 - v_j)(1 - \delta_j) \right]
+    W_{\mathbf{v}} = \prod_{j=1}^{D} \left[ v_j \cdot \delta_j + (1 - v_j)(1 - \delta_j) \right],
+    \qquad \delta_j = n_j - \lfloor n_j \rfloor,
     \label{baricentric_eq}
 \end{equation}
-where $\delta_j = n_j - \lfloor n_j \rfloor$. This condition-free formulation ensures that all threads within a CUDA warp execute identical instruction streams, maximizing hardware occupancy and enabling the processing of extreme-density grid resolutions that were previously considered intractable.
+so that all threads in a warp execute the same instruction stream regardless of where their states land. In what follows, $\mathcal{V}(s')$ denotes the set of the $2^D$ vertices of the cell enclosing $s'$, so the interpolated value of a next state reads $\sum_{\mathbf{v} \in \mathcal{V}(s')} W_{\mathbf{v}}\, V(\mathbf{v})$.
 
-\subsection{Barycentric Mapping and Consistency}
-Unlike traditional nearest-neighbor or simple linear lookups, Algorithm~\ref{alg:parallel-policy-iteration} utilizes the barycentric interpolation framework proposed by Munos and Moore \cite{Munos1998}. This choice is mathematically critical: barycentric interpolators are \textit{non-expansive} in the supremum norm \cite{Munos1998}, so the interpolated backup inherits the contraction properties of the exact one instead of amplifying approximation error, and the discretized operator is consistent with the continuous problem as the mesh is refined \cite{Munos1998, Munos2002}.
+\subsection{Interpolation Preserves the Convergence Guarantee}
+\label{sec:guarantee}
+Discretizing the state space forces the value function to be evaluated between grid nodes, and the choice of interpolator determines whether the discretized backup keeps the convergence properties of the exact one. The scheme above is the barycentric framework of Munos and Moore \cite{Munos1998}: because the weights of Eq.~\eqref{baricentric_eq} are non-negative and sum to one, the interpolation operator $\mathcal{I}$ is \emph{non-expansive} in the supremum norm,
+\begin{equation*}
+    \|\mathcal{I}V - \mathcal{I}W\|_\infty \le \|V - W\|_\infty ,
+\end{equation*}
+so the interpolated backup inherits the contraction structure of the exact operator instead of amplifying approximation error, and the discretized problem is consistent with the continuous one as the mesh is refined \cite{Munos1998, Munos2002}.
 
-Two properties of the present formulation should be stated explicitly, since they determine what the converged solution certifies. First, the recursion is \emph{undiscounted} ($\beta = 1$): the objective is the total altitude change to absorption, and no discount factor is introduced, so the operator is non-expansive rather than a strict contraction. Convergence rests instead on the stochastic-shortest-path structure of the problem \cite{Bertsekas2017}: the stage reward is non-positive throughout the descent, the level-flight set $\{\gamma \ge 0\}$ and the departure set are absorbing and cost-free thereafter, and a policy that never reaches either accumulates unbounded loss and is therefore excluded by the maximization. Second, the object that converges is the optimal value function of the \emph{discretized, interpolated, finite-action} Markov decision process induced by the grid, the action set and the control interval. Optimality is exact for that process; its distance to the continuous optimum is a discretization question, addressed for Case~I in Sec.~\ref{sec:scaling} by refinement.
+This is the point of the architecture. Integrating the dynamics inside the kernel does not modify the mathematical operator at all: each thread computes the same next state, the same $2^D$ vertices, and the same convex weights that a tabular implementation would have precomputed, so the $\mathcal{O}(N_s)$ footprint costs nothing in the mathematics. The complexity reduction and the preservation of the guarantee are therefore obtained together, and it is the combination that matters: the guarantee is what makes the computed policy a trustworthy optimum, and the reduced footprint is what lets the grid that carries the guarantee be fine enough to resolve the recovery.
+
+Two properties of the present formulation should be stated explicitly, since they determine what the converged solution certifies. First, the recursion is \emph{undiscounted} (unit discount factor): the objective is the total altitude change to absorption, and no discount factor is introduced, so the operator is non-expansive rather than a strict contraction. Convergence rests instead on the stochastic-shortest-path structure of the problem \cite{Bertsekas2017}: the stage reward is non-positive throughout the descent, the level-flight set $\{\gamma \ge 0\}$ and the departure set are absorbing and cost-free thereafter, and a policy that never reaches either accumulates unbounded loss and is therefore excluded by the maximization. Second, the object that converges is the optimal value function of the \emph{discretized, interpolated, finite-action} Markov decision process induced by the grid, the action set and the control interval. Optimality is exact for that process; its distance to the continuous optimum is a discretization question, addressed for Case~I in Sec.~\ref{sec:scaling} by refinement.
 
 \subsection{The Control Interval $\Delta t$}
 \label{sec:delta_t}
@@ -307,34 +323,32 @@ h_i)^{-1}\}$ on the fly inside the kernel, at no memory cost, since
 the derivatives are already computed for the RK4 stage; the case
 studies reported here use the fixed-interval configuration.
 
-\subsection{Policy Iteration: Justification and GPU Architecture}
-While previous studies in this domain utilized Value Iteration (VI) \cite{Bunge2018}, this work implements a Policy Iteration (PI) scheme, summarized in Algorithm~\ref{alg:parallel-policy-iteration}. Although PI is more complex to implement due to the requirement of a full policy evaluation step, it offers superior convergence properties. While VI converges linearly toward the fixed point, PI moves directly between the vertices of the policy polytope, typically converging in significantly fewer iterations \cite{Bertsekas2017}.
-
-In our high-performance architecture, we mitigate the traditional \textit{evaluation bottleneck} of PI through a massively parallel iterative resolution. This evaluates the policy over the entire state array in a single kernel launch, leveraging the raw ALU throughput of the GPU to solve the linear system more efficiently than the asymptotic convergence of VI \cite{Munos2002}.
+\subsection{Policy Iteration}
+Where prior work in this domain used Value Iteration \cite{Bunge2018}, this solver implements Policy Iteration, summarized in Algorithm~\ref{alg:parallel-policy-iteration}. Policy Iteration requires a full policy-evaluation step but typically converges in far fewer iterations, moving between vertices of the policy polytope rather than approaching the fixed point linearly \cite{Bertsekas2017}. The evaluation step, traditionally the bottleneck of the method, is here an iterative sweep over the entire state array in a single kernel launch per pass, so its cost is the per-sweep cost already profiled in Table~\ref{tab:profiling_L4}.
 
 \begin{algorithm}[H]
 \caption{Massively Parallel Policy Iteration for High-Fidelity Grids}
 \label{alg:parallel-policy-iteration}
 \begin{algorithmic}[1]
-\STATE \textbf{Initialize:} $V(s) \leftarrow 0$ and $\pi(s) \leftarrow \text{random}$ for all $s \in N_s$
+\STATE \textbf{Initialize:} $V(s) \leftarrow 0$ and $\pi(s) \leftarrow \text{random}$ for all $s \in \mathcal{S}$, the set of the $N_s$ grid states
 \STATE $policy\_stable \leftarrow \text{false}$
 \WHILE{\NOT $policy\_stable$}
     \STATE \COMMENT{Step 1: Parallel Policy Evaluation}
     \REPEAT
         \STATE $\Delta \leftarrow 0$
-        \FORALL{thread $s \in N_s$ \textbf{in parallel}}
-            \STATE $v \leftarrow V(s)$
+        \FORALL{thread $s \in \mathcal{S}$ \textbf{in parallel}}
+            \STATE $V_{\text{old}} \leftarrow V(s)$
             \STATE $s' \leftarrow \text{RK4}(s, \pi(s), \Delta t)$
-            \STATE $V(s) \leftarrow g(s, \pi(s)) +  \sum W_{\mathbf{v}} V(s')$ \COMMENT{Barycentric Interpolation \ref{baricentric_eq}}
-            \STATE $\Delta \leftarrow \max(\Delta, |v - V(s)|)$
+            \STATE $V(s) \leftarrow g(s, \pi(s)) + \sum_{\mathbf{v} \in \mathcal{V}(s')} W_{\mathbf{v}}\, V(\mathbf{v})$ \COMMENT{$\mathcal{V}(s')$: vertices of the cell containing $s'$; weights from Eq.~\eqref{baricentric_eq}}
+            \STATE $\Delta \leftarrow \max(\Delta, |V_{\text{old}} - V(s)|)$
         \ENDFOR
     \UNTIL{$\Delta < \text{tolerance}$}
 
     \STATE \COMMENT{Step 2: Parallel Policy Improvement}
     \STATE $policy\_stable \leftarrow \text{true}$
-    \FORALL{thread $s \in N_s$ \textbf{in parallel}}
+    \FORALL{thread $s \in \mathcal{S}$ \textbf{in parallel}}
         \STATE $old\_action \leftarrow \pi(s)$
-        \STATE $\pi(s) \leftarrow \arg\max_{a \in A} \left[ g(s, a) + \sum W_{\mathbf{v}} V(s') \right]$ \COMMENT{Barycentric Interpolation \ref{baricentric_eq}}
+        \STATE $\pi(s) \leftarrow \arg\max_{a \in A} \left[ g(s, a) + \sum_{\mathbf{v} \in \mathcal{V}(s')} W_{\mathbf{v}}\, V(\mathbf{v}) \right]$, with $s' = \text{RK4}(s, a, \Delta t)$
         \IF{$old\_action \neq \pi(s)$}
             \STATE $policy\_stable \leftarrow \text{false}$
         \ENDIF
@@ -398,6 +412,13 @@ Bellman equation, which dynamic programming solves for all initial
 conditions simultaneously: the solution is no longer a single trajectory
 but the optimal feedback policy $a^* = \pi^*(x)$, yielding the
 minimum-altitude-loss recovery from every state in the flight envelope.
+The solver implements this minimization as the equivalent maximization
+of a non-positive stage reward: $g(s,a)$ in
+Algorithm~\ref{alg:parallel-policy-iteration} accumulates the
+(negative) altitude change over one control interval, the negative of
+the running cost of Eq.~\eqref{eq:ocp_inf_horizon}, so the $\arg\max$
+of the backup and the minimization of Eq.~\eqref{eq:ocp_inf_horizon}
+select the same actions.
 
 
 
@@ -448,10 +469,10 @@ abstraction is precisely the perfect-inner-loop assumption that
 Case II removes by resolving the pitch dynamics explicitly.
 
 \subsection{Baseline Discretization Benchmarking}
-To ensure a rigorous validation against established aerospace benchmarks, the state-control space was initially discretized following the rectangular grid configuration defined by Bunge et al. \cite{Bunge2018}. The flight dynamics are integrated with a fixed time step of $\Delta t = 0.1$ seconds. The stage cost function $g(s, a)$ is designed to minimize altitude loss while incorporating a quadratic penalty term to ensure the smoothness of the bank rate command policy, preventing jagged control surfaces: the smoothing device introduced by Bunge et al.\ \cite{Bunge2018}, here with a lighter weight ($0.001$ vs.\ their $0.01$) that preserves the regularizing role while keeping the altitude-loss term strictly dominant:
+To ensure a rigorous validation against established aerospace benchmarks, the state-control space was initially discretized following the rectangular grid configuration defined by Bunge et al. \cite{Bunge2018}. The flight dynamics are integrated with a fixed time step of $\Delta t = 0.1$ seconds. The stage reward $g(s, a)$ is the altitude change over the interval, non-positive during the descent, minus a quadratic penalty that ensures the smoothness of the bank rate command policy, preventing jagged control surfaces: the smoothing device introduced by Bunge et al.\ \cite{Bunge2018}, here with a lighter weight ($0.001$ vs.\ their $0.01$) that preserves the regularizing role while keeping the altitude-loss term strictly dominant:
 
 \begin{equation}
-    g(s, a) = -V \sin \gamma \Delta t + 0.001 \dot{\mu}_{cmd}^2
+    g(s, a) = V \sin \gamma \, \Delta t - 0.001 \dot{\mu}_{cmd}^2
     \label{eq:reward-3dof}
 \end{equation}
 
@@ -491,7 +512,7 @@ plays no role in the runtime. Solving the benchmark problem of
 % the validation case study.)
 
 \subsection{Baseline Validation and Optimal Value Function Topology}
-Upon convergence of the Policy Iteration algorithm using the baseline discretization ($53,280$ states, matching the parameters established by Bunge et al. \cite{Bunge2018}), the resulting optimal value function $V^*(s)$ inherently maps the state space to the minimal altitude loss achievable from any given initial condition. Because the stage cost $g(s, a)$ is defined primarily by the incremental descent rate, the total altitude loss $\Delta h_{min}$ required to return the aircraft to level flight ($\gamma = 0^\circ$) can be extracted directly from the converged grid:
+Upon convergence of the Policy Iteration algorithm using the baseline discretization ($53,280$ states, matching the parameters established by Bunge et al. \cite{Bunge2018}), the resulting optimal value function $V^*(s)$ inherently maps the state space to the minimal altitude loss achievable from any given initial condition. Because the stage reward $g(s, a)$ is defined primarily by the incremental altitude change, the total altitude loss $\Delta h_{min}$ required to return the aircraft to level flight ($\gamma = 0^\circ$) can be extracted directly from the converged grid:
 
 \begin{equation}
     \Delta h_{min}(V_0, \gamma_0, \mu_0) \approx -V^*(V_0, \gamma_0, \mu_0)
@@ -1189,7 +1210,7 @@ CAA recovery sequence.
 
 The nature of that statement deserves emphasis, because it is not the
 one the remainder of this section will make. Nothing in the problem
-formulation refers to a recovery procedure: the stage cost is the
+formulation refers to a recovery procedure: the stage reward is the
 altitude increment, augmented only by a penalty for departing the
 envelope; the dynamics are wind-tunnel tables; the admissible controls
 are actuator limits. No candidate sequence was parameterized, scored,
