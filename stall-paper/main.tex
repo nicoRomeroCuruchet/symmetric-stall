@@ -482,26 +482,15 @@ To ensure a rigorous validation against established aerospace benchmarks, the st
     \label{eq:reward-3dof}
 \end{equation}
 
-The baseline grid boundaries and increments used for initial validation are detailed in Table \ref{tab:discretization}.
-
-\begin{table}[H]
-\centering
-\caption{Discretization of state-control space (following Bunge et al. \cite{Bunge2018})}
-\label{tab:discretization}
-\begin{tabular}{lcccc}
-\hline
-\textbf{Variable} & \textbf{Lower Bound} & \textbf{Increment} & \textbf{Upper Bound} & \textbf{Units} \\ \hline
-$V$ & 0.9 & 0.1 & 4.0 & $1/V_s$ \\
-$\gamma$ & -180 & 5 & 0 & deg \\
-$\mu$ & -20 & 5 & 200 & deg \\
-$C_L^{cmd}$ & -0.5 & 0.25 & 1.0 & - \\
-$\dot{\mu}_{cmd}$ & -30 & 5 & 30 & deg/s \\ \hline
-\end{tabular}
-\end{table}
+The baseline grid boundaries and increments, identical to those of
+Bunge et al., are reproduced in Table~\ref{tab:discretization}
+(Appendix~\ref{app:case1_baseline}); Sec.~\ref{sec:scaling} refines
+them.
 
 On this baseline grid the full Policy Iteration solve is essentially
-instantaneous: Table~\ref{tab:profiling} breaks down the wall-clock
-cost as measured with CUDA events on an NVIDIA GeForce RTX 4090. The
+instantaneous: Table~\ref{tab:profiling} (Appendix~\ref{app:case1_baseline})
+breaks down the wall-clock cost as measured with CUDA events on an
+NVIDIA GeForce RTX 4090. The
 profile is the compute-bound architecture of Section~II made visible.
 Policy evaluation (the phase that traditional implementations
 amortize with precomputed transition tables) accounts for
@@ -512,75 +501,13 @@ device-to-host traffic is $0.2$\,ms, confirming that memory movement
 plays no role in the runtime. Solving the benchmark problem of
 \cite{Bunge2018} to full convergence takes $0.38$\,s end to end.
 
-\input{img/profiling_table_L1}
-
-% (3-DOF results merged into Case I: the following subsections belong to
-% the validation case study.)
-
 \subsection{Baseline Validation and Optimal Value Function Topology}
 Upon convergence of the Policy Iteration algorithm using the baseline discretization ($53,280$ states, matching the parameters established by Bunge et al. \cite{Bunge2018}), the resulting optimal value function $V^*(s)$ inherently maps the state space to the minimal altitude loss achievable from any given initial condition. Because the stage reward $g(s, a)$ is defined primarily by the incremental altitude change, the total altitude loss $\Delta h_{min}$ required to return the aircraft to level flight ($\gamma = 0^\circ$) can be extracted directly from the converged grid:
 
 \begin{equation}
     \Delta h_{min}(V_0, \gamma_0, \mu_0) \approx -V^*(V_0, \gamma_0, \mu_0)
 \end{equation}
-where the approximation accounts for the marginal numeric contribution of the bank-rate regularization penalty (\ref{eq:reward-3dof}) ($0.001 \dot{\mu}_{cmd}^2$) accumulated throughout the maneuver. To validate the physical and numerical accuracy of the compute-bound framework, the converged value function was queried across slices of constant initial normalized airspeed ($V_0/V_s \in \{1.2, 2.0, 3.0, 4.0\}$). Figure \ref{fig:combined_contours} illustrates the resulting altitude loss contours as a function of the initial bank angle ($\mu_0$) and the initial flight path angle ($\gamma_0$).
-
-
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.72\textwidth]{img/combined_alt_loss_contours.png}
-    \caption{Contour plots of minimal altitude loss ($\Delta h_{min} \approx -V^*$) during aircraft pullout maneuvers, evaluated on the baseline 53,280-state grid. Each subplot presents the altitude loss across the bank angle ($\mu_0$) and flight path angle ($\gamma_0$) envelope for a fixed initial airspeed ($V_0/V_s$). The global topology of the solution perfectly aligns with established literature \cite{Bunge2018}, validating the accuracy of the on-the-fly RK4 integration and the consistency of the barycentric interpolator.}
-    \label{fig:combined_contours}
-\end{figure}
-
-The macro-level topology of the solution confirms the physical accuracy of the procedural GPU solver. Furthermore, the topological structure of both the value function and the optimal policy exhibits a pronounced asymmetry around the knife-edge flight condition ($\mu = 90^\circ$). This geometric skew is a direct mathematical consequence of the unequal constraints imposed on the lift coefficient. Because the aircraft's aerodynamic threshold for positive stall is significantly higher in magnitude than its negative (inverted) counterpart, the optimal solver inherently biases the recovery roll commands toward upright attitudes. This maximizes the available normal acceleration and mathematically breaks the symmetry of the control envelope \cite{Bunge2018}.
-
-\subsection{Optimal Control Policy: Switching Surfaces and Asymmetry}
-
-The optimal policy $\pi^*(s)$ extracted from the converged value function explicitly demonstrates a \textit{bang-bang} control architecture. This behavior is characteristic of shortest-path optimal control problems, where applying maximum allowable control authority at all times drives the system to the terminal state (level flight) with minimal accumulated cost \cite{Bunge2018}.
-
-Figure \ref{fig:optimal_policy_grids} presents the optimal commanded lift coefficient ($C_L^*$) and optimal bank rate ($\dot{\mu}_{cmd}^*$) across the flight path and bank angle envelope, evaluated at two distinct normalized airspeeds ($V_0/V_s = 1.2$ and $V_0/V_s = 4.0$). Throughout the entire state space, the optimal actions saturate at their respective constraints: $C_L^* \in \{-0.5, 1.0\}$ and $\dot{\mu}_{cmd}^* \in \{-30, 30\}$ deg/s.
-
-
-% --- Figure: 2x2 Grid for the Optimal Policy ---
-\begin{figure}[H]
-    \centering
-    % Top Left: CL at V=1.2
-    \begin{subfigure}[b]{0.48\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{img/banked_glider_L1_mca_policy_CL_V_1.2.png}
-    \end{subfigure}
-    \hfill
-    % Top Right: MuDot at V=1.2
-    \begin{subfigure}[b]{0.48\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{img/banked_glider_L1_mca_policy_MuDot_V_1.2.png}
-    \end{subfigure}
-
-    \vspace{0.3cm} % Space between rows
-
-    % Bottom Left: CL at V=4.0
-    \begin{subfigure}[b]{0.48\textwidth}
-        \centering
-       \includegraphics[width=\textwidth]{img/banked_glider_L1_mca_policy_CL_V_4.0.png}
-    \end{subfigure}
-    \hfill
-    % Bottom Right: MuDot at V=4.0
-    \begin{subfigure}[b]{0.48\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{img/banked_glider_L1_mca_policy_MuDot_V_4.0.png}
-    \end{subfigure}
-
-    \caption{Optimal policy for commanded lift coefficient ($C_L^*$, left column) and bank rate ($\dot{\mu}_{cmd}^*$, right column) as a function of initial bank and flight path angle. Top row corresponds to $V/V_s = 1.2$; bottom row to $V/V_s = 4.0$. The sharp boundaries between the black and white regions denote the control switching surfaces.}
-    \label{fig:optimal_policy_grids}
-\end{figure}
-
-The boundary delineating the transition from one control extreme to the other constitutes the \textit{switching surface}. A critical observation from the high-fidelity GPU policy is the pronounced asymmetry of these surfaces. While intuitively the switching boundary for bank rate might be expected to lie at the $90^\circ$ knife-edge attitude, the optimal boundary is heavily shifted toward the inverted regime ($\mu > 90^\circ$).
-
-This geometric skew is a direct mathematical consequence of the unequal constraints imposed on the lift coefficient ($1.0$ for positive angles of attack vs. $-0.5$ for negative angles) \cite{Bunge2018}. Because the aircraft's aerodynamic capacity to pull up is twice its capacity to push down, the optimal solver inherently biases the recovery toward upright attitudes. As seen in the right column of Figure \ref{fig:optimal_policy_grids}, the controller predominantly commands a $-30$ deg/s roll rate (rolling back to upright) even when the aircraft is banked past $90^\circ$. Rolling over to an inverted pullout ($+30$ deg/s and $C_L^* = -0.5$) only becomes optimal when the aircraft is in a deep, highly banked dive where the temporal cost of rolling back to upright outweighs the aerodynamic penalty of an inverted pullout.
-
-Furthermore, the kinetic energy of the aircraft dynamically morphs these switching surfaces. Comparing the $V/V_s = 1.2$ scenario to the $V/V_s = 4.0$ scenario, the region where an inverted pullout is deemed optimal shrinks significantly at higher speeds. At elevated velocities, the aircraft has sufficient kinetic energy to sustain the tightest possible turning radius, making the transition back to an upright $C_L = 1.0$ recovery mathematically superior across a broader range of the envelope.
+where the approximation accounts for the marginal numeric contribution of the bank-rate regularization penalty (\ref{eq:reward-3dof}) ($0.001 \dot{\mu}_{cmd}^2$) accumulated throughout the maneuver. To validate the physical and numerical accuracy of the compute-bound framework, the converged value function was queried across slices of constant initial normalized airspeed ($V_0/V_s \in \{1.2, 2.0, 3.0, 4.0\}$). The resulting altitude-loss contours over the initial bank and flight-path envelope (Fig.~\ref{fig:combined_contours}, Appendix~\ref{app:case1_baseline}) reproduce the global topology published by Bunge et al.\ \cite{Bunge2018}, validating the accuracy of the on-the-fly RK4 integration and the consistency of the barycentric interpolator.
 
 \subsection{Scaling the Grid: The Practical Reach of the Compute-Bound
 Architecture}
@@ -589,7 +516,7 @@ Architecture}
 The baseline grid replicates the published benchmark at interactive
 speed, but its $53{,}280$ states are coarse. To probe the practical
 reach of the architecture, the same problem was re-solved on a grid
-refined in every state dimension to $31{,}948{,}500$ states (a
+refined in every state dimension: $31{,}948{,}500$ states (a
 $600$-fold increase) with the same $91$ actions.
 Table~\ref{tab:profiling_L4} reports the cost on the same GPU: full
 Policy Iteration converges in $67$ iterations and $14.9$ minutes.
@@ -603,7 +530,40 @@ residual $1.8\times$ is occupancy and memory-traffic overhead at the
 larger grid, not an extra order of complexity), consistent with the
 $\mathcal{O}(N_s)$ footprint of Section~II.
 
-\input{img/profiling_table_L4}
+The curse of dimensionality is not defeated (work and memory still
+scale exponentially with the state dimension), but the constant in
+front of that exponential is now small enough that grids three orders
+of magnitude beyond the published state of the art
+\cite{Bunge2018} fit on a single workstation GPU. The refined grid is
+detailed in Table~\ref{tab:discretization_L4}; the policies it
+produces (Fig.~\ref{fig:policy_maps_L4}) are examined next.
+
+\begin{table}[H]
+\centering
+\caption{Discretization of the refined state-control space: the grid
+of Fig.~\ref{fig:policy_maps_L4} and
+Tables~\ref{tab:profiling_L4} and~\ref{tab:casadi_benchmark}. The
+baseline grid of Bunge et al.\ \cite{Bunge2018} it refines is
+reproduced in Table~\ref{tab:discretization},
+Appendix~\ref{app:case1_baseline}.}
+\label{tab:discretization_L4}
+\begin{tabular}{lccccc}
+\hline
+\textbf{Variable} & \textbf{Lower Bound} & \textbf{Upper Bound} & \textbf{Points} & \textbf{Increment} & \textbf{Units} \\ \hline
+$\gamma$ & $-180$ & $0$ & $361$ & $0.5$ & deg \\
+$V/V_s$ & $0.9$ & $4.0$ & $250$ & $\sim 0.0124$ & -- \\
+$\mu$ & $-20$ & $200$ & $354$ & $\sim 0.623$ & deg \\
+$C_L^{cmd}$ & $-0.5$ & $1.0$ & $7$ & $0.25$ & -- \\
+$\dot{\mu}_{cmd}$ & $-30$ & $30$ & $13$ & $5$ & deg/s \\ \hline
+\end{tabular}
+\\[4pt]
+\footnotesize $361 \times 250 \times 354 = 31{,}948{,}500$ states;
+$7 \times 13 = 91$ actions.
+\end{table}
+
+\subsection{Optimal Control Policy: Switching Surfaces and Asymmetry}
+
+The optimal policy $\pi^*(s)$ extracted from the converged value function exhibits a \textit{bang-bang} control architecture. This behavior is characteristic of shortest-path optimal control problems, where applying maximum allowable control authority at all times drives the system to the terminal state (level flight) with minimal accumulated cost \cite{Bunge2018}.
 
 \begin{figure}[H]
     \centering
@@ -627,90 +587,94 @@ $\mathcal{O}(N_s)$ footprint of Section~II.
         \centering
         \includegraphics[width=\textwidth]{img/banked_glider_L4_mca_policy_MuDot_V_4.0.png}
     \end{subfigure}
-    \caption{The optimal policies of Fig.~\ref{fig:optimal_policy_grids}
-    recomputed on the $31.9$-million-state grid: commanded lift
-    coefficient (left column) and bank rate (right column) at
-    $V/V_s = 1.2$ (top row) and $V/V_s = 4.0$ (bottom row). The
-    switching surfaces sharpen into smooth curves and the
-    discretization aliasing of the coarse grid is eliminated, while
-    the global bang-bang structure is unchanged.}
+    \caption{Optimal policy on the $31.9$-million-state grid:
+    commanded lift coefficient ($C_L^*$, left column) and bank rate
+    ($\dot{\mu}_{cmd}^*$, right column) at $V/V_s = 1.2$ (top row)
+    and $V/V_s = 4.0$ (bottom row). The boundaries between the black
+    and white regions are the control switching surfaces; the
+    baseline-grid maps these refine are shown in
+    Fig.~\ref{fig:optimal_policy_grids},
+    Appendix~\ref{app:case1_baseline}.}
     \label{fig:policy_maps_L4}
 \end{figure}
 
-The refined policies (Fig.~\ref{fig:policy_maps_L4}) preserve the
-global bang-bang structure of the baseline while the switching
-surfaces sharpen from stair-stepped bands into smooth curves. The
-curse of dimensionality is not defeated (work and memory still
-scale exponentially with the state dimension), but the constant in
-front of that exponential is now small enough that grids three orders
-of magnitude beyond the published state of the art
-\cite{Bunge2018} fit on a single workstation GPU. That margin is
-precisely what the next section spends: not on a denser grid for the
-same reduced model, but on a higher-fidelity one: a fourth state
-for the pitch dynamics, a second control for the throttle, and
-wind-tunnel aerodynamic tables in place of analytic polars.
+Figure \ref{fig:policy_maps_L4} maps the optimal commanded lift
+($C_L^*$) and bank rate ($\dot{\mu}_{cmd}^*$) over the bank and
+flight-path envelope at $V_0/V_s = 1.2$ and $4.0$, the product of the
+$14.9$-minute solve profiled in Table~\ref{tab:profiling_L4}.
 
+\input{img/profiling_table_L4}
 
-% ============================================================
-%  4-DOF SYMMETRIC STALL RECOVERY — RILEY (1985) AERODYNAMICS
-% ============================================================
+Away from the switching surfaces (the boundaries where the command
+flips from one extreme to the other) the actions saturate at their
+bounds, $C_L^* \in \{-0.5, 1.0\}$ and
+$\dot{\mu}_{cmd}^* \in \{-30, 30\}$\,deg/s, with only a thin band of
+near-tied intermediate commands along the surfaces themselves.
+Compared with the baseline-grid maps
+(Fig.~\ref{fig:optimal_policy_grids},
+Appendix~\ref{app:case1_baseline}), the surfaces sharpen from
+stair-stepped bands into smooth curves while the global structure is
+unchanged. The notable feature of the policy is the asymmetry of the
+surfaces. The bank-rate switching boundary does not lie at the
+$90^\circ$ knife-edge but well into the inverted regime: the lift
+bounds are asymmetric ($1.0$ up against $-0.5$ down
+\cite{Bunge2018}), pulling up is twice as effective as pushing down,
+and the optimum therefore rolls back toward upright even when banked
+past $90^\circ$. Committing instead to an inverted pullout
+($+30$\,deg/s, $C_L^* = -0.5$) pays only in deep, highly banked
+dives, where rolling back upright costs more time than the inverted
+recovery costs aerodynamically; and that region shrinks with
+airspeed, because at $V/V_s = 4.0$ the aircraft carries the energy to
+sustain its tightest turn and the upright $C_L = 1.0$ recovery wins
+over a broader range of the envelope.
 
 \subsection{Trajectory-Level Validation Against Direct Optimal Control}
 
-The value-function and policy comparisons above validate the solver
-against the published DP results of \cite{Bunge2018}; a second,
-independent check validates it against continuous-time optimal
-control. For each initial condition of Figures~3 and~4 of
-\cite{Bunge2018} ($V_0/V_s = 1.2$, $\gamma_0 \in \{-30^\circ,
--60^\circ\}$, and initial bank angles
+A second, independent check quantifies the solver against
+continuous-time optimal control. For each initial condition of
+Figures~3 and~4 of \cite{Bunge2018} ($V_0/V_s = 1.2$,
+$\gamma_0 \in \{-30^\circ, -60^\circ\}$,
 $\mu_0 \in \{30, 60, 90, 120, 150\}^\circ$), the free-final-time
-problem of Eq.~\eqref{eq:ocp_free_tf} was solved directly as a
-continuous-time nonlinear program (direct collocation
-\cite{Betts1998}, implemented in CasADi \cite{Andersson2019} with the
-interior-point solver IPOPT \cite{Wachter2006}), warm-started with
-the corresponding DP rollout. The warm
-start matters: the problem is nonconvex and a local NLP solver needs
-an initialization in the correct homotopy class (which basin of the
-solution space to descend), and this is precisely the global
-information the DP policy supplies. The two methods are therefore
-complementary, and their agreement is a bidirectional check:
-the NLP confirms the local optimality of the DP trajectory, and the
-DP certifies that the NLP converged to the \emph{global} basin.
+problem of Eq.~\eqref{eq:ocp_free_tf} was solved by direct
+collocation \cite{Betts1998} (CasADi \cite{Andersson2019} with IPOPT
+\cite{Wachter2006}), warm-started with the DP rollout: the nonconvex
+NLP needs an initialization in the correct basin, which is exactly
+the global information the DP policy supplies. Their agreement is
+therefore a bidirectional check: the NLP confirms the local
+optimality of the DP trajectory, and the DP certifies that the NLP
+descended the global basin.
 
-The qualitative structure published by \cite{Bunge2018} is
-reproduced exactly: at $\gamma_0 = -30^\circ$ the altitude loss grows
-roughly threefold with initial bank (from $49$\,m at
-$\mu_0 = 30^\circ$ to $156$\,m at $\mu_0 = 150^\circ$), and at the
-near-inverted entry the optimum performs an \emph{inverted} pullout
-(negative commanded lift) rather than rolling upright first; at
-$\gamma_0 = -60^\circ$ the near-inverted trajectory instead rolls
-through the vertical before pulling to an upright recovery.
+Table~\ref{tab:casadi_benchmark} gives the number, on the refined
+grid of Sec.~\ref{sec:scaling}; the trajectory pairs behind it are
+reproduced in Fig.~\ref{fig:casadi_trajectories},
+Appendix~\ref{app:case1_baseline}. The metric is the gap relative to
+the deepest altitude loss of each sweep: at most $1.4\%$, $0.9\%$ on
+average, $2.1$\,m at worst in absolute terms, with the qualitative
+structure of \cite{Bunge2018} reproduced, including the inverted
+pullout at the near-inverted entry. The continuous solution is the
+better of the two at every entry, as it must be: a policy holding
+each control over a finite interval cannot outperform one free to
+switch continuously.
 
-Table~\ref{tab:casadi_benchmark} reports the comparison
-quantitatively, on the refined grid of Sec.~\ref{sec:scaling}. Over
-the nine entries the policy recovers, the two methods differ by at
-most $1.4\%$ of the deepest altitude loss of each sweep and by
-$0.9\%$ on average, the largest absolute disagreement being
-$2.1$\,m. Referred instead to each entry's own loss the spread is
-$0.7$--$3.6\%$, and the maximum falls on the shallowest entry of the
-shallowest sweep, where the same ${\approx}1$\,m disagreement is
-divided by the smallest denominator in the set; that is why the
-comparison is normalized by the deepest loss. The continuous solution
-is the better of the two at every entry, as the discretized policy
-requires: a policy holding each control over a finite interval cannot
-outperform one free to switch continuously, so a reversed sign
-anywhere would indicate that the NLP had missed its own optimum
-rather than that the DP had beaten it.
-
-What remains is the rollout's step size rather than any difference in
-what the two methods compute. Matching the integration --- holding
-each policy action for the control interval but integrating it at
-$\mathrm{d}t = 10^{-3}$\,s --- closes seven of the nine entries to
-within $7$\,cm. The tenth entry, the near-inverted
-$\gamma_0 = -60^\circ$, $\mu_0 = 150^\circ$ case, is excluded: the
+Most of the residual is not optimality at all. The evaluation
+rollout accumulates altitude with forward Euler at
+$\Delta t = 0.1$\,s, an overstatement that telescopes to
+$(\Delta t/2)\, V_0\, |\sin\gamma_0|$ and matches the smallest gap
+of each sweep to three figures ($0.96$\,m at $\gamma_0 = -30^\circ$,
+$1.66$\,m at $-60^\circ$). What stands above that floor, at most
+$1.2$\,m, is the genuine price of holding each control for
+$0.1$\,s; tightening the NLP further would lower its own losses and
+widen the gap, not close it. The near-inverted
+$\gamma_0 = -60^\circ$, $\mu_0 = 150^\circ$ entry is excluded: the
 policy does not return it to level flight within the horizon.
 
 \input{tables/table_casadi_benchmark}
+
+The margin demonstrated in Sec.~\ref{sec:scaling} is precisely what
+the next section spends: not on a denser grid for the same reduced
+model, but on a higher-fidelity one: a fourth state for the pitch
+dynamics, a second control for the throttle, and wind-tunnel
+aerodynamic tables in place of analytic polars.
 
 \section{Case II: 4-DOF Symmetric Stall Recovery with Riley (1985) Aerodynamics}
 
@@ -2207,6 +2171,101 @@ within reach.
 % ============================================================
 
 \appendix
+
+\section{Case I Supplementary Results}
+\label{app:case1_baseline}
+
+This appendix collects the supplementary Case~I material. From the
+baseline $53{,}280$-state solve: the grid itself, reproduced verbatim
+from Bunge et al.\ \cite{Bunge2018} (Table~\ref{tab:discretization}),
+the wall-clock profile (Table~\ref{tab:profiling}), the
+altitude-loss contours behind the topology validation
+(Fig.~\ref{fig:combined_contours}), and the baseline optimal-policy
+maps that the refined grid of Sec.~\ref{sec:scaling} sharpens
+(Fig.~\ref{fig:optimal_policy_grids}). From the refined grid: the
+closed-loop trajectory pairs behind the CasADi comparison of
+Table~\ref{tab:casadi_benchmark}
+(Fig.~\ref{fig:casadi_trajectories}).
+
+\begin{table}[H]
+\centering
+\caption{Baseline discretization of the state-control space,
+reproduced from Bunge et al.\ \cite{Bunge2018}.}
+\label{tab:discretization}
+\begin{tabular}{lcccc}
+\hline
+\textbf{Variable} & \textbf{Lower Bound} & \textbf{Increment} & \textbf{Upper Bound} & \textbf{Units} \\ \hline
+$V$ & 0.9 & 0.1 & 4.0 & $1/V_s$ \\
+$\gamma$ & -180 & 5 & 0 & deg \\
+$\mu$ & -20 & 5 & 200 & deg \\
+$C_L^{cmd}$ & -0.5 & 0.25 & 1.0 & - \\
+$\dot{\mu}_{cmd}$ & -30 & 5 & 30 & deg/s \\ \hline
+\end{tabular}
+\end{table}
+
+\input{img/profiling_table_L1}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.72\textwidth]{img/combined_alt_loss_contours.png}
+    \caption{Contour plots of minimal altitude loss ($\Delta h_{min} \approx -V^*$) during aircraft pullout maneuvers, evaluated on the baseline 53,280-state grid. Each subplot presents the altitude loss across the bank angle ($\mu_0$) and flight path angle ($\gamma_0$) envelope for a fixed initial airspeed ($V_0/V_s$). The global topology of the solution reproduces the established literature \cite{Bunge2018}, validating the accuracy of the on-the-fly RK4 integration and the consistency of the barycentric interpolator.}
+    \label{fig:combined_contours}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{img/banked_glider_L1_mca_policy_CL_V_1.2.png}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{img/banked_glider_L1_mca_policy_MuDot_V_1.2.png}
+    \end{subfigure}
+
+    \vspace{0.3cm}
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+       \includegraphics[width=\textwidth]{img/banked_glider_L1_mca_policy_CL_V_4.0.png}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{img/banked_glider_L1_mca_policy_MuDot_V_4.0.png}
+    \end{subfigure}
+
+    \caption{Optimal policy on the baseline grid for commanded lift coefficient ($C_L^*$, left column) and bank rate ($\dot{\mu}_{cmd}^*$, right column) as a function of initial bank and flight path angle. Top row corresponds to $V/V_s = 1.2$; bottom row to $V/V_s = 4.0$. The boundaries between the black and white regions denote the control switching surfaces; Fig.~\ref{fig:policy_maps_L4} shows the same maps on the refined grid.}
+    \label{fig:optimal_policy_grids}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{img/banked_glider_L4_mca_validation_guided_Fig3.png}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{img/banked_glider_L4_mca_validation_guided_Fig4.png}
+    \end{subfigure}
+    \caption{The closed-loop trajectories behind
+    Table~\ref{tab:casadi_benchmark}: DP rollouts (solid) and
+    DP-guided CasADi/IPOPT solutions (dashed) at
+    $\gamma_0 = -30^\circ$ (left) and $\gamma_0 = -60^\circ$ (right),
+    $V_0/V_s = 1.2$, $\mu_0 \in \{30, 60, 90, 120, 150\}^\circ$. Each
+    arm reconstructs its own horizontal distance from its own
+    integration, so the sub-metre vertical separation between paired
+    curves is not resolved at this scale; the quantitative comparison
+    is between the endpoints at $\gamma = 0$, where both arms
+    terminate (Table~\ref{tab:casadi_benchmark}). In the right
+    panel, the leftmost pair is the excluded near-inverted
+    $\mu_0 = 150^\circ$ entry: the policy does not return it to level
+    flight and the NLP did not converge there, so neither curve
+    terminates and their relative position carries no information.}
+    \label{fig:casadi_trajectories}
+\end{figure}
 
 \section{Riley (1985) Aircraft and Aerodynamic Data}
 \label{app:riley_tables}
