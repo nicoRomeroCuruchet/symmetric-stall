@@ -640,18 +640,17 @@ $\mu_0 \in \{30, 60, 90, 120, 150\}^\circ$), the free-final-time
 problem of Eq.~\eqref{eq:ocp_free_tf} was solved by direct
 collocation \cite{Betts1998} (CasADi \cite{Andersson2019} with IPOPT
 \cite{Wachter2006}), warm-started with the DP rollout: the nonconvex
-NLP needs an initialization in the correct basin, which is exactly
-the global information the DP policy supplies. Their agreement is
-therefore a bidirectional check: the NLP confirms the local
-optimality of the DP trajectory, and the DP certifies that the NLP
-descended the global basin.
+NLP needs an initialization in the correct basin, which the DP
+supplies. Their agreement is therefore a bidirectional check: the
+NLP confirms the local optimality of the DP trajectory, and the DP
+certifies that the NLP descended the global basin.
 
 Table~\ref{tab:casadi_benchmark} gives the number, on the refined
 grid of Sec.~\ref{sec:scaling}; the trajectory pairs behind it are
 reproduced in Fig.~\ref{fig:casadi_trajectories},
 Appendix~\ref{app:case1_baseline}. The metric is the gap relative to
 the deepest altitude loss of each sweep: at most $1.4\%$, $0.9\%$ on
-average, $2.1$\,m at worst in absolute terms, with the qualitative
+average, $2.1$\,m at worst, with the qualitative
 structure of \cite{Bunge2018} reproduced, including the inverted
 pullout at the near-inverted entry. The continuous solution is the
 better of the two at every entry, as it must be: a policy holding
@@ -660,7 +659,9 @@ switch continuously.
 
 Most of the residual is not optimality at all. The evaluation
 rollout accumulates altitude with forward Euler at
-$\Delta t = 0.1$\,s, an overstatement that telescopes to
+$\Delta t = 0.1$\,s, a first-order, one-signed error (the NLP's
+high-order collocation error is orders of magnitude smaller) that
+telescopes to
 $(\Delta t/2)\, V_0\, |\sin\gamma_0|$ and matches the smallest gap
 of each sweep to three figures ($0.96$\,m at $\gamma_0 = -30^\circ$,
 $1.66$\,m at $-60^\circ$). What stands above that floor, at most
@@ -668,15 +669,14 @@ $1.2$\,m, is the genuine price of holding each control for
 $0.1$\,s; tightening the NLP further would lower its own losses and
 widen the gap, not close it. The near-inverted
 $\gamma_0 = -60^\circ$, $\mu_0 = 150^\circ$ entry is excluded: the
-policy does not return it to level flight within the horizon.
+policy does not return it to level flight.
 
 \input{tables/table_casadi_benchmark}
 
-The margin demonstrated in Sec.~\ref{sec:scaling} is precisely what
-the next section spends: not on a denser grid for the same reduced
-model, but on a higher-fidelity one: a fourth state for the pitch
-dynamics, a second control for the throttle, and wind-tunnel
-aerodynamic tables in place of analytic polars.
+The margin of Sec.~\ref{sec:scaling} is what the next section
+spends, not on a denser grid but on a higher-fidelity model: a
+fourth state for the pitch dynamics, a second control for the
+throttle, and wind-tunnel tables in place of analytic polars.
 
 \section{Case II: 4-DOF Symmetric Stall Recovery with Riley (1985) Aerodynamics}
 
