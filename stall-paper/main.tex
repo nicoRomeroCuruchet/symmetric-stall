@@ -452,6 +452,9 @@ $\mathbf{a} = [C_L^{cmd},\, \dot{\mu}_{cmd}]^\top$:
     \dot{\mu} &= \dot{\mu}_{cmd}.
     \label{eq:mudot_3dof}
 \end{align}
+Equations~\eqref{eq:gam_3dof}--\eqref{eq:vdot_3dof} are written in
+the dimensional airspeed $V$; the solver stores and integrates the
+normalized state component $V/V_s$, whose rate is $\dot{V}/V_s$.
 The drag coefficient is a static function of the commanded lift,
 obtained by inverting the linear lift curve
 $\alpha = (C_L - C_{L_0})/C_{L_\alpha}$ and evaluating the quadratic
@@ -475,7 +478,7 @@ abstraction is precisely the perfect-inner-loop assumption that
 Case II removes by resolving the pitch dynamics explicitly.
 
 \subsection{Baseline Discretization Benchmarking}
-To ensure a rigorous validation against established aerospace benchmarks, the state-control space was initially discretized following the rectangular grid configuration defined by Bunge et al. \cite{Bunge2018}. The flight dynamics are integrated with a fixed time step of $\Delta t = 0.1$ seconds. The stage reward $g(s, a)$ is the altitude change over the interval, non-positive during the descent, minus a quadratic penalty that ensures the smoothness of the bank rate command policy, preventing jagged control surfaces: the smoothing device introduced by Bunge et al.\ \cite{Bunge2018}, here with a lighter weight ($0.001$ vs.\ their $0.01$) that preserves the regularizing role while keeping the altitude-loss term strictly dominant:
+For validation against the published benchmark, the state-control space was first discretized on the rectangular grid of Bunge et al.\ \cite{Bunge2018}. The flight dynamics are integrated with a fixed time step of $\Delta t = 0.1$ seconds. The stage reward $g(s, a)$ is the altitude change over the interval, non-positive during the descent, minus a quadratic penalty that ensures the smoothness of the bank rate command policy, preventing jagged control surfaces: the smoothing device introduced by Bunge et al.\ \cite{Bunge2018}, here with a lighter weight ($0.001$ vs.\ their $0.01$) that preserves the regularizing role while keeping the altitude-loss term strictly dominant:
 
 \begin{equation}
     g(s, a) = V \sin \gamma \, \Delta t - 0.001 \dot{\mu}_{cmd}^2
@@ -497,17 +500,16 @@ amortize with precomputed transition tables) accounts for
 $98.5\%$ of the runtime and executes entirely on the GPU at
 $12$\,ms per sweep; policy improvement, which evaluates all $91$
 actions per state, costs $0.16$\,ms per iteration; and the total
-device-to-host traffic is $0.2$\,ms, confirming that memory movement
-plays no role in the runtime. Solving the benchmark problem of
+device-to-host traffic is $0.2$\,ms. Solving the benchmark problem of
 \cite{Bunge2018} to full convergence takes $0.38$\,s end to end.
 
 \subsection{Baseline Validation and Optimal Value Function Topology}
-Upon convergence of the Policy Iteration algorithm using the baseline discretization ($53,280$ states, matching the parameters established by Bunge et al. \cite{Bunge2018}), the resulting optimal value function $V^*(s)$ inherently maps the state space to the minimal altitude loss achievable from any given initial condition. Because the stage reward $g(s, a)$ is defined primarily by the incremental altitude change, the total altitude loss $\Delta h_{min}$ required to return the aircraft to level flight ($\gamma = 0^\circ$) can be extracted directly from the converged grid:
+Upon convergence on the baseline grid, the optimal value function $V^*(s)$ maps each state to the minimal altitude loss achievable from it. Because the stage reward $g(s, a)$ is defined primarily by the incremental altitude change, the total altitude loss $\Delta h_{min}$ required to return the aircraft to level flight ($\gamma = 0^\circ$) can be extracted directly from the converged grid:
 
 \begin{equation}
     \Delta h_{min}(V_0, \gamma_0, \mu_0) \approx -V^*(V_0, \gamma_0, \mu_0)
 \end{equation}
-where the approximation accounts for the marginal numeric contribution of the bank-rate regularization penalty (\ref{eq:reward-3dof}) ($0.001 \dot{\mu}_{cmd}^2$) accumulated throughout the maneuver. To validate the physical and numerical accuracy of the compute-bound framework, the converged value function was queried across slices of constant initial normalized airspeed ($V_0/V_s \in \{1.2, 2.0, 3.0, 4.0\}$). The resulting altitude-loss contours over the initial bank and flight-path envelope (Fig.~\ref{fig:combined_contours}, Appendix~\ref{app:case1_baseline}) reproduce the global topology published by Bunge et al.\ \cite{Bunge2018}, validating the accuracy of the on-the-fly RK4 integration and the consistency of the barycentric interpolator.
+where the approximation absorbs the small accumulated contribution of the bank-rate penalty of Eq.~\eqref{eq:reward-3dof}. The converged value function was queried across slices of constant initial normalized airspeed ($V_0/V_s \in \{1.2, 2.0, 3.0, 4.0\}$). The resulting altitude-loss contours over the initial bank and flight-path envelope (Fig.~\ref{fig:combined_contours}, Appendix~\ref{app:case1_baseline}) reproduce the global topology published by Bunge et al.\ \cite{Bunge2018}, validating the accuracy of the on-the-fly RK4 integration and the consistency of the barycentric interpolator.
 
 \subsection{Scaling the Grid: The Practical Reach of the Compute-Bound
 Architecture}
