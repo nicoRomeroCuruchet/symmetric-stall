@@ -18,7 +18,7 @@
 \usepackage{setspace}
 \setstretch{1.1}
 
-\title{Certified Stall Recovery Procedures Measured Against the Global Optimum: A Compute-Bound Dynamic Programming Approach}
+\title{Certified Stall Recovery Procedures Measured Against the Global Optimum: A Dynamic Programming Approach}
 
 % Author 1: Nicolás Romero
 \author{Nicol\'as D. Romero\footnote{Ph.D. Candidate, Departamento de Ingenier\'ia.}}
@@ -429,6 +429,7 @@ select the same actions.
 
 
 \section{Case I: 3-DOF Banked Pullout Validation against Established Literature}
+\label{sec:case1}
 
 \subsection{Reduced-Order Equations of Motion}
 
@@ -681,18 +682,26 @@ throttle, and wind-tunnel tables in place of analytic polars.
 
 \section{Case II: 4-DOF Symmetric Stall Recovery with Riley (1985) Aerodynamics}
 
-The 3-DOF banked pullout validated the compute-bound solver against
-established literature, but it inherits the central simplification of the
-reduced-order formulation: lift coefficient and bank rate are treated as
-directly commanded inputs, assuming perfect, infinitely fast inner-loop
-tracking. To remove this assumption, the framework is scaled to a
-four-state longitudinal model that explicitly resolves the pitch
-dynamics and the post-stall aerodynamics of the airframe. The state
-vector is $\mathbf{x} = [\gamma,\, V/V_s,\, \alpha,\, q]^\top$
+This section poses the question the paper was built to answer: flown
+optimally, does the symmetric stall recovery apply power at once or
+delay it, and what does either choice cost? The 3-DOF pullout of
+Sec.~\ref{sec:case1} validated the solver but could not ask this:
+its controls were the outputs of an assumed-perfect inner loop
+(commanded lift and bank rate), and it had no throttle. Here the
+framework is applied to a four-state longitudinal model that
+resolves what the pilot actually commands. The state vector is
+$\mathbf{x} = [\gamma,\, V/V_s,\, \alpha,\, q]^\top$
 (flight path angle, normalized airspeed, angle of attack, and pitch
 rate) and the control vector is
 $\mathbf{u} = [\delta_e,\, \delta_t]^\top$
-(elevator deflection and throttle position). The physical parameters
+(elevator deflection and throttle position): the pitch dynamics are
+resolved rather than assumed tracked, and the timing of power
+application becomes a decision variable of the optimization instead
+of an input from doctrine. The aerodynamics come from Riley's
+propulsion-coupled wind-tunnel tables, measured through stall and
+post-stall at two propulsive conditions, and the propulsion carries
+his first-order engine lag; both are developed in the following
+subsections. The physical parameters
 correspond to the Grumman American AA-1 Yankee as tabulated by Riley
 \cite{Riley1985} and are collected in Table~\ref{tab:aa1_params} of
 Appendix~\ref{app:riley_tables}, together with the derived reference
@@ -706,10 +715,7 @@ incipient spin), and no longitudinal model can speak to that phase.
 The scope of this section is therefore the symmetric stall proper:
 the regime in which the certified procedures disagree on power
 timing, and the one the flight-test comparison of Gratton et al.\
-\cite{Gratton2014} addressed. The asymmetric departure requires the
-lateral--directional states and is deferred, together with the
-developed spin, to the eight-state companion noted in the
-Introduction.
+\cite{Gratton2014} addressed.
 
 \subsection{Equations of Motion}
 
@@ -723,7 +729,10 @@ The longitudinal dynamics are
 \end{align}
 with $L = \bar{q}S\,C_L$, $D = \bar{q}S\,C_D$,
 $\bar{q} = \tfrac{1}{2}\rho V^2$, and the dimensionless pitch rate
-$\hat{q} = qc/(2V)$ entering the aerodynamic coefficients below.
+$\hat{q} = qc/(2V)$ entering the aerodynamic coefficients below. As
+in Sec.~\ref{sec:case1}, the equations are written in the
+dimensional airspeed $V$ while the solver stores and integrates the
+normalized $V/V_s$.
 
 Notably, Eqs.~\eqref{eq:gam_riley}--\eqref{eq:vdot_riley} contain
 \emph{no explicit thrust terms} ($T\sin\alpha$, $T\cos\alpha$). This is
@@ -753,121 +762,110 @@ explicit thrust term into Eq.~\eqref{eq:vdot_riley} while also using the
 Riley power-on tables would therefore \textit{double-count} the
 propulsive contribution. Thrust enters the model exclusively through
 $C_T$, which selects the operating point of the aerodynamic tables.
-The throttle map is calibrated such that full throttle sustains level
-cruise at $V_{max} = 2V_s$, giving $T = K_t\,\delta_t$ with
-$K_t \approx 1151$\,N (Table~\ref{tab:aa1_params}). Definition~\eqref{eq:ct_def} couples the
+The thrust itself follows Riley's Appendix~A: the cockpit throttle $\delta_t$
+maps to the intermediate setting
+$\delta_t' = 0.65\,\delta_t + 0.35$ of his Eq.~(A3), and sea-level
+thrust is interpolated from the twelve-entry table of his Eq.~(A9),
+$T = T_0(\delta_t') + T_1(\delta_t')\,V$: about $2.0$\,kN at full
+throttle statically, decaying with airspeed.
+Definition~\eqref{eq:ct_def} couples the
 propulsive and aerodynamic states: as the aircraft decelerates during
 the stall, $\bar{q}$ collapses and $C_T$ rises for a fixed throttle,
 shifting the interpolated coefficients toward the power-on tables.
+
+One element of the propulsion model is deliberately left out of the
+dynamic program: Riley's Eq.~(A4) places a first-order lag,
+$\tau_e\, \dot{\delta}_t = \delta_{t,c} - \delta_t$, between the
+commanded and the effective throttle. Riley defines $\tau_e$ and
+never tabulates its value; digitizing his published throttle
+transients and fitting the lag through his Eqs.~(A3) and~(A12)
+recovers $\tau_e = 0.8 \pm 0.2$\,s, and $\tau_e = 0.85$\,s is used
+throughout. Carrying the lag into the dynamic program would promote
+the effective throttle to a fifth state and multiply the grid:
+eleven bins take the $14.9$ million states of
+Sec.~\ref{sec:4dof_solver} to $164$ million, and the solve from
+hours to days. The policy is therefore solved against an ideal
+engine, and every trajectory in this section is flown through the
+lagged one; Sec.~\ref{sec:time_domain} quantifies what the lag
+costs and the sensitivity of the conclusions to $\tau_e$.
 
 \subsection{Propulsion-Coupled Aerodynamic Model from Wind-Tunnel Data}
 \label{sec:riley_aero}
 
 The aerodynamic model replaces the constant-derivative formulations
-used in prior stall-recovery studies \cite{Grillo2023} with the complete
-tabulated aerodynamics of Riley \cite{Riley1985} (NASA TM-86309).
-That report documents a simulation of the airframe, but its
-coefficient tables are not a fitted model: they were established from
-full-scale powered wind-tunnel tests of the same aircraft type in the
-Langley $30$- by $60$-Foot Tunnel, with a thrust-torque balance
-installed between engine shaft and propeller, and it is those
-measurements that are used here. The
-constant-derivative approach carries three structural limitations:
-(i) post-stall lift and drag are poorly represented by low-order
-polynomials; (ii) all aerodynamic derivatives are treated as constants,
-ignoring their pronounced variation with angle of attack in the
-separated-flow regime; and (iii) the effect of the propeller slipstream
-on the airframe aerodynamics is entirely absent.
-
-Seven coefficient tables are extracted directly from Table III of Riley
-\cite{Riley1985}: the baseline lift, axial-force, and pitching-moment
+of prior stall-recovery studies \cite{Grillo2023} with the complete
+tabulated aerodynamics of Riley \cite{Riley1985} (NASA TM-86309):
+not a fitted model but measurements, from full-scale powered
+wind-tunnel tests of the aircraft type in the Langley $30$- by
+$60$-Foot Tunnel with a thrust-torque balance between engine shaft
+and propeller. Seven coefficient tables are extracted directly from
+his Table III: the baseline lift, axial-force, and pitching-moment
 coefficients ($C_{L_o}$, $C_{D_o}$, $C_{m_o}$), the pitch-rate
 derivatives ($C_{L_{\hat{q}}}$, $C_{m_{\hat{q}}}$), and the elevator
-effectiveness derivatives ($C_{L_{\delta_e}}$, $C_{m_{\delta_e}}$). All
-share the 14-point angle-of-attack breakpoint vector
-\begin{equation}
-    \boldsymbol{\alpha} = [-10, -5, 0, 5, 10, 12, 14, 16, 18, 20, 25,
-    30, 35, 40]\ (\text{deg}),
-\end{equation}
-and each is provided at two propulsive operating conditions: power-off
-($C_T = 0$) and a representative power-on setting ($C_T = 0.5$). The
-complete transcribed tables are collected in
+effectiveness derivatives ($C_{L_{\delta_e}}$,
+$C_{m_{\delta_e}}$), each on a common 14-point angle-of-attack grid
+from $-10^\circ$ to $40^\circ$, at power-off ($C_T = 0$) and a
+representative power-on condition ($C_T = 0.5$). The complete
+transcribed tables are collected in
 Appendix~\ref{app:riley_tables} for reproducibility;
-Figure~\ref{fig:riley_coeffs} plots all seven coefficients at both
-propulsive conditions.
+Fig.~\ref{fig:riley_coeffs} plots the four that drive the recovery
+physics.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{img/riley_coefficients.png}
-    \caption{The seven Riley (1985) Table III coefficients vs.\ angle
-    of attack at the two tabulated propulsive conditions (one panel per
-    table of Appendix~\ref{app:riley_tables}; $C_{m_o}$ is
-    $C_T$-independent). Three features drive the recovery physics:
-    (a)~baseline lift $C_{L_o}$ shows the power-off flat-top stall
-    plateau vs.\ monotone power-on growth from slipstream augmentation;
-    (d)~the negative power-on values of the net axial-force coefficient
-    $C_{D_o}$ are the embedded-thrust fingerprint of
-    Eq.~\eqref{eq:cd_net}; (f)~pitch-rate damping $C_{m_{\hat{q}}}$
-    more than doubles across the stall. The dotted line marks the stall
-    angle $\alpha_s = 14^\circ$.}
+    \includegraphics[width=\textwidth]{img/riley_coeff_row.pdf}
+    \caption{The Riley (1985) coefficients that drive the recovery,
+    at the two tabulated propulsive conditions (complete tables in
+    Appendix~\ref{app:riley_tables}). (a)~Baseline lift and net
+    axial force: the power-off flat-top stall plateau against the
+    monotone power-on growth of slipstream augmentation, and the
+    negative power-on axial force that fingerprints the embedded
+    thrust of Eq.~\eqref{eq:cd_net}. (b)~The static pitching moment
+    is $C_T$-independent. (c)~Pitch-rate damping more than doubles
+    across the stall. (d)~Elevator moment effectiveness. The dotted
+    line marks the power-off stall angle $\alpha_s = 14^\circ$.}
     \label{fig:riley_coeffs}
 \end{figure}
 
-Three features of the data drive the results of this section, none of
-which survives a constant-derivative approximation. First, the
-power-off lift curve exhibits the characteristic flat-top plateau
-($C_{L_o} = 1.26$ between $14^\circ$ and $18^\circ$) followed by a
-gradual post-stall decay, while the power-on curve keeps
-\emph{increasing} monotonically up to $40^\circ$
-(Table~\ref{tab:riley_cl}): the propeller slipstream augments the
-effective dynamic pressure over the wing, so powered lift remains
-available deep into the post-stall regime. The onset of the power-off
-plateau defines the stall angle used as reference throughout this
-work, $\alpha_s = 14^\circ$ (Table~\ref{tab:aa1_params}); it is a
-power-off boundary: under power the usable lift extends well beyond
-it, a distinction that the optimal policy will be seen to exploit. Second, the power-on
-axial-force column is negative below $\alpha \approx 18^\circ$
-($C_{D_o} = -0.347$ at $\alpha = 0^\circ$, Table~\ref{tab:riley_cd}):
-it is a net coefficient per Eq.~\eqref{eq:cd_net}, and these negative
-values are the empirical fingerprint of the embedded thrust discussed
-above. Third, the pitch-rate damping $C_{m_{\hat{q}}}$ more than
-doubles across the stall, from $-7.15$ at cruise to $-15.4$ (power-off)
-or $-20.3$ (power-on) at $\alpha = 18^\circ$
-(Table~\ref{tab:riley_cmq}), a stabilizing effect entirely absent from
-models that freeze the derivative at its cruise value.
+Three features of the data drive the results of this section, and
+none survives a constant-derivative approximation. First, the
+power-off lift curve shows the characteristic flat-top plateau
+($C_{L_o} = 1.26$ between $14^\circ$ and $18^\circ$) while the
+power-on curve keeps \emph{increasing} up to $40^\circ$: the
+propeller slipstream raises the dynamic pressure over the wing, so
+powered lift remains available deep into the post-stall regime. The
+plateau onset defines the reference stall angle
+$\alpha_s = 14^\circ$; it is a power-off boundary, and the policy
+will be seen to exploit the powered lift beyond it. Second, the
+power-on axial-force column is negative below
+$\alpha \approx 18^\circ$: the empirical fingerprint of the embedded
+thrust of Eq.~\eqref{eq:cd_net}. Third, the pitch-rate damping
+$C_{m_{\hat{q}}}$ more than doubles across the stall, from $-7.15$
+at cruise to $-15.4$ power-off ($-20.3$ power-on).
 
-These three features also delineate what may be fairly compared across
-studies. The slipstream increment is a purely aerodynamic effect: the
-propeller wake accelerates the flow over the wing and tail, raising the
-local dynamic pressure beyond what the freestream provides, and it
-cannot be reproduced by adding explicit thrust terms to the equations
-of motion. Those represent the mechanical projection of the thrust
-vector and leave the aerodynamic coefficients unchanged, so a model
-that treats thrust only as a body-axis force will systematically
-underpredict the normal force available during a powered recovery.
-Published altitude-loss figures obtained on decoupled,
-constant-derivative models (those of Grillo et al.\ \cite{Grillo2023}
-among them) are therefore not commensurable with the results reported
-here: any difference between them conflates the solution method with
-the aerodynamic model. For this reason no quantitative comparison
-against decoupled-model results is attempted; the validation of this
-framework rests instead on Case~I, where the benchmark and this work
-share the same plant.
+The slipstream increment is aerodynamic, not mechanical: an explicit
+thrust term projects a force but leaves the coefficients untouched,
+so decoupled models systematically underpredict the normal force
+available during a powered recovery. Altitude-loss figures published
+on such models \cite{Grillo2023} are therefore not commensurable
+with the results below, and no quantitative comparison is attempted;
+the validation of the framework rests on Case~I, where benchmark and
+solver share the same plant.
 
-\subsubsection{Bilinear Interpolation Scheme}
-
-For any current thrust coefficient $C_T \in [0, 0.5]$ and angle of
-attack $\alpha$, each coefficient $f$ is evaluated via a two-dimensional
-interpolation: a 1-D lookup along the $\alpha$ axis at each of the two
-$C_T$ levels, blended linearly in the $C_T$ direction:
-\begin{equation}
-    f(\alpha, C_T) = f_0(\alpha)
-    + \frac{C_T}{0.5}\,\bigl[f_{0.5}(\alpha) - f_0(\alpha)\bigr],
-    \label{eq:bilinear}
-\end{equation}
-where $f_0(\alpha)$ and $f_{0.5}(\alpha)$ are the linear table lookups
-at $C_T = 0$ and $C_T = 0.5$ respectively, and $C_T$ is clipped to
-$[0, 0.5]$. The complete aerodynamic model is then
+Each coefficient is evaluated bilinearly: a linear table lookup
+along the $\alpha$ axis at each of the two tabulated $C_T$ levels,
+blended linearly in $C_T$, with the lookup clipped to the tabulated
+range $C_T \in [0, 0.5]$. The clip applies to the table lookup only,
+not to the thrust itself: in the recovery regime $C_T$ routinely
+exceeds the tabulated $0.5$ (full throttle at $0.57\,V_s$ gives
+$C_T \approx 1$), and the excess axial force is restored through
+Riley's Appendix~B correction,
+$\Delta C_{D_T} = -0.80\,(C_T - 0.5)\cos\alpha$ for $C_T > 0.5$ and
+$-0.80\,C_T\cos\alpha$ for $C_T < 0$, identically zero inside the
+tabulated range. The lift and moment columns, by contrast, saturate
+at the $C_T = 0.5$ measurement: the slipstream augmentation beyond
+the tabulated condition is not extrapolated, a conservative choice.
+The complete aerodynamic model is then
 \begin{align}
     C_L &= C_{L_o}(\alpha, C_T)
          + C_{L_{\delta_e}}(\alpha, C_T)\,\delta_e
@@ -904,41 +902,24 @@ over the domain this maneuver traverses.
 Because $C_L$ depends on $\dot{\alpha}$ while
 Eq.~\eqref{eq:alpha_dot_riley} makes $\dot{\alpha}$ depend on
 $\dot{\gamma}$, which Eq.~\eqref{eq:gam_riley} in turn obtains from
-$C_L$, the rate terms close an implicit loop. It is resolved in closed
-form rather than by fixed-point iteration, so that the CUDA kernel and
-the CPU reference evaluate the identical expression:
-\begin{equation}
-    \dot{\gamma} = \frac{A\,C_L^{-} + A\,C_{L_{\hat{\dot{\alpha}}}}\,k\,q
-                        - (g/V)\cos\gamma}
-                       {1 + A\,C_{L_{\hat{\dot{\alpha}}}}\,k},
-    \qquad k = \frac{c}{2V}, \quad A = \frac{\bar{q}S}{mV},
-    \label{eq:implicit_alphadot}
-\end{equation}
-where $C_L^{-}$ collects the terms of Eq.~\eqref{eq:cl_riley} that do
-not involve $\hat{\dot{\alpha}}$. The denominator stays within
-$1 \pm 0.005$ over the whole speed range of the grid.
-where the last term of Eq.~\eqref{eq:cm_riley} transfers the pitching
-moment to a center of gravity displaced $\Delta x_{cg}$ aft of the Riley
-reference ($0.25\,\bar{c}$); $\Delta x_{cg} = 0$ reproduces the nominal
-model and is used throughout unless stated otherwise (the robustness
-study of Sec.~\ref{sec:robustness} exercises this term explicitly). Every derivative that
-was previously a scalar constant is now a function of both $\alpha$ and
-$C_T$, capturing the nonlinear, propulsion-coupled aerodynamics across
-the full post-stall envelope. All table lookups execute inside the CUDA
-kernel via branch-minimal linear scans over the 14 breakpoints, keeping
-the solver strictly compute-bound.
+$C_L$, the rate terms close an implicit loop. It is resolved
+algebraically in closed form rather than by fixed-point iteration,
+so that the CUDA kernel and the CPU reference evaluate the identical
+expression; the correction is small, the implicit denominator
+staying within $1 \pm 0.005$ over the whole speed range of the grid.
+
+The last term of Eq.~\eqref{eq:cm_riley} transfers the pitching
+moment to a center of gravity displaced $\Delta x_{cg}$ aft of the
+Riley reference ($0.25\,\bar{c}$); $\Delta x_{cg} = 0$ is used
+throughout, and the robustness study of Sec.~\ref{sec:robustness}
+exercises the term. All lookups execute inside the CUDA kernel,
+keeping the solver compute-bound.
 
 \subsection{Discretization, Stage Cost, and Solver Configuration}
 \label{sec:4dof_solver}
 
 The state-action space is discretized as detailed in
-Table~\ref{tab:4dof_discretization}, yielding $N_s = 5{,}648{,}160$
-states and $N_a = 451$ actions. The angle-of-attack axis extends down to
-$-40^\circ$ so that the negative branch of the catastrophic terminal
-set lies \emph{inside} the grid: its penalty value
-is pre-assigned to those terminal cells and propagates inward through the
-multilinear backup, ensuring the solver perceives the crash boundary
-during training rather than extrapolating past a truncated grid edge.
+Table~\ref{tab:4dof_discretization}.
 
 \begin{table}[H]
 \centering
@@ -948,11 +929,11 @@ during training rather than extrapolating past a truncated grid edge.
 \toprule
 \textbf{Variable} & \textbf{Lower Bound} & \textbf{Upper Bound} & \textbf{Nodes} & \textbf{Resolution / Units} \\
 \midrule
-\multicolumn{5}{c}{\textit{State Space ($N_s = 5{,}648{,}160$)}} \\
+\multicolumn{5}{c}{\textit{State Space ($N_s = 14{,}878{,}080$)}} \\
 \midrule
 Flight path angle ($\gamma$) & $-90$ & $5$ & 56 & $\sim 1.73$ (deg) \\
-Airspeed ($V/V_s$) & $0.9$ & $2.0$ & 41 & $\sim 0.028$ (--) \\
-Angle of attack ($\alpha$) & $-40$ & $20$ & 60 & $\sim 1.02$ (deg) \\
+Airspeed ($V/V_s$) & $0.4$ & $2.0$ & 81 & $0.02$ (--) \\
+Angle of attack ($\alpha$) & $-10$ & $40$ & 80 & $\sim 0.63$ (deg) \\
 Pitch rate ($q$) & $-50$ & $50$ & 41 & $2.5$ (deg/s) \\
 \midrule
 \multicolumn{5}{c}{\textit{Action Space ($N_a = 451$)}} \\
@@ -984,7 +965,7 @@ quadratic penalty acts as a surrogate for the unmodeled actuation
 physics. In the 4-DOF formulation the actuation \emph{is} modeled: the
 elevator acts through the moment chain
 $\delta_e \to C_m \to \dot{q} \to q \to \dot{\alpha}$, whose inertia
-and stall-amplified pitch damping (Fig.~\ref{fig:riley_coeffs}f)
+and stall-amplified pitch damping (Fig.~\ref{fig:riley_coeffs}c)
 low-pass filter the command. Residual action ties on the constraint
 arc still produce bang-bang switching in the raw policy map (the
 discrete approximation of the singular-arc equivalent control analyzed
@@ -1001,76 +982,44 @@ of Eq.~\eqref{baricentric_eq}. This is not a smoothing applied to the
 optimum for convenience; it is the solution concept the converged
 policy requires.
 
-The optimal feedback law is bang-bang with a switching surface, and a
-differential equation closed by a discontinuous feedback has in
-general no classical solution on that surface: solutions are defined
-in the sense of Filippov \cite{Filippov1988}, by the convex
-combination of the vector fields on either side, and the combination
-that holds the state on the surface is the equivalent control of
-sliding-mode theory \cite{Utkin1977}. Because the plant is affine in
-each control channel to within the bound quantified below --- the
-elevator enters $C_L$ and $C_m$ linearly
-through $C_{L_{\delta e}}$ and $C_{m_{\delta e}}$, and the throttle
-through $C_T = K_t \delta_t / (\bar{q}S)$, in which the tables are
-interpolated linearly --- a convex combination of \emph{actions}
-produces the corresponding convex combination of \emph{vector
-fields}. Averaging the commanded action at the switching surface
-therefore realizes the Filippov solution rather than approximating
-it, with a residual of $0.6\%$ of the field magnitude in the elevator
-channel at the canonical entry ($10^{-3}\%$ in the throttle channel),
-measured against the mean of the constituent fields. The equivalent
-control recovered this way, $\bar{\delta}_e \approx -5^\circ$ over the
-sliding arc, is confirmed independently in
-Sec.~\ref{sec:pilot_sensitivity}, where a constant elevator held open
-loop minimizes altitude loss at that same deflection.
+The optimal feedback law is bang-bang with a switching surface, so
+on that surface solutions are of Filippov type \cite{Filippov1988},
+and the combination that holds the state there is the equivalent
+control of sliding-mode theory \cite{Utkin1977}. Because the plant
+is affine in each control channel (the elevator enters $C_L$ and
+$C_m$ linearly, and the throttle through $C_T$, in which the tables
+are interpolated linearly), the barycentric action blend realizes
+the Filippov solution rather than approximating it: the residual is
+$0.6\%$ of the field magnitude in the elevator channel at the
+canonical entry, the cross-channel and quadratic-drag corrections
+are bounded by the $\pm 0.3$\,m execution band quoted throughout,
+and the equivalent control recovered on the sliding arc,
+$\bar{\delta}_e \approx -5^\circ$, is confirmed independently in
+Sec.~\ref{sec:pilot_sensitivity}. The argument is exercised only in
+the elevator channel, since the throttle commands full power almost
+everywhere (Sec.~\ref{sec:caa_faa}). Evaluated greedily instead
+(re-deriving the $\arg\max$ at the continuous state, which discards
+the combination), the policy chatters between the bang-bang
+extremes and the pitch-rate overshoot costs several times the
+altitude.
 
-Three limitations of the construction should be stated. Affinity holds
-per channel but not jointly, since $C_{m_{\delta e}}$ and
-$C_{L_{\delta e}}$ themselves vary with $C_T$; blending both channels
-at once carries a cross-term residual, up to $18\%$ of the field at an
-equal mix of the two extreme actions. Nor is the elevator channel
-affine in the drag axis: the quadratic term
-$C_{D_{\delta_e^2}}\delta_e^2$ of Eq.~\eqref{eq:cd_riley} makes a
-blended action differ from the blend of its constituent drags by the
-Jensen gap $\tfrac{1}{4}C_{D_{\delta_e^2}}(\delta_{e,1} -
-\delta_{e,2})^2$. That gap scales with the \emph{square} of the
-separation between the actions being mixed, and the blend mixes the
-argmax of adjacent grid vertices, one degree apart: at the canonical
-entry it amounts to $0.01\%$ of $C_D$, rising to $2.6\%$ only if
-actions $20^\circ$ apart were combined and to $10\%$ at the two
-extremes of the elevator range. On the switching surface, where
-adjacent vertices disagree by one grid step, the term is numerically
-irrelevant; the affine argument would fail only for a blend that
-straddled the full control range. And the argument applies where a
-switching surface is actually being straddled, which is the elevator:
-the throttle policy commands full power almost everywhere
-(Sec.~\ref{sec:caa_faa}), so intermediate throttle values returned by
-the blend near the absorbing boundary are an artifact of mixing with
-terminal cells rather than an equivalent control. Both effects are
-bounded by the $\pm 0.3$\,m execution band quoted throughout.
-Evaluated greedily instead --- re-deriving $\arg\max_a Q(s,a)$ at the
-continuous state, which discards the Filippov combination and applies
-one extreme of the bang-bang at every interval --- the same policy
-commands full throttle throughout and saturates the elevator, and the
-resulting chatter drives a pitch-rate overshoot costing several times
-the altitude. Second, the
-4-DOF problem requires a catastrophic
-terminal set that the reduced model did not: Case I commands the lift
-coefficient directly within safe bounds, so its trajectories cannot
-depart controlled flight, whereas the 4-DOF model resolves the
-post-stall aerodynamics and can genuinely crash. Accordingly, the
-terminal set $\{|\alpha| \geq 40^\circ\} \cup \{\gamma \leq -\pi +
-0.05\}$ (angle-of-attack departure beyond the range of the
-wind-tunnel data, or a near-vertical inverted dive) carries a fixed
-penalty of $-1000\,V_s$, the value pre-assigned to the terminal grid
-cells discussed above. Each
-Bellman transition integrates the dynamics over a control interval of
-$\Delta t = 0.01$\,s subdivided into ten RK4 micro-steps of 1\,ms,
-executed entirely within GPU registers; the success and crash events are
-detected at micro-step resolution, so intra-interval boundary crossings
-are never skipped. The 4-DOF formulation requires the 16-vertex
-($2^4$) instance of the branchless barycentric interpolation of
-Eq.~\eqref{baricentric_eq}.
+Unlike Case~I, whose commanded lift is bounded within safe limits,
+the 4-DOF model resolves the post-stall aerodynamics and can
+genuinely crash. The catastrophic terminal set
+$\{|\alpha| \geq 40^\circ\} \cup \{\gamma \leq -\pi + 0.05\}$
+(angle-of-attack departure beyond the wind-tunnel data, or a
+near-vertical inverted dive) carries a fixed penalty of
+$-1000\,V_s$. Its $\alpha = +40^\circ$ branch is the upper edge of
+the grid, where the penalty is pre-assigned to the terminal cells
+and propagates inward through the multilinear backup; the negative
+branch and the inverted dive lie outside the grid and are detected
+during integration. Each Bellman transition integrates the dynamics
+over a control interval of $\Delta t = 0.01$\,s subdivided into ten
+RK4 micro-steps of $1$\,ms, executed entirely within GPU registers;
+success and crash crossings are detected at micro-step resolution,
+so intra-interval boundary events are never skipped. The 4-DOF
+formulation uses the 16-vertex ($2^4$) instance of the barycentric
+interpolation of Eq.~\eqref{baricentric_eq}.
 
 Two further conventions govern every closed-loop number reported in
 this section. First, the stage reward of
