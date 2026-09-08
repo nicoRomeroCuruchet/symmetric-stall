@@ -1,6 +1,6 @@
 \begin{table}[H]
     \centering
-    \caption{Closed-loop DP rollouts vs.\ CasADi/IPOPT solutions of Eq.~\eqref{eq:ocp_free_tf} warm-started from the DP, at the initial conditions of Bunge et al.\ \cite{Bunge2018} ($V_0/V_s = 1.2$). Both end at the level-flight recovery $\gamma = 0$; $e$ is the gap normalized by the deepest loss of each sweep.}
+    \caption{Closed-loop DP rollouts vs.\ DP-warm-started CasADi/IPOPT solutions of Eq.~\eqref{eq:ocp_free_tf} at the initial conditions of Bunge et al.\ \cite{Bunge2018} ($V_0/V_s = 1.2$); both end at the level-flight recovery $\gamma = 0$, and $e$ is the gap over the deepest loss of each sweep. The $\gamma_0 = -60^\circ$, $\mu_0 = 150^\circ$ entry is excluded (not returned to level flight).}
     \label{tab:casadi_benchmark}
     \begin{tabular}{c c r r r r}
         \toprule
