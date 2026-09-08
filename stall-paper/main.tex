@@ -1109,8 +1109,7 @@ attack through on its own. That anticipation is visible in the
 policy itself: the surface's crossing sits at $13.4^\circ$ on the
 $q = 0$ slice of Fig.~\ref{fig:4dof_policy_riley} and tilts to
 $17^\circ$ at the $q \approx -20$\,deg/s the trajectories carry at
-reversal (Fig.~\ref{fig:policy_q_slices},
-Appendix~\ref{app:q_slices}). The two angles sit on opposite sides of
+reversal (Fig.~\ref{fig:policy_q_slices}). The two angles sit on opposite sides of
 $\alpha_s$ because they answer different questions: when to reverse
 the elevator during the transient (early, with momentum in hand),
 and where to ride once the descent is being arrested (at the edge of
@@ -1132,6 +1131,28 @@ CAA recovery sequence.
     (Fig.~\ref{fig:riley_coeffs}a). The shaded region marks the
     unfavourable trade.}
     \label{fig:alpha_trade}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{img/policy_q_slices.pdf}
+    \caption{The commanded-elevator policy over the
+    $(\alpha, \gamma)$ plane at $V/V_s = 0.9$, at nose-down (top
+    row) and nose-up (bottom row) pitch-rate slices; the $q = 0$
+    slice, with its crossing at $13.4^\circ$, is in
+    Fig.~\ref{fig:4dof_policy_riley}. The white dotted line travels
+    with each slice's median crossing (elevator zero crossing over
+    the recovery-relevant columns, $-40^\circ \le \gamma \le 0$,
+    $V \le 1.2\,V_s$); the faint one is fixed at
+    $\alpha_s = 14^\circ$. The pull/push boundary shifts by about
+    $2^\circ$ per $10$\,deg/s of pitch rate: with nose-down rotation
+    in hand the optimum reverses at higher angle of attack, with
+    nose-up rotation it pushes earlier. The tilt is the momentum
+    anticipation of the reversal, and reconciles the $q = 0$ maps
+    with the closed-loop reversal statistics of
+    Table~\ref{tab:closed_loop_alpha}, flown at
+    $q \approx -20$\,deg/s.}
+    \label{fig:policy_q_slices}
 \end{figure}
 
 The nature of that statement deserves emphasis, because it is not the
@@ -2451,34 +2472,6 @@ $40$  & $-0.573$ & $-0.859$ \\
 \bottomrule
 \end{tabular}
 \end{table}
-
-\section{The Elevator Switching Surface Across Pitch Rate}
-\label{app:q_slices}
-
-The heatmaps of Fig.~\ref{fig:4dof_policy_riley} show the elevator
-switching surface on the $q = 0$ slice of the four-dimensional state
-space. Figure~\ref{fig:policy_q_slices} shows how that surface moves
-with pitch rate.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=\textwidth]{img/policy_q_slices.pdf}
-    \caption{The commanded-elevator policy over the
-    $(\alpha, \gamma)$ plane at $V/V_s = 0.9$, at nose-down (top
-    row) and nose-up (bottom row) pitch-rate slices; the $q = 0$
-    slice, with its crossing at $13.4^\circ$, is in
-    Fig.~\ref{fig:4dof_policy_riley}. The white dotted line travels
-    with each slice's median crossing (computed as in Sec.~V.D); the
-    faint one is fixed at $\alpha_s = 14^\circ$. The pull/push
-    boundary shifts by about $2^\circ$ per $10$\,deg/s of pitch
-    rate: with nose-down rotation in hand the optimum reverses at
-    higher angle of attack, with nose-up rotation it pushes earlier.
-    The tilt is the momentum anticipation of the reversal, and
-    reconciles the $q = 0$ maps with the closed-loop reversal
-    statistics of Table~\ref{tab:closed_loop_alpha}, flown at
-    $q \approx -20$\,deg/s.}
-    \label{fig:policy_q_slices}
-\end{figure}
 
 \bibliography{sample}
 
