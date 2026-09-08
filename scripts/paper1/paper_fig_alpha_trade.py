@@ -65,17 +65,13 @@ def main():
     ax.plot(mid, dcd0, marker="^", ms=4, color=C_DRAG, ls="--", lw=1.2,
             alpha=0.55, label=r"drag paid / deg, $C_T = 0$")
 
-    # Crossing of the two power-on piecewise-linear curves; it falls a
-    # hair below the 14-deg table breakpoint because the finite
-    # differences live at segment midpoints.
-    g = dcl05 - dcd05
-    i = np.nonzero(g[:-1] * g[1:] < 0)[0][0]
-    t = g[i] / (g[i] - g[i + 1])
-    x_c = mid[i] + t * (mid[i + 1] - mid[i])
-
+    # The crossing of the two power-on piecewise-linear curves computes
+    # to 13.9 deg, a hair below the 14-deg table breakpoint because the
+    # finite differences live at segment midpoints; the label states the
+    # table's stall angle, which is where the dotted line is drawn.
     ax.axvline(ALPHA_STALL, color="gray", lw=0.9, ls=":")
     ax.axvspan(ALPHA_STALL, 25.0, color=C_DRAG, alpha=0.06, zorder=0)
-    ax.text(14.4, -0.017, rf"$\alpha_s = {x_c:.1f}°$", fontsize=9,
+    ax.text(14.4, -0.017, rf"$\alpha_s = {ALPHA_STALL:.0f}°$", fontsize=9,
             color="gray")
 
     ax.set_xlabel(r"$\alpha$ (deg)")

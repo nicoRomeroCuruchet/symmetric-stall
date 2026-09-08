@@ -561,11 +561,17 @@ def plot_heatmaps(
     pi: PolicyIterationStall,
     prefix: str,
     alpha_window_deg: tuple[float, float] = (-5.1, 20.1),
+    alpha_s_deg: float | None = None,
+    stamp_label: str | None = None,
 ) -> None:
     """Generates the 3x3 heatmap figure (elevator, throttle, altitude loss).
 
     `alpha_window_deg` crops the displayed alpha range; pass (-40.1, 20.1)
     to render the full grid width instead of the default recovery window.
+    `alpha_s_deg` draws a dotted stall-boundary line on the elevator column;
+    `stamp_label` writes a provenance stamp in the lower-right corner (the
+    figure shows solver fields, so the engine lag of the rollouts does not
+    apply to it -- say so in the label).
     """
     logger.info("[*] Extracting 4D Tensors for heatmaps...")
 
@@ -639,6 +645,11 @@ def plot_heatmaps(
             va="center", ha="left", fontsize=11,
         )
 
+    if alpha_s_deg is not None:
+        # Near-white so it reads on the dark nose-up region of the maps.
+        for i in range(3):
+            axes[i, 0].axvline(alpha_s_deg, color="0.9", ls=":", lw=1.2)
+
     titles = ["Policy for Elevator", "Policy for Throttle", "Altitude Loss"]
     for j, title in enumerate(titles):
         axes[0, j].set_title(title, pad=10)
@@ -668,6 +679,11 @@ def plot_heatmaps(
             mappable, cax=cax, orientation="horizontal",
             label=label, ticks=ticks,
         )
+
+    if stamp_label is not None:
+        # Below the colorbar labels; bbox_inches="tight" keeps it in frame.
+        fig.text(0.995, -0.02, stamp_label, ha="right", va="bottom",
+                 fontsize=7, color="0.55")
 
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     out_path = RESULTS_DIR / f"{prefix}_heatmaps.png"

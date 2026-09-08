@@ -1053,24 +1053,24 @@ commanded elevator ($\delta_e^*$) and throttle ($\delta_t^*$), together
 with the converged value function read as minimum altitude loss,
 $-V(\mathbf{x})$, across the $(\alpha, \gamma)$
 envelope for normalized airspeeds $V_0/V_s \in \{0.9, 1.0, 1.1\}$.
-Two related quantities coexist in this paper and are never
-interchanged: $-V(\mathbf{x})$ is the solver's own cost-to-absorption
-(the Bellman recursion's accumulated altitude reward until the
-trajectory enters the absorbing set), whereas every closed-loop
-loss reported in the tables and trajectory figures below executes the
-policy through the action blend of Sec.~\ref{sec:4dof_solver} under
-the dive-and-return stopping rule. The two fields agree in structure
-everywhere but differ in level by $-1$--$3$\,m across the entry range
-($\approx 7.79$ vs.\ $7.80$\,m at the canonical entry): the imprint of
-the executable smoothing and of the trajectory-level stopping rule,
-neither of which enters the Bellman recursion. Of the two executable
+Three levels of altitude loss coexist in this paper and are never
+interchanged. $-V(\mathbf{x})$ is the solver's own
+cost-to-absorption, on the ideal engine of Sec.~V.A: $10.2$\,m at
+the canonical entry. The closed-loop rollout on the same ideal
+engine, executing the policy through the action blend of
+Sec.~\ref{sec:4dof_solver} under the dive-and-return rule, reads
+$9.4$\,m there, recovering the recursion's valuation to within a
+metre at the stalled entries of the recovery window. And every
+number reported in the tables and trajectory figures below is flown
+through the engine lag, which moves the same canonical entry to the
+$19.8$\,m quoted throughout; Sec.~\ref{sec:time_domain} separates
+that cost. Of the two executable
 readings of the converged policy, the blend is the faithful one:
 inside the barycentric recursion the successor state is re-averaged
-over the cell vertices at every step (an averaging that realizes
-the equivalent control of the sliding arc), and the action blend
-reproduces that averaging in the action space, recovering the
-recursion's valuation to within $1.8$\,m; the literal argmax, applied
-to the continuous plant with no such per-step averaging, lets the
+over the cell vertices at every step, and the action blend
+reproduces that averaging in action space (the equivalent control of
+the sliding arc); the literal argmax, applied
+to the continuous plant with no per-step averaging, lets the
 bang-bang overshoot through pitch-rate inertia into losses several
 times larger (Sec.~\ref{sec:4dof_solver}).
 
@@ -1094,7 +1094,8 @@ times larger (Sec.~\ref{sec:4dof_solver}).
     ($0.2\%$), so the extremum that wins the tie flips between adjacent
     rows while $-V$ stays smooth. The blend of
     Sec.~\ref{sec:4dof_solver}, which is what the closed loop executes,
-    averages across those ties.}
+    averages across those ties. The dotted line on the elevator
+    column marks the stall boundary $\alpha_s = 14^\circ$.}
     \label{fig:4dof_policy_riley}
 \end{figure}
 
@@ -1108,15 +1109,21 @@ angle of attack falls through that surface, at which point the policy
 switches to nose-up commands, regardless of how long that takes from
 each initial condition. Over the recovery-relevant columns of the
 converged array ($-40^\circ \le \gamma \le 0$, $V \le 1.2\,V_s$,
-$q = 0$) the switching angle has a median of $14.9^\circ$ and a
-$5$--$95$ percentile range of $11.9$--$15.9^\circ$: it tracks
-$\alpha_s = 14^\circ$, sitting about a degree above it. The surface is
-therefore where the optimum \emph{stops pushing}, not where the wing
-has already recovered: with the elevator drag terms of
-Eq.~\eqref{eq:cd_riley} in the model, a nose-down deflection is not
-free, and the optimum stops paying for it as soon as the pitch rate it
-has built will carry the angle of attack through the boundary on its
-own. That is a distinct mechanism from the one that sets the sliding
+$q = 0$), the zero crossing of the commanded elevator along $\alpha$
+has a median of $13.4^\circ$ and a $95$th percentile of
+$15.3^\circ$: the switching surface straddles the stall boundary,
+tracking $\alpha_s = 14^\circ$ to within about a degree (the lower
+tail belongs to columns whose angle of attack is already low enough
+that little or no push is needed). Where it sits is not an accident
+of the tables' breakpoints but the optimality frontier of the
+marginal trade they encode: past ${\approx}14^\circ$, each further
+degree of angle of attack buys less lift than the drag it costs,
+with or without power (Fig.~\ref{fig:alpha_trade}), even though the
+power-on lift itself keeps rising to $40^\circ$. The switch is thus
+where the optimum \emph{stops paying} for nose-down deflection,
+which carries its own drag (Eq.~\eqref{eq:cd_riley}): it stops
+pushing as soon as the pitch rate it has built will carry the angle
+of attack through the boundary on its own. That is a distinct mechanism from the one that sets the sliding
 arc, which settles $2.4^\circ$ \emph{below} $\alpha_s$
 (Sec.~\ref{sec:time_domain}): there the constraint is holding maximum
 lift without re-stalling, and the margin is a safety buffer against
@@ -1128,6 +1135,20 @@ state space, not a schedule in time. Together,
 simultaneous full power and nose-down elevator, pull-up once the wing
 unstalls, these two features are the structural fingerprint of the
 CAA recovery sequence.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.62\textwidth]{img/alpha_trade.pdf}
+    \caption{The marginal trade encoded in the Riley tables: lift
+    gained vs.\ drag paid per degree of angle of attack, at both
+    propulsive conditions (finite differences at the table segment
+    midpoints). The curves cross at the stall boundary with or
+    without power: past it, each further degree costs more drag than
+    the lift it buys, even though the power-on lift keeps rising
+    (Fig.~\ref{fig:riley_coeffs}a). The shaded region marks the
+    unfavourable trade.}
+    \label{fig:alpha_trade}
+\end{figure}
 
 The nature of that statement deserves emphasis, because it is not the
 one the remainder of this section will make. Nothing in the problem
@@ -1151,7 +1172,7 @@ clock, and that is precisely what makes the optimum flyable: a pilot
 cannot be instructed to rotate at $t^\ast = 0.24$\,s from an entry
 whose onset they did not time, but can be instructed to pull as the
 wing unstalls. That the optimizer, free to return any measurable
-feedback law over a $5.6$-million-state grid, returns one expressible
+feedback law over a $14.9$-million-state grid, returns one expressible
 in the same language the certified procedure already uses is the
 substantive finding of this subsection; the sections that follow
 quantify it.
