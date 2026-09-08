@@ -835,7 +835,10 @@ propeller slipstream raises the dynamic pressure over the wing, so
 powered lift remains available deep into the post-stall regime. The
 plateau onset defines the reference stall angle
 $\alpha_s = 14^\circ$; it is a power-off boundary, and the policy
-will be seen to exploit the powered lift beyond it. Second, the
+will be seen to exploit the powered lift beyond it. Throughout this
+paper, \emph{stall boundary} refers to this power-off angle: under
+power the aerodynamic stall itself moves, but $\alpha_s$ remains the
+reference the recovery is measured against. Second, the
 power-on axial-force column is negative below
 $\alpha \approx 18^\circ$: the empirical fingerprint of the embedded
 thrust of Eq.~\eqref{eq:cd_net}. Third, the pitch-rate damping
@@ -1048,54 +1051,38 @@ completed recovery.
 \subsection{Optimal Policy: Full-Power Structure and the Stall-Boundary Switching Surface}
 \label{sec:policy_structure}
 
-Figure~\ref{fig:4dof_policy_riley} presents the exact DP policies for
-commanded elevator ($\delta_e^*$) and throttle ($\delta_t^*$), together
-with the converged value function read as minimum altitude loss,
-$-V(\mathbf{x})$, across the $(\alpha, \gamma)$
-envelope for normalized airspeeds $V_0/V_s \in \{0.9, 1.0, 1.1\}$.
-Three levels of altitude loss coexist in this paper and are never
-interchanged. $-V(\mathbf{x})$ is the solver's own
-cost-to-absorption, on the ideal engine of Sec.~V.A: $10.2$\,m at
-the canonical entry. The closed-loop rollout on the same ideal
-engine, executing the policy through the action blend of
-Sec.~\ref{sec:4dof_solver} under the dive-and-return rule, reads
-$9.4$\,m there, recovering the recursion's valuation to within a
-metre at the stalled entries of the recovery window. And every
-number reported in the tables and trajectory figures below is flown
-through the engine lag, which moves the same canonical entry to the
-$19.8$\,m quoted throughout; Sec.~\ref{sec:time_domain} separates
-that cost. Of the two executable
-readings of the converged policy, the blend is the faithful one:
-inside the barycentric recursion the successor state is re-averaged
-over the cell vertices at every step, and the action blend
-reproduces that averaging in action space (the equivalent control of
-the sliding arc); the literal argmax, applied
-to the continuous plant with no per-step averaging, lets the
-bang-bang overshoot through pitch-rate inertia into losses several
-times larger (Sec.~\ref{sec:4dof_solver}).
+Figure~\ref{fig:4dof_policy_riley} presents the converged solution
+over the $(\alpha, \gamma)$ plane at the $q = 0$ slice, one row per
+normalized airspeed $V_0/V_s \in \{0.9, 1.0, 1.1\}$. The left and
+middle columns are the exact DP policies for commanded elevator
+($\delta_e^*$) and throttle ($\delta_t^*$); the right column is the
+converged value function, read as the minimum altitude loss to
+recovery from each state. In the elevator maps, dark blue is full
+nose-up command and yellow full nose-down; the dotted line marks the
+power-off stall angle $\alpha_s = 14^\circ$ of
+Sec.~\ref{sec:riley_aero}.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{img/riley_symmetric_stall_heatmaps.png}
     \caption{Exact DP heatmaps for the 4-DOF symmetric stall recovery
     with the Riley (1985) propulsion-coupled aerodynamic model: optimal
-    commanded elevator ($\delta_e^*$), throttle ($\delta_t^*$), and the
-    value function read as minimum altitude loss, $-V(\mathbf{x})$,
-    over the evaluated flight envelope (slice $q = 0$). $-V$ is the
-    solver's cost-to-absorption, not the closed-loop metric of the
-    tables and trajectory figures, which execute the blended policy
-    under the dive-and-return rule; the two agree in structure and
-    differ in level by $1$--$3$\,m (see text). The elevator panels plot
+    commanded elevator ($\delta_e^*$), throttle ($\delta_t^*$), and
+    minimum altitude loss,
+    over the evaluated flight envelope (slice $q = 0$). The
+    altitude-loss column is the solver's own cost-to-absorption on
+    the ideal engine, not the closed-loop metric of the tables and
+    trajectory figures below. The elevator panels plot
     the \emph{raw} $\arg\max$, so the narrow bands of saturated command
     that appear near $\gamma \approx 0$ should be read as the switching
     surface itself rather than as physical reversals: sampling the
     one-step $Q$ across the full elevator range at those cells spreads
     it by only $0.04$\,m out of a $16$--$18$\,m cost-to-go
     ($0.2\%$), so the extremum that wins the tie flips between adjacent
-    rows while $-V$ stays smooth. The blend of
+    rows while the altitude-loss field stays smooth. The blend of
     Sec.~\ref{sec:4dof_solver}, which is what the closed loop executes,
     averages across those ties. The dotted line on the elevator
-    column marks the stall boundary $\alpha_s = 14^\circ$.}
+    column marks the power-off stall angle $\alpha_s = 14^\circ$.}
     \label{fig:4dof_policy_riley}
 \end{figure}
 
@@ -1111,8 +1098,8 @@ each initial condition. Over the recovery-relevant columns of the
 converged array ($-40^\circ \le \gamma \le 0$, $V \le 1.2\,V_s$,
 $q = 0$), the zero crossing of the commanded elevator along $\alpha$
 has a median of $13.4^\circ$ and a $95$th percentile of
-$15.3^\circ$: the switching surface straddles the stall boundary,
-tracking $\alpha_s = 14^\circ$ to within about a degree (the lower
+$15.3^\circ$: the switching surface straddles the power-off stall
+angle, tracking $\alpha_s = 14^\circ$ to within about a degree (the lower
 tail belongs to columns whose angle of attack is already low enough
 that little or no push is needed). Where it sits is not an accident
 of the tables' breakpoints but the optimality frontier of the
@@ -1142,7 +1129,7 @@ CAA recovery sequence.
     \caption{The marginal trade encoded in the Riley tables: lift
     gained vs.\ drag paid per degree of angle of attack, at both
     propulsive conditions (finite differences at the table segment
-    midpoints). The curves cross at the stall boundary with or
+    midpoints). The curves cross near $\alpha_s = 14^\circ$ with or
     without power: past it, each further degree costs more drag than
     the lift it buys, even though the power-on lift keeps rising
     (Fig.~\ref{fig:riley_coeffs}a). The shaded region marks the
