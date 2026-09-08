@@ -1064,7 +1064,7 @@ Sec.~\ref{sec:riley_aero}.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.85\textwidth]{img/riley_symmetric_stall_heatmaps.png}
+    \includegraphics[width=0.75\textwidth]{img/riley_symmetric_stall_heatmaps.png}
     \caption{Exact DP heatmaps for the 4-DOF symmetric stall recovery
     with the Riley (1985) propulsion-coupled aerodynamic model: optimal
     commanded elevator ($\delta_e^*$), throttle ($\delta_t^*$), and
@@ -1084,20 +1084,28 @@ angle of attack falls through that surface, at which point the policy
 switches to nose-up commands, regardless of how long that takes from
 each initial condition. Table~\ref{tab:closed_loop_alpha} quantifies
 both features on closed-loop trajectories, flown through the engine
-lag across the stalled-entry envelope. The commanded elevator
+lag across the stalled-entry envelope: the commanded elevator
 reverses at a median angle of attack of $17.2^\circ$, well before
-the boundary: nose-down deflection carries its own drag
-(Eq.~\eqref{eq:cd_riley}), and the optimum stops paying for it as
-soon as the pitch rate it has built will carry the angle of attack
-through on its own. The arrested descent then rides at
+the boundary, and the arrested descent then rides at
 $\alpha = 13.9^\circ$ with a spread of two tenths of a degree across
-every recovered entry, and that number is no accident of the tables'
-breakpoints: it is the crossing of the marginal trade they encode
-(Fig.~\ref{fig:alpha_trade}). Past ${\approx}14^\circ$, each further
-degree of angle of attack buys less lift than the drag it costs,
-with or without power, even though the power-on lift itself keeps
-rising to $40^\circ$; the recovery settles exactly on that
-optimality frontier. The two angles sit on opposite sides of
+every recovered entry.
+
+\input{tables/table_closed_loop_alpha}
+
+Figure~\ref{fig:alpha_trade} explains why the recovery settles
+there. It plots the marginal trade encoded in the tables: the
+finite-difference slopes of lift and drag, lift gained against drag
+paid per further degree of angle of attack, at both propulsive
+conditions. Past ${\approx}14^\circ$ each additional degree buys
+less lift than the drag it costs, with or without power, even though
+the power-on lift itself keeps rising to $40^\circ$: the arrest
+angle of Table~\ref{tab:closed_loop_alpha} is no accident of the
+tables' breakpoints but the crossing of that trade, and the recovery
+settles exactly on the optimality frontier. The early reversal has
+the complementary explanation: nose-down deflection carries its own
+drag (Eq.~\eqref{eq:cd_riley}), and the optimum stops paying for it
+as soon as the pitch rate it has built will carry the angle of
+attack through on its own. The two angles sit on opposite sides of
 $\alpha_s$ because they answer different questions: when to reverse
 the elevator during the transient (early, with momentum in hand),
 and where to ride once the descent is being arrested (at the edge of
@@ -1106,8 +1114,6 @@ state space, not a schedule in time. Together,
 simultaneous full power and nose-down elevator, pull-up once the wing
 unstalls, these two features are the structural fingerprint of the
 CAA recovery sequence.
-
-\input{tables/table_closed_loop_alpha}
 
 \begin{figure}[H]
     \centering

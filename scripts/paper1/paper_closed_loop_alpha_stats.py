@@ -77,15 +77,12 @@ def main():
 
     table = r"""\begin{table}[H]
     \centering
-    \caption{Closed-loop angle-of-attack statistics of the optimal
-    recovery across the stalled-entry envelope
-    ($\alpha_0 \in \{16, 18, 20, 22, 25\}^\circ$,
-    $V_0/V_s \in \{0.70, \ldots, 1.00\}$; %(nok)d of %(ntot)d entries
-    recovered, flown through the engine lag). The reversal angle is
-    the angle of attack at the first push-to-pull sign change of the
-    commanded elevator; the arrest angle is the mean angle of attack
-    while the descent is being arrested ($\gamma < -0.5^\circ$ and
-    rising).}
+    \caption{Where the flown recoveries reverse and ride: closed-loop
+    statistics over %(ntot)d stalled entries
+    ($\alpha_0 = 16$--$25^\circ$, $V_0 = 0.70$--$1.00\,V_s$, engine
+    lag on; %(nok)d recovered). Reversal: first push-to-pull sign
+    change of the commanded elevator. Arrest: mean $\alpha$ while the
+    descent is being arrested ($\gamma < -0.5^\circ$ and rising).}
     \label{tab:closed_loop_alpha}
     \begin{tabular}{l c c c}
         \toprule
