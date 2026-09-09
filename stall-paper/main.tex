@@ -921,7 +921,42 @@ keeping the solver compute-bound.
 \label{sec:4dof_solver}
 
 The state-action space is discretized as detailed in
-Table~\ref{tab:4dof_discretization}.
+Table~\ref{tab:4dof_discretization}. The stage reward retains the
+pure altitude-loss structure of the infinite-horizon formulation,
+\begin{equation}
+    g(s, a) = V \sin\gamma \,\Delta t,
+    \label{eq:reward_4dof}
+\end{equation}
+stated here in reward (maximization) form, the negated altitude term
+of the Case I cost, with the absorbing success set
+$\{\gamma \geq 0\}$. Two deliberate differences from the
+Case I objective of Eq.~\eqref{eq:reward-3dof} follow from the
+higher model fidelity. First, the quadratic bank-rate smoothing
+penalty inherited from \cite{Bunge2018} has no counterpart here. In
+the reduced-order model the bank rate is a free kinematic input, so
+infinitely many roll histories tie and the penalty stands in for
+the unmodeled actuation. Here the actuation \emph{is} modeled: the
+elevator acts through the moment chain
+$\delta_e \to C_m \to \dot{q} \to q \to \dot{\alpha}$, whose inertia
+and stall-amplified pitch damping (Fig.~\ref{fig:riley_coeffs}c)
+low-pass filter the command. Residual action ties on the constraint
+arc still produce bang-bang switching in the raw policy map (the
+discrete approximation of the singular-arc equivalent control,
+Sec.~\ref{sec:time_domain}), but the plant dynamics absorb
+it: $\alpha(t)$ rides the stall boundary smoothly, and
+the closed-loop altitude loss is insensitive to command smoothing
+within $0.3$\,m. The objective remains pure altitude loss. Second,
+unlike Case~I, whose commanded lift is bounded within safe limits,
+the 4-DOF model resolves the post-stall aerodynamics and can
+genuinely crash. The catastrophic terminal set
+$\{|\alpha| \geq 40^\circ\} \cup \{\gamma \leq -\pi + 0.05\}$
+(angle-of-attack departure beyond the wind-tunnel data, or a
+near-vertical inverted dive) carries a fixed penalty of
+$-1000\,V_s$. Its $\alpha = +40^\circ$ branch is the upper edge of
+the grid, where the penalty is pre-assigned to the terminal cells
+and propagates inward through the multilinear backup; the negative
+branch and the inverted dive lie outside the grid and are detected
+during integration.
 
 \begin{table}[H]
 \centering
@@ -946,76 +981,23 @@ Throttle position ($\delta_t$) & $0.0$ & $1.0$ & 11 & $0.1$ (--) \\
 \end{tabular}
 \end{table}
 
-The stage reward retains the pure altitude-loss structure of the
-infinite-horizon formulation,
-\begin{equation}
-    g(s, a) = V \sin\gamma \,\Delta t,
-    \label{eq:reward_4dof}
-\end{equation}
-stated here in reward (maximization) form, the negated altitude term
-of the Case I cost, with the absorbing success set
-$\{\gamma \geq 0\}$. Two deliberate differences with respect to the
-Case I objective of Eq.~\eqref{eq:reward-3dof} deserve note. First,
-the quadratic bank-rate smoothing penalty inherited from
-\cite{Bunge2018} has no counterpart here, and its absence is a
-consequence of the higher model fidelity rather than an omission. In
-the reduced-order model the bank rate is a free kinematic input
-($\dot{\mu} = \dot{\mu}_{cmd}$, with no roll inertia or actuation
-cost), so infinitely many roll histories achieve identical altitude
-loss; the resulting ties fragment the discrete policy, and the
-quadratic penalty acts as a surrogate for the unmodeled actuation
-physics. In the 4-DOF formulation the actuation \emph{is} modeled: the
-elevator acts through the moment chain
-$\delta_e \to C_m \to \dot{q} \to q \to \dot{\alpha}$, whose inertia
-and stall-amplified pitch damping (Fig.~\ref{fig:riley_coeffs}c)
-low-pass filter the command. Residual action ties on the constraint
-arc still produce bang-bang switching in the raw policy map (the
-discrete approximation of the singular-arc equivalent control analyzed
-in the sliding-mode discussion below), but the plant dynamics absorb
-it: the resulting $\alpha(t)$ rides the stall boundary smoothly, and
-the closed-loop altitude loss is insensitive to command smoothing to
-within $0.3$\,m. The objective can therefore remain pure altitude
-loss: the physically meaningful quantity, uncontaminated by tuning
-weights. Consistently, every closed-loop evaluation reported in this
+Every closed-loop evaluation reported in this
 section executes the policy through the barycentric action blend: at
 an off-grid state, the commanded action is the convex combination of
 the argmax actions of the $16$ surrounding vertices under the weights
-of Eq.~\eqref{baricentric_eq}. This is not a smoothing applied to the
-optimum for convenience; it is the solution concept the converged
-policy requires.
+of Eq.~\eqref{baricentric_eq}. Section~\ref{sec:time_domain} shows
+why the blend is the solution concept the converged policy requires
+and not a smoothing: the optimal law is bang-bang on a switching
+surface, and since the plant is affine in each control channel (the
+elevator enters $C_L$ and $C_m$ linearly, the throttle through
+$C_T$, in which the tables are interpolated linearly), the blend
+realizes the Filippov solution \cite{Filippov1988} on that surface.
+Evaluated greedily instead (re-deriving the $\arg\max$ at the
+continuous state, which discards the combination), the policy
+chatters between the bang-bang extremes and the pitch-rate
+overshoot costs several times the altitude.
 
-The optimal feedback law is bang-bang with a switching surface, so
-on that surface solutions are of Filippov type \cite{Filippov1988},
-and the combination that holds the state there is the equivalent
-control of sliding-mode theory \cite{Utkin1977}. Because the plant
-is affine in each control channel (the elevator enters $C_L$ and
-$C_m$ linearly, and the throttle through $C_T$, in which the tables
-are interpolated linearly), the barycentric action blend realizes
-the Filippov solution rather than approximating it: the residual is
-$0.6\%$ of the field magnitude in the elevator channel at the
-canonical entry, the cross-channel and quadratic-drag corrections
-are bounded by the $\pm 0.3$\,m execution band quoted throughout,
-and the equivalent control recovered on the sliding arc,
-$\bar{\delta}_e \approx -5^\circ$, is confirmed independently in
-Sec.~\ref{sec:pilot_sensitivity}. The argument is exercised only in
-the elevator channel, since the throttle commands full power almost
-everywhere (Sec.~\ref{sec:policy_structure}). Evaluated greedily instead
-(re-deriving the $\arg\max$ at the continuous state, which discards
-the combination), the policy chatters between the bang-bang
-extremes and the pitch-rate overshoot costs several times the
-altitude.
-
-Unlike Case~I, whose commanded lift is bounded within safe limits,
-the 4-DOF model resolves the post-stall aerodynamics and can
-genuinely crash. The catastrophic terminal set
-$\{|\alpha| \geq 40^\circ\} \cup \{\gamma \leq -\pi + 0.05\}$
-(angle-of-attack departure beyond the wind-tunnel data, or a
-near-vertical inverted dive) carries a fixed penalty of
-$-1000\,V_s$. Its $\alpha = +40^\circ$ branch is the upper edge of
-the grid, where the penalty is pre-assigned to the terminal cells
-and propagates inward through the multilinear backup; the negative
-branch and the inverted dive lie outside the grid and are detected
-during integration. Each Bellman transition integrates the dynamics
+Each Bellman transition integrates the dynamics
 over a control interval of $\Delta t = 0.01$\,s subdivided into ten
 RK4 micro-steps of $1$\,ms, executed entirely within GPU registers;
 success and crash crossings are detected at micro-step resolution,
@@ -1024,14 +1006,12 @@ formulation uses the 16-vertex ($2^4$) instance of the barycentric
 interpolation of Eq.~\eqref{baricentric_eq}.
 
 Two further conventions govern every closed-loop number reported in
-this section. First, the stage reward of
-Eq.~\eqref{eq:reward_4dof} is the altitude increment alone: all
-shaping weights available in the solver (pitch-rate penalty,
-angle-of-attack barrier, control-effort and throttle terms) are set to
-zero, and the only non-altitude contribution anywhere in the
-objective is the terminal crash penalty. This matters for the
-interpretation of Sec.~\ref{sec:policy_structure}: neither full
-throttle nor a switch near $\alpha_s$ is incentivized by a weight.
+this section. First, all shaping weights available in the solver
+(pitch-rate penalty, angle-of-attack barrier, control-effort and
+throttle terms) are zero; the only non-altitude term in the
+objective is the crash penalty. Neither full throttle nor the
+switch near $\alpha_s$ in Sec.~\ref{sec:policy_structure} is
+incentivized by a weight.
 
 Second, the altitude loss of a rollout is measured by a
 \emph{dive-and-return} rule.\label{sec:metric} The episode is integrated at the control
@@ -1172,30 +1152,29 @@ return any feedback law over a $14.9$-million-state grid returns
 one expressible in the language of the certified procedure is the
 substantive finding of this subsection.
 
-\subsection{Time-Domain Recovery and the Sliding-Mode Regime}
+\subsection{Flying the Optimum: Time-Domain Recovery and the
+Monte Carlo Certificate}
 \label{sec:time_domain}
 
 The optimal policy of the preceding subsection is a field of
-commands over the state space; this subsection flies it.
+commands; this subsection flies it.
 Figure~\ref{fig:4dof_trajectory_riley} shows the closed-loop
 recovery from the canonical deep-stall entry (level flight,
 $\gamma_0 = 0$; $\alpha_0 = 20^\circ$; $V_0 = 0.85\,V_s$;
 $q_0 = 0$) under the exact DP policy, overlaid with the two
-certified procedures flown from the same entry by an identical
-scripted pilot: nose-down $\delta_e = +15^\circ$ held until the
+certified procedures flown from the same entry. Both procedures use
+one scripted pilot: nose-down $\delta_e = +15^\circ$ held until the
 unstall event, then a closed-loop pull that holds
 $\alpha \approx 13^\circ$
 ($\delta_e = \mathrm{clip}(K_\alpha (\alpha - \alpha_{tgt}) + K_q q)$
-with $K_\alpha = 10$, $K_q = 2$), with power ramping to full over
-$2$\,s starting at $t = 0$ (CAA) or at the unstall event (FAA).
+with $K_\alpha = 10$, $K_q = 2$). Power ramps to full over $2$\,s
+from $t = 0$ (CAA) or from the unstall event (FAA).
 Pitch technique and pull authority are shared across the three
-maneuvers by construction, so whatever separates their trajectories
-traces to the one channel in which they differ: when power is
-applied. The entry speed is $0.85\,V_s$ rather than the
+maneuvers by construction, so the trajectories differ only in when
+power is applied. The entry speed is $0.85\,V_s$ rather than the
 $0.95\,V_s$ used before the propeller was calibrated: under Riley's
-thrust the aeroplane recovers from $0.95\,V_s$ without ever leaving
-controlled flight, so that entry no longer poses the problem this
-section is about.
+thrust the aeroplane recovers from $0.95\,V_s$ without leaving
+controlled flight.
 
 \begin{figure}[H]
     \centering
@@ -1221,33 +1200,42 @@ section is about.
     \label{fig:4dof_trajectory_riley}
 \end{figure}
 
-The recovery unfolds in three phases: full nose-down elevator and
-full power at once (the angle of attack falls from $20^\circ$ to
-the stall boundary in $0.41$\,s, while the lagged engine needs
-$1.95$\,s to deliver $90\%$ of the thrust commanded at $t = 0$); a
-\emph{sliding-mode} arc that rides the boundary
-($\bar{\alpha} = 13.3^\circ$) for the remainder of the pullout; and
-the level-off. The chattering elevator of panel~(e) is the discrete
-action set's approximation of the intermediate \textit{equivalent
-control} \cite{Utkin1977} that holds the state on the constraint
-surface (its time average is $-6.4^\circ$), the classical signature
-of a singular arc realized by a bang-bang policy
-\cite{BrysonHo1975}. The total loss is $19.8$\,m, and half of it is
+The recovery unfolds in three phases. First, full nose-down
+elevator and full power at once: the angle of attack falls from
+$20^\circ$ to the stall boundary in $0.41$\,s, while the lagged
+engine needs $1.95$\,s to deliver $90\%$ of the thrust commanded at
+$t = 0$. Second, a \emph{sliding-mode} arc rides the boundary for
+the remainder of the pullout ($\bar{\alpha} = 13.3^\circ$; the
+arrest statistic of Table~\ref{tab:closed_loop_alpha}, averaged
+only while the climb is being established, puts the same floor at
+$13.9^\circ$). Third, the level-off. The chattering elevator of
+panel~(e) is the discrete action set's approximation of the
+intermediate \textit{equivalent control} \cite{Utkin1977} that
+holds the state on the constraint surface; its time average is
+$-6.4^\circ$. This is the classical signature of a singular arc
+realized by a bang-bang policy \cite{BrysonHo1975}. On the arc the
+blend of Sec.~\ref{sec:4dof_solver} realizes the equivalent control
+rather than approximating it: the elevator-channel residual is
+$0.6\%$ of the field magnitude at the canonical entry, and the
+cross-channel and quadratic-drag corrections stay inside the
+$\pm 0.3$\,m execution band. Sec.~\ref{sec:pilot_sensitivity}
+confirms the equivalent control independently. Only the elevator is
+at stake: the throttle commands full power almost everywhere. The total loss is $19.8$\,m, and half of it is
 the engine's: the same policy flown on an instantaneous propeller
-loses $9.4$\,m, so the optimum is not exempt from the lag; it is
-simply the arm that commands power earliest. Absolute losses
-throughout this section inherit the uncertainty of $\tau_e$ itself,
-$0.8 \pm 0.2$\,s, worth approximately $\pm 2$\,m here; the margins
-\emph{between} arms are far less sensitive, and are what the
-conclusions rest on. The scripted procedures differ from the
-optimum only in the power channel of panel~(f), and that is where
-their altitude goes: the $0.37$\,s FAA gating delay compounds
+loses $9.4$\,m; the optimum is simply the arm that commands power
+earliest. The scripted procedures differ from the
+optimum only in the power channel of panel~(f): the
+$0.37$\,s FAA gating delay compounds
 through the dive into a $3.9$\,m gap at recovery ($-32.2$ vs.\
-$-36.1$\,m), and the procedures give up $12.4$ and $16.3$\,m to the
+$-36.1$\,m). The procedures give up $12.4$ and $16.3$\,m to the
 optimum not through poor pitch flying, their pull rides the same
-boundary, but through later, slower power.
+boundary, but through later, slower power. Absolute losses
+throughout this section inherit the uncertainty of $\tau_e$,
+$0.8 \pm 0.2$\,s, worth approximately $\pm 2$\,m here; the margins
+\emph{between} arms are far less sensitive, and carry the
+conclusions.
 
-One entry, however well chosen, is an anecdote.
+One entry is an anecdote.
 Table~\ref{tab:montecarlo_scripted} flies the same three maneuvers
 from $1000$ Latin-hypercube samples of the stalled-entry set,
 through the same engine lag and with the scripted pulls capped,
@@ -1255,30 +1243,29 @@ entry by entry, to the pull authority the optimum commands there.
 The ranking of the canonical entry is the ranking of the set: the
 CAA sequence loses less altitude than the FAA sequence at
 $100.0\%$ of the sampled entries, with a median advantage of
-$4.8$\,m and never less than $0.2$\,m, while either procedure gives
-up a median $13.5$--$18.2$\,m to the exact optimum. The advantage
+$4.8$\,m, shrinking to $0.2$\,m at the closest entry. Either
+procedure gives up a median $13.5$--$18.2$\,m to the exact
+optimum. The advantage
 is milder than Gratton's two thirds because the scripted FAA pilot
-restores power at the very instant of unstall, the most favorable
-possible reading of the FAA sequence; any recognition delay widens
-the gap. The single entry that fails to close under every maneuver
-is itself instructive: at the slowest corner of the set
-($V_0 = 0.43\,V_s$, $\alpha_0 = 18^\circ$, $q_0 = +19^\circ$/s) the
+restores power at the instant of unstall, the most favorable
+reading of the FAA sequence; any recognition delay widens
+the gap. At the one entry not recovered by all three maneuvers, the
+slowest corner of the set
+($V_0 = 0.43\,V_s$, $\alpha_0 = 18^\circ$, $q_0 = +19^\circ$/s), the
 optimum and the CAA sequence recover while the FAA sequence,
 waiting for the unstall before restoring power, does not. Replacing
 the closed-loop pull by an open-loop full pull
-($\delta_e = -25^\circ$ held) is worse than any of this: it
-re-stalls the wing and prevents the recovery outright, a failure
-mode not commensurable with power timing and taken up in
-Sec.~\ref{sec:pilot_sensitivity}.
+($\delta_e = -25^\circ$ held) re-stalls the wing and prevents the
+recovery outright, a failure mode not commensurable with power
+timing and taken up in Sec.~\ref{sec:pilot_sensitivity}.
 
 \input{tables/table_montecarlo_scripted}
 
-For the Riley model the conclusion is therefore unambiguous: the
-minimum-altitude-loss recovery has the CAA structure (full power
-applied simultaneously with the nose-down input, followed by a pull
+For the Riley model the minimum-altitude-loss recovery has the CAA
+structure (full power simultaneous with the nose-down input, pull
 initiated at the stall boundary), and the ranking holds over the
-stalled-entry set rather than at a single entry, exactly as the
-flight tests of \cite{Gratton2014} rank it.
+stalled-entry set, exactly as the flight tests of
+\cite{Gratton2014} rank it.
 
 
 \FloatBarrier
