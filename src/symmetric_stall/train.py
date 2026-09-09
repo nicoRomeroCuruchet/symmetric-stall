@@ -563,6 +563,7 @@ def plot_heatmaps(
     alpha_window_deg: tuple[float, float] = (-5.1, 20.1),
     alpha_s_deg: float | None = None,
     stamp_label: str | None = None,
+    boundary: bool = False,
 ) -> None:
     """Generates the 3x3 heatmap figure (elevator, throttle, altitude loss).
 
@@ -628,6 +629,30 @@ def plot_heatmaps(
             A_mesh, G_mesh, de_slice,
             cmap="plasma", vmin=-25, vmax=15, shading="gouraud",
         )
+        if boundary:
+            # Switching boundary: per gamma row, the interpolated alpha
+            # where the commanded elevator changes sign (push to pull).
+            xs, ys = [], []
+            for r in range(de_slice.shape[0]):
+                col = de_slice[r]
+                neg = np.where(col < 0)[0]
+                if len(neg) == 0 or neg[-1] + 1 >= len(alpha_deg):
+                    continue
+                k = neg[-1]
+                d0, d1 = col[k], col[k + 1]
+                t = d0 / (d0 - d1) if d1 != d0 else 0.5
+                xs.append(alpha_deg[k] + t * (alpha_deg[k + 1] - alpha_deg[k]))
+                ys.append(gamma_deg[r])
+            axes[i, 0].plot(xs, ys, color="white", lw=1.4)
+            # Dashed line: the mean alpha of the boundary in this panel,
+            # its value written at the foot of the line.
+            mean_x = float(np.mean(xs))
+            axes[i, 0].axvline(mean_x, color="white", ls="--", lw=1.0)
+            axes[i, 0].text(mean_x, gamma_deg.min() + 4.0,
+                            rf"${mean_x:.1f}°$", color="white",
+                            ha="center", va="bottom", fontsize=11)
+            axes[i, 0].set_xlim(alpha_deg.min(), alpha_deg.max())
+            axes[i, 0].set_ylim(gamma_deg.min(), gamma_deg.max())
         # Throttle
         axes[i, 1].pcolormesh(
             A_mesh, G_mesh, dt_slice,
@@ -652,18 +677,21 @@ def plot_heatmaps(
 
     titles = ["Policy for Elevator", "Policy for Throttle", "Altitude Loss"]
     for j, title in enumerate(titles):
-        axes[0, j].set_title(title, pad=10)
+        axes[0, j].set_title(title, pad=10, fontsize=14)
+    for ax_row in axes:
+        for ax in ax_row:
+            ax.tick_params(labelsize=12)
 
     alpha_ticks = (
         [0, 10, 20] if alpha_window_deg[0] > -6.0
         else [-40, -30, -20, -10, 0, 10, 20]
     )
     for j in range(3):
-        axes[2, j].set_xlabel(r"$\alpha$ (deg)")
+        axes[2, j].set_xlabel(r"$\alpha$ (deg)", fontsize=14)
         axes[2, j].set_xticks(alpha_ticks)
 
     for i in range(3):
-        axes[i, 0].set_ylabel(r"$\gamma$ (deg)")
+        axes[i, 0].set_ylabel(r"$\gamma$ (deg)", fontsize=14)
         axes[i, 0].set_yticks([0, -30, -60, -90])
 
     # Colorbars

@@ -1053,18 +1053,19 @@ completed recovery.
 
 Figure~\ref{fig:4dof_policy_riley} presents the converged solution
 over the $(\alpha, \gamma)$ plane at the $q = 0$ slice, one row per
-normalized airspeed $V_0/V_s \in \{0.9, 1.0, 1.1\}$. The left and
-middle columns are the exact DP policies for commanded elevator
-($\delta_e^*$) and throttle ($\delta_t^*$); the right column is the
-converged value function, read as the minimum altitude loss to
-recovery from each state. In the elevator maps, dark blue is full
-nose-up command and yellow full nose-down; the dotted line marks the
-power-off stall angle $\alpha_s = 14^\circ$ of
-Sec.~\ref{sec:riley_aero}.
+airspeed $V_0/V_s \in \{0.9, 1.0, 1.1\}$: the exact DP policies for
+commanded elevator ($\delta_e^*$) and throttle ($\delta_t^*$), and
+the value function read as minimum altitude loss to recovery. In the
+elevator maps dark blue is full nose-up, yellow full nose-down, and
+the white curve traces the switching boundary, with the dashed
+line at its mean angle of attack. The surface lives in
+four dimensions, and Fig.~\ref{fig:policy_q_slices} sweeps
+the pitch rate: with nose-down rotation in hand the boundary shifts
+higher, about $2^\circ$ per $10$\,deg/s, with nose-up it drops.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.75\textwidth]{img/riley_symmetric_stall_heatmaps.png}
+    \includegraphics[width=0.63\textwidth]{img/riley_symmetric_stall_heatmaps.png}
     \caption{Exact DP heatmaps for the 4-DOF symmetric stall recovery
     with the Riley (1985) propulsion-coupled aerodynamic model: optimal
     commanded elevator ($\delta_e^*$), throttle ($\delta_t^*$), and
@@ -1072,6 +1073,19 @@ Sec.~\ref{sec:riley_aero}.
     (slice $q = 0$). The altitude-loss column is the solver's own
     cost-to-absorption on the ideal engine.}
     \label{fig:4dof_policy_riley}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.70\textwidth]{img/policy_q_slices.pdf}
+    \caption{The commanded-elevator policy at $V/V_s = 0.9$, at
+    nose-down (top row) and nose-up (bottom row) pitch-rate slices;
+    the $q = 0$ slice is in Fig.~\ref{fig:4dof_policy_riley}. The
+    solid white curve traces the switching boundary at this airspeed,
+    for each $\gamma$, the angle of attack where the commanded
+    elevator flips from push to pull; the dashed line marks the mean
+    angle of attack of that boundary.}
+    \label{fig:policy_q_slices}
 \end{figure}
 
 Two structural features stand out. First, the throttle policy
@@ -1082,77 +1096,63 @@ closed-loop trajectories initiated across the deep-stall envelope
 command full nose-down deflection ($\delta_e = +15^\circ$) until the
 angle of attack falls through that surface, at which point the policy
 switches to nose-up commands, regardless of how long that takes from
-each initial condition. Table~\ref{tab:closed_loop_alpha} quantifies
+each initial condition.
+
+The displacement of the boundary is the kinematics of the reversal
+made visible. Since $\dot{\alpha} = q - \dot{\gamma}$, a nose-down
+pitch rate means the angle of attack is already falling on its own:
+the rotation the push exists to build is already in hand, and
+holding the deflection longer buys only elevator drag
+(Eq.~\eqref{eq:cd_riley}). The optimum therefore releases the push
+early, at higher angle of attack, and lets the rotation complete the
+crossing; with nose-up rate working against it, the mirror argument
+holds, and it keeps pushing to lower angles of attack before
+reversing.
+
+Table~\ref{tab:closed_loop_alpha} quantifies
 both features on closed-loop trajectories, flown through the engine
-lag across the stalled-entry envelope: the commanded elevator
-reverses at a median angle of attack of $17.2^\circ$, well before
-the boundary, and the arrested descent then rides at
-$\alpha = 13.9^\circ$ with a spread of two tenths of a degree across
-every recovered entry.
+lag across the stalled-entry envelope, and its two rows read very
+differently. The commanded elevator reverses at angles of attack
+that span $15.0$--$20.6^\circ$ across the entries, with a median of
+$17.2^\circ$: \emph{when} to switch adapts to each recovery. The
+arrested descent then rides at $\alpha = 13.9^\circ$ with a spread
+of two tenths of a degree across every recovered entry:
+\emph{where} to fly the pull does not.
 
 \input{tables/table_closed_loop_alpha}
 
-Figure~\ref{fig:alpha_trade} explains why the recovery settles
-there. It plots the marginal trade encoded in the tables: the
-finite-difference slopes of lift and drag, lift gained against drag
-paid per further degree of angle of attack, at both propulsive
-conditions. Past ${\approx}14^\circ$ each additional degree buys
-less lift than the drag it costs, with or without power, even though
-the power-on lift itself keeps rising to $40^\circ$: the arrest
-angle of Table~\ref{tab:closed_loop_alpha} is no accident of the
-tables' breakpoints but the crossing of that trade, and the recovery
-settles exactly on the optimality frontier. The early reversal has
-the complementary explanation: nose-down deflection carries its own
-drag (Eq.~\eqref{eq:cd_riley}), and the optimum stops paying for it
-as soon as the pitch rate it has built will carry the angle of
-attack through on its own. That anticipation is visible in the
-policy itself: the surface's crossing sits at $13.4^\circ$ on the
-$q = 0$ slice of Fig.~\ref{fig:4dof_policy_riley} and tilts to
-$17^\circ$ at the $q \approx -20$\,deg/s the trajectories carry at
-reversal (Fig.~\ref{fig:policy_q_slices}). The two angles sit on opposite sides of
-$\alpha_s$ because they answer different questions: when to reverse
-the elevator during the transient (early, with momentum in hand),
-and where to ride once the descent is being arrested (at the edge of
-the trade). The switching criterion is in any case a surface in
-state space, not a schedule in time. Together,
-simultaneous full power and nose-down elevator, pull-up once the wing
-unstalls, these two features are the structural fingerprint of the
-CAA recovery sequence.
+Each row has its physical explanation. In the arrest phase every
+recovered simulation seeks the same angle of attack, around
+$14^\circ$ (the arrest row of Table~\ref{tab:closed_loop_alpha}),
+and Fig.~\ref{fig:alpha_trade} says why: it plots the marginal
+trade encoded in the tables, lift gained against drag paid per
+further degree of angle of attack, at both propulsive conditions.
+Past ${\approx}14^\circ$ each additional degree buys less lift than
+the drag it costs, with or without power, even though the power-on
+lift keeps rising to $40^\circ$: there is a single best angle to
+fly the pull, the crossing of that trade, and every recovery
+converges to it. The flexible row is the mechanism of
+Fig.~\ref{fig:policy_q_slices} at work: each trajectory arrives at
+the reversal with its own pitch rate, and at the
+$q \approx -20$\,deg/s they typically carry, the boundary sits near
+$17^\circ$ at the shallow flight-path angles where the reversals
+occur. The maneuver is thus adaptive where the state demands it,
+the timing of the reversal, and rigid where the aerodynamics does,
+the operating point of the pull; the switching criterion is in any
+case a surface in state space, not a schedule in time. Together,
+simultaneous full power and nose-down elevator, pull-up once the
+wing unstalls, these are the structural fingerprint of the CAA
+recovery sequence.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.62\textwidth]{img/alpha_trade.pdf}
+    \includegraphics[width=0.46\textwidth]{img/alpha_trade.pdf}
     \caption{The marginal trade encoded in the Riley tables: lift
     gained vs.\ drag paid per degree of angle of attack, at both
-    propulsive conditions (finite differences at the table segment
-    midpoints). The curves cross near $\alpha_s = 14^\circ$ with or
-    without power: past it, each further degree costs more drag than
-    the lift it buys, even though the power-on lift keeps rising
-    (Fig.~\ref{fig:riley_coeffs}a). The shaded region marks the
-    unfavourable trade.}
+    propulsive conditions; the curves cross near
+    $\alpha_s = 14^\circ$ with or without power (shaded: the
+    unfavourable trade).}
     \label{fig:alpha_trade}
-\end{figure}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=\textwidth]{img/policy_q_slices.pdf}
-    \caption{The commanded-elevator policy over the
-    $(\alpha, \gamma)$ plane at $V/V_s = 0.9$, at nose-down (top
-    row) and nose-up (bottom row) pitch-rate slices; the $q = 0$
-    slice, with its crossing at $13.4^\circ$, is in
-    Fig.~\ref{fig:4dof_policy_riley}. The white dotted line travels
-    with each slice's median crossing (elevator zero crossing over
-    the recovery-relevant columns, $-40^\circ \le \gamma \le 0$,
-    $V \le 1.2\,V_s$); the faint one is fixed at
-    $\alpha_s = 14^\circ$. The pull/push boundary shifts by about
-    $2^\circ$ per $10$\,deg/s of pitch rate: with nose-down rotation
-    in hand the optimum reverses at higher angle of attack, with
-    nose-up rotation it pushes earlier. The tilt is the momentum
-    anticipation of the reversal, and reconciles the $q = 0$ maps
-    with the closed-loop reversal statistics of
-    Table~\ref{tab:closed_loop_alpha}, flown at
-    $q \approx -20$\,deg/s.}
-    \label{fig:policy_q_slices}
 \end{figure}
 
 The nature of that statement deserves emphasis, because it is not the
@@ -1203,30 +1203,24 @@ independent readings of the converged solution, and then measures what
 the alternative sequence costs.
 
 First, the converged
-policy array itself: $99.3\%$ of the non-terminal grid states inside
-the recovery-relevant window ($-14^\circ \le \alpha \le 20^\circ$,
+policy array itself: $99.7\%$ of the non-terminal grid states inside
+the recovery-relevant window ($-10^\circ \le \alpha \le 20^\circ$,
 $V \le 1.2\,V_s$, $-90^\circ \le \gamma \le 0$) command full throttle
-($92.7\%$ over all non-terminal states of the $5.6$-million-state
+($99.0\%$ over all non-terminal states of the $14.9$-million-state
 grid), so maximum power is
 not a feature of one trajectory but the argmax essentially everywhere
 a recovery can evolve. Second, the time-domain structure: rollouts
 from all nine initial conditions of the grid
 ($\alpha_0 \in \{16, 18, 20\}^\circ \times V_0/V_s \in
-\{0.90, 0.95, 1.00\}$) apply full throttle from the very first control
-interval, simultaneously with the elevator command; in seven of the
-nine, a brief nose-down hold ($\delta_e = +15^\circ$) precedes the
-pull and is terminated not at a fixed time but at a state event:
-the crossing of the stall boundary $\alpha \approx 14^\circ$, reached
-between $t^\ast = 0.12$ and $0.26$\,s depending on the initial
-condition. Third, the exception that sharpens the rule: at the two
-lowest-energy corners ($\alpha_0 = 16$--$18^\circ$,
-$V_0 = 0.90\,V_s$) the nose-down phase vanishes and the policy pulls
-immediately. Power-on lift grows monotonically with $\alpha$ well past
-the power-off stall (Fig.~\ref{fig:riley_coeffs}a), so when airspeed
-is scarce the optimum leans on slipstream lift rather than trading
-altitude for speed. The grid-wide invariant is the simultaneous full
-power; the duration of the pitch-down phase adapts to the energy
-state.
+\{0.80, 0.85, 0.90\}$) apply full throttle from the very first control
+interval, simultaneously with the elevator command; in every one, a
+brief nose-down hold ($\delta_e = +15^\circ$) precedes the
+pull and is terminated not at a fixed time but at a state event,
+the crossing of the switching surface, reached
+between $t^\ast = 0.14$ and $0.31$\,s: later the deeper and slower
+the entry, exactly as a surface in state space demands. Third, the
+dense sweep below: over the entire stalled-entry plane, no timing of
+power ever beats the simultaneous one.
 
 To isolate the power-timing variable, the optimal elevator schedule
 was left untouched and only the throttle channel was perturbed: an
@@ -1236,49 +1230,44 @@ replicating the flight-test procedure); and a gated variant that
 withholds power until $\alpha < 14^\circ$: the FAA logic in
 idealized form, with zero recognition delay.
 Figures~\ref{fig:ic_optimum} and~\ref{fig:ic_procedures} report the
-comparison over a dense plane of stalled entries
-($\gamma_0 \in [-30^\circ, 0]$, $\alpha_0 \in [14^\circ, 20^\circ]$,
-$q_0 = 0$, one closed-loop rollout per node on a $31 \times 25$ grid)
-at the three airspeeds of the policy maps of
-Fig.~\ref{fig:4dof_policy_riley} ($0.90\,V_s$, $V_s$, and the
-accelerated-stall slice at $1.10\,V_s$), so the cost of an entry can be
-read against the switching surface that governs it. At the canonical IC the
+comparison over a dense plane of stalled entries at level entry
+($\alpha_0 \in [14^\circ, 20^\circ]$,
+$V_0/V_s \in [0.40, 0.90]$, $\gamma_0 = 0$, $q_0 = 0$; one
+closed-loop rollout per node on a $13 \times 101$ grid, every arm
+flown through the engine lag). At the canonical IC the
 loss grows monotonically with any withholding of power, from
-$7.80$\,m (optimal, simultaneous) to $17.87$\,m for the gated FAA
-logic and $30.54$\,m for the PD protocol; the continuous delay sweep
+$19.8$\,m (optimal, simultaneous) to $35.3$\,m for the gated FAA
+logic and $50.2$\,m for the PD protocol; the continuous delay sweep
 behind that ordering is taken up, as a pilot-execution error, in
 Sec.~\ref{sec:pilot_sensitivity}.
-Table~\ref{tab:caa_vs_faa} reports the same three arms at every
+Table~\ref{tab:caa_vs_faa} reports the arms at every
 initial condition of the $3 \times 3$ grid.
 
 \input{tables/table_caa_vs_faa}
 
 Figure~\ref{fig:ic_optimum} reports the optimum over that plane.
-Altitude loss is governed by the flight path: at $V_0 = 0.90\,V_s$ it
-runs from $16$--$18$\,m at level entry to $\approx 50$\,m from a
-$30^\circ$ descent, a span of $35$\,m that widens to $41$\,m at
-$V_s$.
-The dependence on the depth of the stall is weaker by more
-than an order of magnitude: traversing the entire stalled range
-$14^\circ \le \alpha_0 \le 20^\circ$ moves the loss by $1$--$2$\,m,
-which is why the contours run nearly parallel to the $\alpha_0$ axis.
-This is the quantitative form of the structural result of
+Altitude loss is governed by the energy state: the median loss runs
+from $11$\,m at $V_0 = 0.90\,V_s$ to $92$\,m at $0.40\,V_s$, a span
+of $81$\,m across the airspeed axis. The dependence on the depth of
+the stall is weaker by well over an order of magnitude: traversing
+the entire stalled range $14^\circ \le \alpha_0 \le 20^\circ$ moves
+the loss by under $2$\,m at any airspeed, which is why the contours
+run nearly parallel to the $\alpha_0$ axis. This is the quantitative
+form of the structural result of
 Sec.~\ref{sec:policy_structure}: how deeply the wing is stalled sets
-how long the nose-down phase lasts, but the altitude that phase costs
-is set by how fast the aircraft is already falling when the recovery
-begins.
+how long the nose-down phase lasts, but the altitude that phase
+costs is set by how much energy is missing when the recovery begins.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{img/fig_ic_optimum.pdf}
-    \caption{Altitude loss of the exact optimum over the stalled-entry
-    plane ($\alpha_0$ abscissa, $\gamma_0$ ordinate, $q_0 = 0$), at
-    the stalled-entry airspeeds of the policy maps of
-    Fig.~\ref{fig:4dof_policy_riley}; one closed-loop rollout per node
-    on a $31 \times 25$ grid, labeled contours on a shared scale. The
-    field is governed by $\gamma_0$ (a $35$\,m span at $0.90\,V_s$,
-    $41$\,m at $V_s$) and only weakly by $\alpha_0$ (under $2$\,m
-    across the entire stalled range).}
+    \includegraphics[width=0.62\textwidth]{img/fig_optimal_ic_heatmap.pdf}
+    \caption{Altitude loss of the exact optimum over the
+    stalled-entry plane ($V_0/V_s$ abscissa, $\alpha_0$ ordinate,
+    $\gamma_0 = q_0 = 0$); one closed-loop rollout per node on a
+    $13 \times 101$ grid, flown through the engine lag, with labeled
+    contours. The field is governed by the airspeed (an $81$\,m
+    median span from $0.90$ to $0.40\,V_s$) and only weakly by
+    $\alpha_0$ (under $2$\,m across the entire stalled range).}
     \label{fig:ic_optimum}
 \end{figure}
 
@@ -1291,100 +1280,83 @@ only difference between the rows. All three rows repeat one shared
 scale anchored at zero excess, so the ranking is read directly down
 each column. The CAA row is the floor imposed by the engine:
 reaching full power through a $2$\,s ramp rather than instantaneously
-costs $5$--$8$\,m at every stalled entry, and no procedure flown on this
-aircraft can avoid it. That floor is a property of the low-energy
-regime, not of the ramp: at $1.10\,V_s$ the same ramp costs under
-$5$\,m and falls below $0.1$\,m at the shallowest entries, because an
-aircraft entering the stall with surplus airspeed does not need the
-power it is waiting for. The FAA row is that floor plus the price of
-the doctrine, and the increment has structure: gating power on the
-unstall costs most toward the low-speed, shallow-descent entries:
-at $V_0 = 0.90\,V_s$ entered level the doctrine effect has a median
-of $3.9$\,m and peaks at $4.3$\,m (median excesses of $7.6$\,m for
-the CAA sequence against $11.1$\,m for the FAA), and decays to a
-median of $1.5$\,m by a $30^\circ$ descent,
-so a single headline number understates the penalty exactly where
-altitude margin is scarcest. Most of what either certified sequence
-gives up to the optimum is nevertheless the engine, not the doctrine,
-a distinction that bounds how much any revision of the published
-procedure could recover. The power-delayed row puts both in
-perspective: Gratton's deliberate $2$\,s pause costs $13$--$23$\,m
-over the optimum, dwarfing the engine floor and the doctrine effect
-alike.
+costs $9$--$12$\,m (median $11.3$\,m), nearly uniformly across the
+plane, and no procedure flown on this aircraft can avoid it:
+everywhere in the stalled regime the aircraft needs the power it is
+waiting for. The FAA row is that floor plus the price of the
+doctrine, and the increment has structure: gating power on the
+unstall costs most exactly where energy is scarcest, a median of
+$2.8$\,m at $V_0 = 0.90\,V_s$ growing to $18.9$\,m at $0.40\,V_s$
+($7.4$\,m over the plane), because the slower the entry, the longer
+the wing takes to unstall and the longer the gate withholds the
+power. A single headline number therefore understates the penalty
+exactly where altitude margin matters most. Most of what either
+certified sequence gives up to the optimum is nevertheless the
+engine, not the doctrine, a distinction that bounds how much any
+revision of the published procedure could recover. The power-delayed
+row puts both in perspective: Gratton's deliberate $2$\,s pause
+costs $28$--$31$\,m over the optimum, dwarfing the engine floor and
+the doctrine effect alike.
 
-The third airspeed of the policy maps, $1.10\,V_s$, was swept
-identically, and over its valid rows ($\gamma_0 \le -1^\circ$, $750$
-nodes) the ordering is the same at every node. Its level-entry row,
-however, is not a stall recovery, which is why the accelerated-stall
-slice is reported here rather than mapped. At $\gamma_0 = 0$ with
-$V_0 > V_s$ the entry sits on the boundary of the DP's absorbing
-level-flight set (the formulation rightly treats such a state as
-already recovered), and under full power the vertical force balance
-lifts it into that set within the first integration step
-($\dot{\gamma}(0) \approx +4\,^\circ$/s over $\alpha_0 =
-16$--$20^\circ$, the slipstream lift increment of the Riley tables of
-Sec.~\ref{sec:riley_aero} raising $C_L$ at fixed $\alpha$ enough to
-close the vertical balance above unity); past the boundary the
-recovery problem, and with it the policy, is simply not posed. A
-single degree of initial descent absorbs the transient entirely (the
-climb then peaks below $0^\circ$), so the boundary is sharp. The
-distinction mirrors the roles of the two figures: the policy maps of
-Fig.~\ref{fig:4dof_policy_riley} display the feedback law over
-\emph{states}, which recoveries legitimately traverse at $V > V_s$
-mid-dive, whereas the entry maps measure outcomes over \emph{stalled
-entries}, which are well posed on $V_0 \le V_s$. Across the two
-mapped airspeeds and the valid rows of the third ($2300$ entries),
-the ordering is unbroken:
+Across the $1313$ nodes of the plane, the ordering
 $|\Delta h_{\mathrm{opt}}| \le |\Delta h_{\mathrm{CAA}}| \le
-|\Delta h_{\mathrm{FAA}}| \le |\Delta h_{\mathrm{PD}}|$, without a
-single exception.
+|\Delta h_{\mathrm{FAA}}|$ holds without exception, and
+$|\Delta h_{\mathrm{FAA}}| \le |\Delta h_{\mathrm{PD}}|$ at all but
+three nodes in the lowest-energy corner ($V_0 = 0.40\,V_s$,
+$\alpha_0 \ge 19^\circ$), where the wing takes longer than
+Gratton's $2$\,s clock to unstall, the gate opens after it, and the
+two arms coincide to within $0.2$\,m. The exception proves the
+mechanism: the FAA gate \emph{is} a delay, of whatever duration the
+unstall happens to take.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.8\textwidth]{img/fig_ic_procedures.pdf}
+    \includegraphics[width=\textwidth]{img/fig_procedures_ic_heatmap.pdf}
     \caption{Excess altitude loss of each recovery procedure over the
     optimum of Fig.~\ref{fig:ic_optimum},
     $\Delta h_{\mathrm{opt}} - \Delta h_{\mathrm{proc}}$, from the
     same entries; all arms fly the DP-optimal elevator schedule, so
-    power timing is the only difference between rows. Top: CAA, full
-    power from $t = 0$ through a $2$\,s ramp: the floor imposed by
-    the engine itself. Middle: FAA, power gated on
+    power timing is the only difference between panels. Left: CAA,
+    full power from $t = 0$ through a $2$\,s ramp: the floor imposed
+    by the engine itself, nearly uniform. Middle: FAA, power gated on
     $\alpha < \alpha_s$, then the same ramp: the floor plus the
-    doctrine penalty, largest toward low-speed, shallow entries.
-    Bottom: Gratton's power-delayed protocol ($2$\,s pause, then the
-    ramp). The three rows repeat one shared viridis scale anchored
-    at zero excess, so the ranking reads directly down each column. On every
-    one of the $1550$ nodes shown, the ordering optimum $\le$ CAA
-    $\le$ FAA $\le$ PD holds without exception.}
+    doctrine penalty, largest toward the low-energy entries. Right:
+    Gratton's power-delayed protocol ($2$\,s pause, then the ramp).
+    The three panels share one scale anchored at zero excess, so the
+    ranking reads directly across.}
     \label{fig:ic_procedures}
 \end{figure}
 
-Both figures are confined to $q_0 = 0$ and to one plane of a
+Both figures are confined to $\gamma_0 = q_0 = 0$: one plane of a
 four-dimensional entry set. Table~\ref{tab:montecarlo} removes that
 restriction: every arm is flown from the same $1000$ Latin-hypercube
-samples spanning all four entry states over the certified domain
-$V_0 \le V_s$, so the interactions the planar maps cannot show are
-included. The ranking survives intact: the CAA sequence loses less
-than the FAA sequence at $100\%$ of the sampled entries, by a median
-of $1.32$\,m. But the certificate also records how thin the margin
-becomes at its narrowest, $0.05$\,m, which no aggregate figure would
+samples spanning all four entry states
+($\gamma_0 \in [-30^\circ, 0]$, $V_0/V_s \in [0.40, 0.90]$,
+$\alpha_0 \in [14^\circ, 20^\circ]$, $q_0 \in [-20, 20]^\circ$/s),
+so the interactions the planar maps cannot show are included.
+The ranking survives intact: the CAA sequence loses less than the
+FAA sequence at $100\%$ of the sampled entries, by a median of
+$5.9$\,m. But the certificate also records how thin the margin
+becomes at its narrowest, $0.18$\,m, which no aggregate figure would
 reveal.
 
 \input{tables/table_montecarlo}
 
-The ratios, not the absolute losses, are what may be compared against
-the flight tests: Gratton's protocol decelerates at $1$\,kt/s to the
-natural stall break ($V \lesssim V_s$, $\alpha$ just past critical),
-which corresponds to the level-entry edge ($\gamma_0 = 0$) of the
-low-speed panel. Under matched power-ramp modeling ($2$\,s ramp in
-both arms), the simultaneous sequence loses $0.61$--$0.62$ of the
-power-delayed figure along that edge at $V_0 = 0.90\,V_s$, in
-close agreement with the
-$\approx 0.6$ implied by the flight-test chain (CAA
-$\approx \tfrac{2}{3} \times$ FAA $\approx 0.9\times$ PD). Notably,
-Gratton's fleet included the Grumman AA-5A, a direct sibling of the
-AA-1 modeled here, which lost $120$\,ft under the CAA sequence versus
-$230$\,ft under the FAA sequence.
+The ratios, not the absolute losses, are what may be compared
+against the flight tests, and the comparison must respect what each
+arm idealizes: the gated arm is the FAA logic with zero recognition
+delay, so the FAA sequence as actually flown, with a human check in
+the loop, lies between it and the power-delayed protocol. Gratton's
+protocol decelerates at $1$\,kt/s to the natural stall break
+($V \lesssim V_s$), which corresponds to the fast edge of the
+mapped plane. Under matched power-ramp modeling, the simultaneous
+sequence loses $0.52$--$0.54$ of the power-delayed figure along the
+$V_0 = 0.90\,V_s$ row, against the $\approx 0.6$ implied by the
+flight-test chain (CAA $\approx \tfrac{2}{3} \times$ FAA
+$\approx 0.9\times$ PD). Notably, Gratton's fleet included the
+Grumman AA-5A, a direct sibling of the AA-1 modeled here, which lost
+$120$\,ft under the CAA sequence against $230$\,ft under the flown
+FAA: a ratio of $0.52$.
 
 \FloatBarrier
 \subsection{Time-Domain Recovery and the Sliding-Mode Regime}

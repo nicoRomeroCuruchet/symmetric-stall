@@ -5,14 +5,15 @@ across pitch-rate slices of the converged policy.
 Two rows of three panels: commanded elevator over the (alpha, gamma)
 plane at V/Vs = 0.9, nose-down slices q in {-10,-20,-30} deg/s on
 top and nose-up slices {+10,+20,+30} below (the q = 0 slice lives in
-the main policy figure). A white dotted line travels with each
-slice's median crossing; a faint fixed one marks alpha_s = 14. The
-boundary shifts ~2 deg per 10 deg/s of pitch rate: the momentum
-anticipation of the reversal, reconciling the q = 0 maps (crossing
-13.4 deg) with the closed-loop reversal statistics (median 17.2 deg,
-flown at q ~ -20 deg/s). Median crossing per the criterion of
-paper_switching_stats.py (-40 <= gamma <= 0, V <= 1.2 Vs, elevator
-zero crossing below alpha = 30 deg).
+the main policy figure). The solid white curve traces the switching
+boundary itself: the zero crossing of the commanded elevator along
+alpha, one point per gamma row. The boundary shifts ~2 deg per 10 deg/s of
+pitch rate: the momentum anticipation of the reversal, reconciling
+the q = 0 maps (crossing 13.4 deg) with the closed-loop reversal
+statistics (median 17.2 deg, flown at q ~ -20 deg/s). Median
+crossing per the criterion of paper_switching_stats.py
+(-40 <= gamma <= 0, V <= 1.2 Vs, elevator zero crossing below
+alpha = 30 deg).
 
 Output: fig_policy_q_slices.{png,pdf} in paths.out_dir()
 (+ manuscript copy img/policy_q_slices.{png,pdf} if present).
@@ -35,8 +36,8 @@ V_TARGET = 0.9
 ALPHA_STALL = 14.0
 
 plt.rcParams.update({
-    "font.family": "serif", "mathtext.fontset": "stix", "font.size": 9,
-    "axes.labelsize": 10,
+    "font.family": "serif", "mathtext.fontset": "stix", "font.size": 12,
+    "axes.labelsize": 14,
 })
 
 
@@ -82,14 +83,35 @@ def main():
             de_slice = de_of[P[:, vi, :, qi]][gmask][:, amask_plot]
             ax.pcolormesh(adeg, gdeg, de_slice, cmap="plasma",
                           vmin=-25, vmax=15, shading="gouraud")
-            # Fixed faint reference at alpha_s; the white dotted line
-            # travels with the slice's own median crossing.
-            ax.axvline(ALPHA_STALL, color="0.6", ls=":", lw=0.8)
-            med = median_crossing(qi)
-            ax.axvline(med, color="white", ls=":", lw=1.4)
-            ax.set_title(rf"$q = {qt:+.0f}$ deg/s", fontsize=9)
-            ax.text(0.03, 0.06, rf"median crossing ${med:.1f}°$",
-                    transform=ax.transAxes, fontsize=8, color="white")
+            # The white curve traces the switching boundary itself at
+            # this panel's airspeed:
+            # the zero crossing of the commanded elevator along alpha,
+            # one point per gamma row.
+            xs, ys = [], []
+            am = alpha <= 30.0
+            for r, g_i in enumerate(np.where(gmask)[0]):
+                col = de_of[P[g_i, vi, :, qi]]
+                neg = np.where((col < 0) & am)[0]
+                if len(neg) == 0 or neg[-1] + 1 >= len(alpha):
+                    continue
+                k = neg[-1]
+                d0, d1 = col[k], col[k + 1]
+                t = d0 / (d0 - d1) if d1 != d0 else 0.5
+                xs.append(alpha[k] + t * (alpha[k + 1] - alpha[k]))
+                ys.append(gdeg[r])
+            ax.plot(xs, ys, color="white", lw=1.6)
+            # Dashed line: the mean alpha of the boundary drawn in
+            # this panel (same population as the curve).
+            mean_x = float(np.mean(xs))
+            ax.axvline(mean_x, color="white", ls="--", lw=1.1)
+            # Mean value written at the foot of the dashed line, on
+            # the alpha axis, per the manuscript's request.
+            ax.text(mean_x, gdeg.min() + 3.5, rf"${mean_x:.1f}°$",
+                    color="white", ha="center", va="bottom",
+                    fontsize=11)
+            ax.set_xlim(adeg.min(), adeg.max())
+            ax.set_ylim(gdeg.min(), gdeg.max())
+            ax.set_title(rf"$q = {qt:+.0f}$ deg/s", fontsize=13)
     for ax in axes[1]:
         ax.set_xlabel(r"$\alpha$ (deg)")
     for ax in axes[:, 0]:
