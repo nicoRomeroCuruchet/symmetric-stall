@@ -1279,10 +1279,11 @@ The policy is solved once, for the nominal aircraft; the aircraft
 actually flown differs from flight to flight in weight and CG
 position (fuel state, payload and its placement). This subsection
 flies the nominal policy, unchanged and uninformed, on the
-perturbed aircraft: mass from $-15\%$ to $+15\%$ in $2.5\%$ steps,
-CG from $10\%$ of chord forward to $22.5\%$ aft of the Riley
-reference, nine stalled entries per cell, $1638$ rollouts through
-the engine lag. The perturbation enters the dynamics only: the
+perturbed aircraft: mass from $-15\%$ to $+15\%$ in $2.5\%$ steps
+($\pm 107$\,kg on the $715$\,kg reference, a passenger with
+baggage), CG from $10\%$ of chord forward to $22.5\%$ aft of the
+Riley reference ($12$\,cm forward to $27$\,cm aft), nine stalled
+entries per cell, $1638$ rollouts through the engine lag. The perturbation enters the dynamics only: the
 observation keeps the nominal stall speed, so the policy believes
 the aircraft is nominal. Entries are placed relative to the real
 stall speed of the perturbed aircraft. Pitch inertia is
@@ -1305,50 +1306,45 @@ general-aviation accidents.
 
 Figure~\ref{fig:robustness_matrix} reports the excess loss at the
 canonical entry. The matrix is smooth and monotone: mass dominates
-($-13.8$\,m at $-15\%$ mass to $-29.8$\,m at $+15\%$, nominal CG),
-the CG modulates ($+2.9$\,m at $10\%$ forward, where the added
-nose-down moment fights the pull; $-3.2$\,m at $15\%$ aft, where it
-helps). Two properties hold everywhere. The policy never re-stalls
-the aircraft: in $1638$ rollouts the angle of attack never exceeds
-its entry value by more than $0.9^\circ$, because the switching
-surface that organizes the recovery is set by the stall boundary of
-the tables and does not move with the trim. And $1635$ of $1638$
-entries recover. The three that do not share one corner, $+15\%$
-mass with the CG at the aft data edge: still descending at the
-$15$\,s cutoff with $21$\,m lost, $\alpha$ settled at $16^\circ$,
-the aft CG having removed the pitch stiffness that would bring the
-heavy wing back to the boundary.
+($-13.8$\,m at $-15\%$ to $-29.8$\,m at $+15\%$, nominal CG), the
+CG modulates ($+2.9$\,m at $10\%$ forward, $-3.2$\,m at $15\%$ aft:
+the nose-down moment fights the pull, the aft CG relieves it). The
+policy never re-stalls the aircraft: over $1638$ rollouts $\alpha$
+never exceeds its entry value by more than $0.9^\circ$, because the
+switching surface is set by the stall boundary of the tables and
+does not move with the trim. $1635$ of $1638$ entries recover; the
+three that do not are one corner, $+15\%$ mass with the CG at the
+aft data edge, still descending at the $15$\,s cutoff.
 
-Above $+10\%$ a slower failure appears. On a $120$\,s horizon the
+The aft-CG credit is not a loading recommendation. The same shift
+that relieves the pull also removes pitch stiffness once the wing
+unstalls, which is why the three failures sit at the aft data
+edge. And the matrix measures the cost of recovering, not the
+propensity to stall: an aft-loaded aircraft is less stable and
+easier to stall in the first place.
+
+Above $+10\%$ a slower failure appears: on a $120$\,s horizon the
 $+10$ and $+15\%$ rows settle into a steady powered descent
-($\gamma = -0.50^\circ$ and $-1.21^\circ$, sink $0.27$ and
-$0.67$\,m/s) and never re-cross level; the $+5\%$ row climbs away.
-The descent is a force balance, not a policy artifact: at the
-airspeed the policy holds ($0.98$ and $1.01$ of the nominal $V_s$),
-sustaining the lift that level flight demands costs more net drag
-than the embedded thrust pays, the back side of the power curve;
-the computed balance reproduces the simulated $\gamma$ to two
-decimals. Level flight is feasible from $V^\ast = 0.99$ and
-$1.02$, just above what the policy holds. The failure is
-informational: the mis-scaled normalization hides that the aircraft
-must fly faster for its weight. It is also the cheapest defect in
-the study to repair: take-off weight is known before flight, and
-dividing the observation by the right $V_s$ costs nothing. The
-terminal state is not a hazard: wings level, full throttle, shallow
-descent, a condition a pilot takes over and lands from.
+($0.27$ and $0.67$\,m/s) and never re-cross level. The descent is
+a force balance: at the airspeed the policy holds, sustaining the
+lift that level flight demands costs more net drag than the
+embedded thrust pays, the back side of the power curve. The
+failure is informational: the mis-scaled normalization hides that
+the aircraft must fly faster for its weight, and the repair is
+free, take-off weight is known before flight. The terminal state
+is not a hazard: wings level, full throttle, shallow descent, a
+condition a pilot takes over and lands from.
 
-The ranges map onto the aircraft's loading decisions. Against the
-certificated ceiling of the Riley reference, half fuel is $-4\%$,
-an empty second seat $-11\%$; a light solo pilot on half tanks
-reaches the $-15\%$ edge. The rows above nominal correspond to no
-legal loading state. The plotted CG span covers every position
-achievable by loading this airframe: seats and fuel sit essentially
-at the CG, and even the full $45$\,kg baggage allowance, a meter
-aft, shifts it by about $5\%$ of chord. The matrix therefore spans
-every state this aircraft can depart in, legal or not: the nominal
-policy arrests the dive in all of them, and what it can miss,
-beyond the certificated weight, is the last degree of the
-level-off, removed by one pre-flight scalar.
+The ranges are the aircraft's loading decisions: half fuel is
+$-4\%$ ($\approx 30$\,kg), an empty second seat $-11\%$
+($\approx 80$\,kg), a light solo pilot on half tanks the $-15\%$
+edge; the rows above nominal correspond to no legal loading state,
+and the CG span covers every position loading can reach. The
+matrix therefore spans every state this aircraft can depart in,
+legal or not: the nominal policy arrests the dive in all of them,
+and the one thing it can miss, the last degree of the level-off
+beyond the certificated weight, is removed by one pre-flight
+scalar.
 
 
 \subsection{Sensitivity to Pilot Execution Errors}
