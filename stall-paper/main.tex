@@ -1181,7 +1181,7 @@ controlled flight.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.70\textwidth]{img/fig_trajectories_procedures_tau085.pdf}
+    \includegraphics[width=0.775\textwidth]{img/fig_trajectories_procedures_tau085.pdf}
     \caption{Time-domain comparison at the canonical deep-stall
     entry: exact DP policy (blue, solid) vs.\ the scripted CAA
     (orange, dashed) and FAA (green, dash-dotted) procedures.
@@ -1276,299 +1276,79 @@ stalled-entry set, exactly as the flight tests of
 \label{sec:robustness}
 
 The policy is solved once, for the nominal aircraft; the aircraft
-actually flown differs from flight to flight in weight and
-longitudinal CG position (fuel state, payload and its placement).
-This subsection quantifies the altitude cost of that mismatch: the
-nominal policy is flown, unchanged and uninformed, on aircraft
-perturbed by mass changes of up to $\pm 15\%$ and CG shifts of up to
-$\pm 7\%$ of the chord (the moment-transfer term of
-Eq.~\eqref{eq:cm_riley}), over the full IC grid: $441$ closed-loop
-rollouts. The negative mass range covers the realistic
-flight-to-flight envelope of the AA-1 (a light two-seater whose
-useful load is a large fraction of its weight); the Riley reference
-weight itself sits at the certificated ceiling, so the $+10$ to
-$+15\%$ rows represent an \emph{overload} stress case beyond the
-certificated maximum, included deliberately, overloading being a
-recurrent factor in general-aviation accidents. Three modeling conventions define the
-operational scenario. The perturbation enters the dynamics only: the
-observation normalization keeps the \emph{nominal} stall speed, so the
-policy believes the aircraft is nominal. Initial conditions are
-placed relative to the \emph{real} stall speed of the perturbed
-aircraft, $V_s\sqrt{m/m_{nom}}$: the physics of the stall break
-belongs to the real aircraft; the mismatch lives only in the policy's
-state normalization. And the pitch inertia is left unperturbed, since
-day-to-day load sits near the CG and its inertia contribution is
-second order. One consequence of the second convention should be
-stated at the outset: because the entry speed is scaled by the real
-$V_s$ while the observation is not, $84$ of the $441$ rollouts
-($19\%$, the light rows at the lower entry speeds) begin below the
-$V/V_s = 0.900$ floor of the state grid, where the barycentric read
-clamps to the boundary rather than extrapolating. Those cells measure
-the policy at a saturated query, and are discussed as such below.
-
-Figure~\ref{fig:robustness_matrix} reports the resulting mass--CG
-matrix at the canonical IC. Along the CG axis, at nominal weight,
-the loss varies smoothly from $1.9$\,m worse than nominal at the most
-forward position to $1.3$\,m better at the most aft, and every cell
-recovers: a forward CG adds nose-down moment that the pull must
-overcome, an aft CG relieves it. The nominal policy remains well
-matched across the whole envelope because the quantity that organizes
-it, the switching surface set by the stall boundary, is a
-property of the aerodynamic tables, not of the trim: shifting the CG
-moves the moment balance, not the $\alpha \approx \alpha_s$ boundary
-that triggers the pull.
-
-The mass axis is where the mismatch itself becomes visible, and below
-nominal weight it does something that at first reading looks wrong: the
-benefit of being light does not grow with how light the aircraft is. At
-the nominal CG, removing $5\%$ of the mass saves $1.2$\,m, removing
-$10\%$ saves only $0.6$\,m, and removing $15\%$ \emph{costs} $0.5$\,m
-more than the nominal aircraft. The non-monotonicity is not
-aerodynamic. Repeating the same three cells with the observation
-normalization corrected --- the policy told the real stall speed of the
-lighter aircraft, everything else unchanged --- recovers a strictly
-monotone trend of $1.97$, $3.75$ and $5.34$\,m saved, in increments of
-$1.97$, $1.78$ and $1.59$\,m per $5\%$ of mass removed. The physics is
-smooth, mildly sublinear and favourable throughout; what bends it back
-on itself is the single scalar the policy normalizes with.
-
-The mechanism is direct, and at the light end it is not merely a
-degradation but a saturation. A lighter aircraft stalls slower, so at
-the same fraction of its \emph{own} stall speed it is flying faster in
-absolute terms than the policy, dividing by the nominal $V_s$, believes.
-The policy therefore treats it as closer to the stall than it is and
-flies with margin it does not need. Below roughly $-10\%$ of the
-reference weight the mis-scaled observation leaves the state grid
-altogether: the canonical entry maps to $V/V_s = 0.876$ against a grid
-floor of $0.900$, and the barycentric read clamps to the boundary
-rather than extrapolating, so the policy stops responding to airspeed
-entirely. The consequence is visible only past the metric's horizon.
-Integrated for $60$\,s with the stopping rule removed, the
-nominally normalized light aircraft never damps: it holds a sustained
-phugoid whose $\gamma$ excursion grows from
-$[-8.6^\circ, +5.7^\circ]$ at $-5\%$ to $[-12.2^\circ, +12.6^\circ]$
-at $-15\%$, carrying $V/V_s$ as low as $0.70$ and thus
-below the grid floor in the low half of every cycle, so the reported
-loss is the first zero crossing of that oscillation. The oscillation
-therefore appears before the entry state itself leaves the grid: it is
-enough that the recovery transient does. The same policy on the same
-aircraft, given the correct $V_s$, settles to within $\gamma \in
-[-0.7^\circ, 2.2^\circ]$ across all three light rows and climbs away. The error grows with the mass
-deficit until it consumes the entire advantage of being light: at
-$-15\%$ the correctly normalized policy recovers in $2.5$\,m and the
-nominally normalized one in $8.3$\,m. Nearly six metres, on an
-aircraft that is easier to recover than the one the policy was
-designed for, attributable to one mis-scaled state. It is also the
-cheapest defect in the study to repair: take-off weight is known
-before the flight, and dividing by the right $V_s$ costs nothing.
-
-Read along the nominal-weight row, the CG axis grows monotonically and
-without surprises, from $+1.86$\,m of excess loss at the most forward
-position to $-1.28$\,m at the most aft, with no CG at which the policy
-degrades abruptly. What that row deliberately does \emph{not} report
-is the distance to a policy re-solved for the CG of the day. An
-operator has no such policy, so the gap to it measures a quantity
-nobody can act on, whereas the degradation of the one policy actually
-flown is the operationally meaningful figure.
+actually flown differs from flight to flight in weight and CG
+position (fuel state, payload and its placement). This subsection
+flies the nominal policy, unchanged and uninformed, on the
+perturbed aircraft: mass from $-15\%$ to $+15\%$ in $2.5\%$ steps,
+CG from $10\%$ of chord forward to $22.5\%$ aft of the Riley
+reference, nine stalled entries per cell, $1638$ rollouts through
+the engine lag. The perturbation enters the dynamics only: the
+observation keeps the nominal stall speed, so the policy believes
+the aircraft is nominal. Entries are placed relative to the real
+stall speed of the perturbed aircraft. Pitch inertia is
+unperturbed, day-to-day load sits near the CG. The negative mass
+range covers the AA-1's flight-to-flight envelope; the Riley
+reference weight is the certificated ceiling, so the positive rows
+are an overload stress case, a recurrent factor in
+general-aviation accidents.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.62\textwidth]{img/fig_robustness_matrix.png}
+    \includegraphics[width=0.75\textwidth]{img/fig_robustness_matrix.png}
     \caption{Excess altitude loss (m) of the \emph{nominal} policy
     flown on the perturbed aircraft, relative to the same policy on
-    the nominal aircraft ($-7.80$\,m, canonical IC), over the mass
-    change ($\pm 15\%$ of the reference weight) and CG shift ($\pm
-    7\%$ of $\bar{c}$, aft positive) envelope. Positive (red) =
-    additional loss; negative (blue) = less loss than nominal. Rows are
-    read as the weight of the day, columns as its placement. At nominal
-    weight the aft-CG credit is genuine; in the light rows the reported
-    value is the first zero crossing of a sustained oscillation and
-    understates the loss. Asterisks mark the $+10$ and $+15\%$ rows,
-    where the dive is arrested but the aircraft settles into a
-    \emph{steady} shallow descent and never regains level flight: their
-    values are losses at the $15$\,s cutoff, and lower bounds.
-    Daggers mark the two cells that reach $\gamma = 0$ while still
-    stalled; both are analysed in the text.}
+    the nominal aircraft ($-19.79$\,m, canonical entry). Positive
+    (red) = additional loss. Rows are read as the weight of the
+    day, columns as its placement.}
     \label{fig:robustness_matrix}
 \end{figure}
 
-Two cells of the matrix carry a dagger rather than an asterisk, and
-they defeat the metric in a third way. At $-15\%$ weight with the CG
-at $+5$ and $+7\%$ of the chord, the trajectory does cross
-$\gamma = 0$ within the horizon, but crosses it still stalled, at
-$\alpha = 16.8^\circ$ and $18.7^\circ$ against
-$\alpha_s = 14^\circ$. Both cells require the aft CG and the light
-mass together. The CG enters the pitch stiffness as
-$(\Delta x_{cg}/\bar{c})\,\partial C_L/\partial\alpha$, and
-$\partial C_L/\partial\alpha$ is $3.35$\,rad$^{-1}$ below the stall
-against $0.22$ above it, so an aft CG barely alters the nose-down
-phase but removes $30\%$ of the stiffness the moment the aircraft
-unstalls: $\alpha$ rebounds at $27^\circ$/s instead of the
-$3$--$5^\circ$/s of the forward-CG cells. At $-15\%$ weight that
-rebound reaches $19.3^\circ$, against $13.7^\circ$ at nominal weight
-where it never re-stalls at all, and the aircraft retains lift margin
-enough to hold $|\gamma| < 0.7^\circ$ throughout, so no dive develops
-and the latch of the stopping rule trips on a $-0.69^\circ$
-excursion. Since the terminal set of the DP is the purely geometric
-$\{\gamma \ge 0\}$, with no condition on $\alpha$, that counts as an
-arrival. Their apparent $7.7$--$7.8$\,m credit --- the episode closes
-having lost $0.1$\,m, because nothing ever pointed down --- measures
-when the metric fires, not a faster recovery, and is not the
-envelope's best corner.
+Figure~\ref{fig:robustness_matrix} reports the excess loss at the
+canonical entry. The matrix is smooth and monotone: mass dominates
+($-13.8$\,m at $-15\%$ mass to $-29.8$\,m at $+15\%$, nominal CG),
+the CG modulates ($+2.9$\,m at $10\%$ forward, where the added
+nose-down moment fights the pull; $-3.2$\,m at $15\%$ aft, where it
+helps). Two properties hold everywhere. The policy never re-stalls
+the aircraft: in $1638$ rollouts the angle of attack never exceeds
+its entry value by more than $0.9^\circ$, because the switching
+surface that organizes the recovery is set by the stall boundary of
+the tables and does not move with the trim. And $1635$ of $1638$
+entries recover. The three that do not share one corner, $+15\%$
+mass with the CG at the aft data edge: still descending at the
+$15$\,s cutoff with $21$\,m lost, $\alpha$ settled at $16^\circ$,
+the aft CG having removed the pitch stiffness that would bring the
+heavy wing back to the boundary.
 
-Above nominal weight a single failure mode appears. No trajectory in
-the $441$ rollouts crashes or departs: the angle of attack never
-exceeds $21.0^\circ$ anywhere in the matrix (the deep-stall entry
-region itself, $19^\circ$ clear of the $\pm 40^\circ$ departure
-boundary), and
-in the heavy rows it never exceeds its entry value: the policy
-that believes the aircraft light never re-stalls the aircraft that is
-heavy. The dive is always arrested. Extending the simulation horizon
-to $120$\,s, however, shows that the heavy rows do not merely recover
-slowly: they converge to a \emph{steady} powered descent
-($\gamma_{ss} = -0.44^\circ$, $-1.84^\circ$, $-3.10^\circ$, with
-steady sink rates of $0.25$, $1.04$, $1.78$\,m/s at $+5$, $+10$,
-$+15\%$ mass) that never re-crosses $\gamma = 0$: integrated for
-$120$\,s with the stopping rule removed, all three record zero
-crossings.
+Above $+10\%$ a slower failure appears. On a $120$\,s horizon the
+$+10$ and $+15\%$ rows settle into a steady powered descent
+($\gamma = -0.50^\circ$ and $-1.21^\circ$, sink $0.27$ and
+$0.67$\,m/s) and never re-cross level; the $+5\%$ row climbs away.
+The descent is a force balance, not a policy artifact: at the
+airspeed the policy holds ($0.98$ and $1.01$ of the nominal $V_s$),
+sustaining the lift that level flight demands costs more net drag
+than the embedded thrust pays, the back side of the power curve;
+the computed balance reproduces the simulated $\gamma$ to two
+decimals. Level flight is feasible from $V^\ast = 0.99$ and
+$1.02$, just above what the policy holds. The failure is
+informational: the mis-scaled normalization hides that the aircraft
+must fly faster for its weight. It is also the cheapest defect in
+the study to repair: take-off weight is known before flight, and
+dividing the observation by the right $V_s$ costs nothing. The
+terminal state is not a hazard: wings level, full throttle, shallow
+descent, a condition a pilot takes over and lands from.
 
-The $+5\%$ row deserves a note, because the matrix scores it as
-recovered while it shares this failure mode exactly. Its steady
-descent, $-0.44^\circ$, lies just inside the $\pm 0.5^\circ$
-convergence band of the stopping rule (Sec.~\ref{sec:metric}), so the
-rule reads the settled flight path as level and closes the episode at
-$12.4$\,s. The aircraft is in the same permanent shallow descent as
-the two rows above it; it is merely shallow enough to pass for level
-flight. What separates the overload rows is therefore not the presence
-of the failure but its steepness.
-
-This equilibrium is physical, and its origin can be stated exactly.
-Sustained level flight at speed $V$ requires, simultaneously, trimmed
-lift and a non-negative speed rate at full throttle:
-\begin{equation}
-    C_L\bigl(\alpha, C_T;\, \delta_e^{trim}(\alpha)\bigr)
-    \;\geq\; \frac{2mg}{\rho V^2 S},
-    \qquad
-    C_D^{net}(\alpha, C_T) \;\leq\; 0,
-    \qquad
-    \alpha \leq \alpha_s,
-    \label{eq:level_feasibility}
-\end{equation}
-with $\delta_e^{trim}(\alpha) = -C_{m_o}/C_{m_{\delta_e}}$ from the
-moment balance. The axial threshold is zero, rather than a thrust
-term, because the Riley tables are propulsion-coupled: thrust enters
-through the $C_T$ axis and is already embedded in the tabulated
-coefficient, so $C_D^{net}$ is drag \emph{net} of the thrust it
-carries and is negative under power. The condition
-$C_D^{net} \leq 0$ therefore reads ``the embedded thrust at least pays
-the drag'', i.e.\ the aircraft is not decelerating; it is not a claim
-that profile drag is negative. Sweeping the Riley tables at the airspeed the policy
-holds ($V_{ss} = 1.010$, $1.021$, $1.040\,V_s$), the lift and axial
-conditions are each satisfiable, but over \emph{disjoint} ranges of
-$\alpha$. Taking the $+15\%$ case: below $\alpha = 10.4^\circ$ the
-axial condition holds comfortably --- the embedded thrust exceeds the
-drag, $C_D^{net}$ reaching $-0.10$ --- but the trimmed lift falls short of
-the $C_L = 1.34$ that level flight demands. Lift is met only on
-approach to $\alpha_s$, from $\alpha = 13.6^\circ$, and by then the
-axial condition has long reversed ($C_D^{net} = +0.09$ at
-$\alpha = 14^\circ$). No single trimmed $\alpha$ satisfies both, so no
-configuration of the control surfaces sustains level flight. The width
-of that gap is what sets the steepness of the resulting descent: it
-spans $10.4^\circ$--$13.6^\circ$ at $+15\%$ but only
-$10.9^\circ$--$11.4^\circ$ at $+5\%$, which is why the lightest
-overload settles at $-0.44^\circ$ and the heaviest at $-3.10^\circ$.
-The overweight aircraft at this speed sits
-on the back side of the power curve, where the lift it needs costs
-more net drag than the embedded thrust can pay. The force balance
-therefore closes on a descending path,
-$\sin\gamma_{ss} = -\bar{q}S\,C_D^{net}/(mg)$, evaluated with the full drag
-polar including the elevator terms at the trimmed deflection. It
-reproduces the simulated $\gamma_{ss}$ to two decimals at all three
-overloads ($-0.44^\circ$, $-1.84^\circ$, $-3.10^\circ$), which
-confirms that the residual descent is a force-balance equilibrium and
-not a grid artifact.
-Pulling harder is not an escape: the stall boundary $\alpha_s$ does
-not move with mass, and beyond it the wing genuinely re-stalls.
-Level flight becomes feasible only above
-$V^\ast = 1.030$, $1.065$, $1.150\,V_s$, that is, at
-$\approx 1.005$, $1.015$, $1.072$ of the heavy aircraft's \emph{own}
-stall speed, precisely the operating point a correctly normalized
-policy would hold. The deficit is modest: $30\%$ more available
-thrust would make level flight feasible at the very speeds the
-policy already holds ($V^\ast$ drops below $V_{ss}$ for all three
-overloads); but the same feasibility is available at zero hardware
-cost by exiting the dive $1.9$--$10.6\%$ faster, which the corrected
-normalization delivers.
-
-Two consequences follow. First, for these cells the altitude loss of
-``the recovery'' is not a single number: the maneuver decomposes into
-a transient (the dive and its arrest, essentially complete at the
-$15$\,s horizon of the matrix) and a steady mismatch descent whose
-cost is a \emph{rate}. The matrix reports the former; the steady
-sink rates above complete the description, and the loss at any later
-time is their sum. For the asterisked rows the cutoff therefore
-conceals nothing, since the mark itself announces that the number is a
-lower bound; for the $+5\%$ row, scored as a recovery, the $0.25$\,m/s
-that follows is not announced by the matrix and is recorded here
-instead. Second, the
-failure is recoverable by design: the aircraft \emph{can}
-complete the recovery ($V^\ast$ exists, barely above its own stall
-speed); what is missing is the policy's knowledge that it must exit
-the dive faster. That knowledge enters through a single scalar:
-the stall-speed normalization, computable from the pre-flight
-weight. Re-scaled, the policy would read
-$V/V_s^{real} \approx 0.97$--$0.99$ at the states where it now reads
-$\approx 1.0$, hold the recovery longer, and exit above $V^\ast$.
-
-In summary, the overweight failure chain is: the policy arrests the
-dive and attempts the level-off; at the airspeed its nominal
-normalization deems sufficient, \emph{sustaining} the required lift
-is aerodynamically infeasible under the Riley coefficients (the
-drag of producing it exceeds the embedded thrust, the back side of
-the power curve), so the aircraft settles into a steady shallow
-descent; and it never accelerates out of the deficit because the
-mis-scaled normalization hides that it is flying too slow for its
-weight. The aircraft can recover; the policy does not know it must
-fly faster. The failure is informational, not aerodynamic.
-
-Two remarks bound the operational reading of the heavy rows. First,
-the terminal state is not a hazard state: the aircraft ends
-wings-level in a shallow powered descent, at full throttle, well
-below the stall boundary: a condition from which a pilot simply
-takes over, accelerates, and lands. From a deep-stall entry, the
-nominal policy has saved the aircraft; what it fails to close is the
-last few degrees of flight-path angle, not the recovery. Second, the
-overload rows are a synthetic stress test, not a claim about
-reachable flight states: the simulations \emph{place} the aircraft at
-the stalled initial condition by construction, whereas an airframe
-loaded $15\%$ beyond its certificated maximum might well lack the
-climb performance to reach such a scenario at altitude in the first
-place. The rows measure the policy, not the plausibility of the
-flight that would precede them.
-
-
-The perturbation ranges map onto the aircraft's actual loading
-decisions. The Riley reference weight sits at the certificated
-ceiling, effectively two occupants with full tanks. Against that
-reference, flying with half fuel is $-4\%$ ($\approx 30$\,kg);
-leaving the second seat empty is $-11\%$ ($\approx 80$\,kg); a light
-pilot flying solo on half tanks reaches the $-15\%$ edge of the
-matrix. The $5\%$ grid steps thus bracket the aircraft's discrete
-loading items almost one to one: each row down is roughly one
-decision: less fuel, one occupant fewer. The rows above nominal,
-by the same token, correspond to no legal loading state at all.
-Seven percent of the chord is $8.5$\,cm of CG travel, which covers
-every CG position actually achievable by loading this airframe: the
-side-by-side seats and the spar-mounted fuel sit essentially at the
-CG, so only the baggage shelf moves it; even its full
-$45$\,kg allowance, a meter aft, shifts the CG by only
-$\approx 5\%$ of the chord. The matrix of
-Fig.~\ref{fig:robustness_matrix} therefore spans, in physical terms,
-essentially every state this aircraft can depart in, legal or not.
-Across all of it the nominal policy arrests the dive without ever
-departing or re-stalling; what it cannot do, beyond the certificated
-weight, is finish the level-off, a failure that the pre-flight
-weight, applied to a single normalization scalar, removes.
+The ranges map onto the aircraft's loading decisions. Against the
+certificated ceiling of the Riley reference, half fuel is $-4\%$,
+an empty second seat $-11\%$; a light solo pilot on half tanks
+reaches the $-15\%$ edge. The rows above nominal correspond to no
+legal loading state. The plotted CG span covers every position
+achievable by loading this airframe: seats and fuel sit essentially
+at the CG, and even the full $45$\,kg baggage allowance, a meter
+aft, shifts it by about $5\%$ of chord. The matrix therefore spans
+every state this aircraft can depart in, legal or not: the nominal
+policy arrests the dive in all of them, and what it can miss,
+beyond the certificated weight, is the last degree of the
+level-off, removed by one pre-flight scalar.
 
 
 \subsection{Sensitivity to Pilot Execution Errors}

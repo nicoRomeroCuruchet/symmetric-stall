@@ -98,7 +98,7 @@ X_CG_DIVERGENT = 0.453               # from cg_reach.py
 
 plt.rcParams.update({
     "font.family": "serif", "mathtext.fontset": "stix", "font.size": 10,
-    "axes.labelsize": 11, "legend.fontsize": 9,
+    "axes.labelsize": 13, "legend.fontsize": 9,
 })
 
 
@@ -353,7 +353,7 @@ def make_matrix_figure(data=None):
                 mark = ""
             dark = abs(excess[i, j]) > 0.6 * lim
             ax.text(j, i, f"{excess[i, j]:+.1f}{mark}", ha="center",
-                    va="center", fontsize=7.5,
+                    va="center", fontsize=9.5,
                     color="white" if dark else "black")
     # %+.0f turned the 2.5 % steps into "+2%" and "+8%": one decimal, with
     # the trailing .0 trimmed so whole percentages stay clean.
@@ -375,8 +375,8 @@ def make_matrix_figure(data=None):
     # consequence is an axis that increases leftward, which is exactly what
     # forward-positive means when the aeroplane is drawn nose-left.
     ax.set_xticks(range(len(DX)), [pct(-d * 100) for d in DX],
-                  rotation=45, ha="right", fontsize=8.5)
-    ax.set_yticks(range(len(M)), [pct((m - 1) * 100) for m in M], fontsize=8.5)
+                  rotation=45, ha="right", fontsize=11)
+    ax.set_yticks(range(len(M)), [pct((m - 1) * 100) for m in M], fontsize=11)
     # Both directions go INSIDE the label rather than at the axis ends: an
     # annotation pinned to the right-hand end collides with the plant stamp in
     # the figure's bottom-right corner.
@@ -398,7 +398,8 @@ def make_matrix_figure(data=None):
     cb = fig.colorbar(sm, ax=ax, fraction=0.026, pad=0.02)
     cb.set_label("altitude loss (varied aircraft)\n"
                  "$-$ altitude loss (nominal aircraft)   (m)",
-                 fontsize=10)
+                 fontsize=12)
+    cb.ax.tick_params(labelsize=11)
     for ext in ("png", "pdf"):
         fig.savefig(OUT_DIR / f"fig_robustness_matrix.{ext}", dpi=300,
                     bbox_inches="tight")
