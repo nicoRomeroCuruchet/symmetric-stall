@@ -77,12 +77,13 @@ def main():
 
     fig, axes = plt.subplots(2, 3, figsize=(11.0, 5.6),
                              sharey=True, sharex=True)
+    pcm = None
     for row, qrow in zip(axes, Q_ROWS_DEG):
         for ax, qt in zip(row, qrow):
             qi = int(np.argmin(np.abs(qb - np.deg2rad(qt))))
             de_slice = de_of[P[:, vi, :, qi]][gmask][:, amask_plot]
-            ax.pcolormesh(adeg, gdeg, de_slice, cmap="plasma",
-                          vmin=-25, vmax=15, shading="gouraud")
+            pcm = ax.pcolormesh(adeg, gdeg, de_slice, cmap="plasma",
+                                vmin=-25, vmax=15, shading="gouraud")
             # The white curve traces the switching boundary itself at
             # this panel's airspeed:
             # the zero crossing of the commanded elevator along alpha,
@@ -120,6 +121,10 @@ def main():
              ha="right", va="bottom", fontsize=7, color="0.55")
 
     fig.tight_layout()
+    # Shared elevator color scale, as in the main policy figure.
+    cbar = fig.colorbar(pcm, ax=axes, fraction=0.046, pad=0.02)
+    cbar.set_label(r"$\delta_e$ (deg)", fontsize=13)
+    cbar.ax.tick_params(labelsize=11)
     from symmetric_stall import paths
     out_results = paths.out_dir()
     out_paper = Path("stall-paper/img")

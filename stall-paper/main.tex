@@ -999,7 +999,7 @@ and the equivalent control recovered on the sliding arc,
 $\bar{\delta}_e \approx -5^\circ$, is confirmed independently in
 Sec.~\ref{sec:pilot_sensitivity}. The argument is exercised only in
 the elevator channel, since the throttle commands full power almost
-everywhere (Sec.~\ref{sec:caa_faa}). Evaluated greedily instead
+everywhere (Sec.~\ref{sec:policy_structure}). Evaluated greedily instead
 (re-deriving the $\arg\max$ at the continuous state, which discards
 the combination), the policy chatters between the bang-bang
 extremes and the pitch-rate overshoot costs several times the
@@ -1065,7 +1065,7 @@ higher, about $2^\circ$ per $10$\,deg/s, with nose-up it drops.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.63\textwidth]{img/riley_symmetric_stall_heatmaps.png}
+    \includegraphics[width=0.61\textwidth]{img/riley_symmetric_stall_heatmaps.png}
     \caption{Exact DP heatmaps for the 4-DOF symmetric stall recovery
     with the Riley (1985) propulsion-coupled aerodynamic model: optimal
     commanded elevator ($\delta_e^*$), throttle ($\delta_t^*$), and
@@ -1077,7 +1077,7 @@ higher, about $2^\circ$ per $10$\,deg/s, with nose-up it drops.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.70\textwidth]{img/policy_q_slices.pdf}
+    \includegraphics[width=0.61\textwidth]{img/policy_q_slices.pdf}
     \caption{The commanded-elevator policy at $V/V_s = 0.9$, at
     nose-down (top row) and nose-up (bottom row) pitch-rate slices;
     the $q = 0$ slice is in Fig.~\ref{fig:4dof_policy_riley}. The
@@ -1155,359 +1155,131 @@ recovery sequence.
     \label{fig:alpha_trade}
 \end{figure}
 
-The nature of that statement deserves emphasis, because it is not the
-one the remainder of this section will make. Nothing in the problem
-formulation refers to a recovery procedure: the stage reward is the
-altitude increment, augmented only by a penalty for departing the
-envelope; the dynamics are wind-tunnel tables; the admissible controls
-are actuator limits. No candidate sequence was parameterized, scored,
-or searched over, and no procedure appears anywhere in
-Sec.~\ref{sec:riley_aero} or in the solver configuration. The CAA
-structure is read directly off the converged solution of the Bellman
-equation: it is a property of the optimum, not the outcome of a
-comparison between alternatives. Everything that follows can
-corroborate that result or quantify what departing from it costs, but
-none of it can produce the result, and none of it can be undone by a
-different choice of scripted pilot model or a different sample of
-initial conditions.
+The nature of that statement deserves emphasis. Nothing in the
+problem formulation refers to a recovery procedure: the reward is
+the altitude increment, the dynamics are wind-tunnel tables, the
+admissible controls are actuator limits. The CAA structure is read
+directly off the converged solution of the Bellman equation: a
+property of the optimum, not the winner of a comparison between
+alternatives, and the sections that follow can corroborate it or
+price departures from it, but cannot produce it or undo it. The
+operational weight is carried by the second feature: the switch is
+a surface in state space pinned to $\alpha_s$, not an instant on a
+clock. A pilot cannot be instructed to rotate at a prescribed
+instant from an entry whose onset they did not time, but can be
+instructed to pull as the wing unstalls. That an optimizer free to
+return any feedback law over a $14.9$-million-state grid returns
+one expressible in the language of the certified procedure is the
+substantive finding of this subsection.
 
-The second feature is what carries the operational weight. The switch
-is a surface in state space pinned to $\alpha_s$, not an instant on a
-clock, and that is precisely what makes the optimum flyable: a pilot
-cannot be instructed to rotate at a prescribed instant from an entry
-whose onset they did not time, but can be instructed to pull as the
-wing unstalls. That the optimizer, free to return any measurable
-feedback law over a $14.9$-million-state grid, returns one expressible
-in the same language the certified procedure already uses is the
-substantive finding of this subsection; the sections that follow
-quantify it.
-
-\subsection{The Optimal Recovery Is the CAA Sequence: Power Timing and
-Certified Procedures}
-\label{sec:caa_faa}
-
-As noted in the Introduction, certified guidance disagrees on the
-timing of power during stall recovery: the CAA sequence commands full
-power \emph{simultaneously} with the nose-down pitch input
-\cite{CAA2009}, whereas the FAA sequence \cite{FAA2021} prescribes the
-pitch reduction first, with power restored once the wing is
-unstalled. In the
-flight-test campaign of Gratton et al.\ \cite{Gratton2014}, the CAA
-sequence consistently produced the least height loss, approximately
-two thirds of the FAA figure, which in turn was about $90\%$ of a
-deliberately power-delayed recovery. The exact DP solution allows this
-question to be settled for the Riley model without pilot or protocol
-confounds. The preceding subsection has already answered it in
-structure; what follows makes the answer quantitative, on three
-independent readings of the converged solution, and then measures what
-the alternative sequence costs.
-
-First, the converged
-policy array itself: $99.7\%$ of the non-terminal grid states inside
-the recovery-relevant window ($-10^\circ \le \alpha \le 20^\circ$,
-$V \le 1.2\,V_s$, $-90^\circ \le \gamma \le 0$) command full throttle
-($99.0\%$ over all non-terminal states of the $14.9$-million-state
-grid), so maximum power is
-not a feature of one trajectory but the argmax essentially everywhere
-a recovery can evolve. Second, the time-domain structure: rollouts
-from all nine initial conditions of the grid
-($\alpha_0 \in \{16, 18, 20\}^\circ \times V_0/V_s \in
-\{0.80, 0.85, 0.90\}$) apply full throttle from the very first control
-interval, simultaneously with the elevator command; in every one, a
-brief nose-down hold ($\delta_e = +15^\circ$) precedes the
-pull and is terminated not at a fixed time but at a state event,
-the crossing of the switching surface, reached
-between $t^\ast = 0.14$ and $0.31$\,s: later the deeper and slower
-the entry, exactly as a surface in state space demands. Third, the
-dense sweep below: over the entire stalled-entry plane, no timing of
-power ever beats the simultaneous one.
-
-To isolate the power-timing variable, the optimal elevator schedule
-was left untouched and only the throttle channel was perturbed: an
-instantaneous application delayed by $\tau$; Gratton's power-delayed
-protocol (PD: $\tau = 2$\,s followed by a $2$\,s ramp to full power,
-replicating the flight-test procedure); and a gated variant that
-withholds power until $\alpha < 14^\circ$: the FAA logic in
-idealized form, with zero recognition delay.
-Figures~\ref{fig:ic_optimum} and~\ref{fig:ic_procedures} report the
-comparison over a dense plane of stalled entries at level entry
-($\alpha_0 \in [14^\circ, 20^\circ]$,
-$V_0/V_s \in [0.40, 0.90]$, $\gamma_0 = 0$, $q_0 = 0$; one
-closed-loop rollout per node on a $13 \times 101$ grid, every arm
-flown through the engine lag). At the canonical IC the
-loss grows monotonically with any withholding of power, from
-$19.8$\,m (optimal, simultaneous) to $35.3$\,m for the gated FAA
-logic and $50.2$\,m for the PD protocol; the continuous delay sweep
-behind that ordering is taken up, as a pilot-execution error, in
-Sec.~\ref{sec:pilot_sensitivity}.
-Table~\ref{tab:caa_vs_faa} reports the arms at every
-initial condition of the $3 \times 3$ grid.
-
-\input{tables/table_caa_vs_faa}
-
-Figure~\ref{fig:ic_optimum} reports the optimum over that plane.
-Altitude loss is governed by the energy state: the median loss runs
-from $11$\,m at $V_0 = 0.90\,V_s$ to $92$\,m at $0.40\,V_s$, a span
-of $81$\,m across the airspeed axis. The dependence on the depth of
-the stall is weaker by well over an order of magnitude: traversing
-the entire stalled range $14^\circ \le \alpha_0 \le 20^\circ$ moves
-the loss by under $2$\,m at any airspeed, which is why the contours
-run nearly parallel to the $\alpha_0$ axis. This is the quantitative
-form of the structural result of
-Sec.~\ref{sec:policy_structure}: how deeply the wing is stalled sets
-how long the nose-down phase lasts, but the altitude that phase
-costs is set by how much energy is missing when the recovery begins.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.62\textwidth]{img/fig_optimal_ic_heatmap.pdf}
-    \caption{Altitude loss of the exact optimum over the
-    stalled-entry plane ($V_0/V_s$ abscissa, $\alpha_0$ ordinate,
-    $\gamma_0 = q_0 = 0$); one closed-loop rollout per node on a
-    $13 \times 101$ grid, flown through the engine lag, with labeled
-    contours. The field is governed by the airspeed (an $81$\,m
-    median span from $0.90$ to $0.40\,V_s$) and only weakly by
-    $\alpha_0$ (under $2$\,m across the entire stalled range).}
-    \label{fig:ic_optimum}
-\end{figure}
-
-Figure~\ref{fig:ic_procedures} prices the procedures against that
-optimum: each panel maps
-$\Delta h_{\mathrm{opt}} - \Delta h_{\mathrm{proc}}$, the extra
-altitude the procedure loses from the same entry, with every arm
-flying the DP-optimal elevator schedule so that power timing is the
-only difference between the rows. All three rows repeat one shared
-scale anchored at zero excess, so the ranking is read directly down
-each column. The CAA row is the floor imposed by the engine:
-reaching full power through a $2$\,s ramp rather than instantaneously
-costs $9$--$12$\,m (median $11.3$\,m), nearly uniformly across the
-plane, and no procedure flown on this aircraft can avoid it:
-everywhere in the stalled regime the aircraft needs the power it is
-waiting for. The FAA row is that floor plus the price of the
-doctrine, and the increment has structure: gating power on the
-unstall costs most exactly where energy is scarcest, a median of
-$2.8$\,m at $V_0 = 0.90\,V_s$ growing to $18.9$\,m at $0.40\,V_s$
-($7.4$\,m over the plane), because the slower the entry, the longer
-the wing takes to unstall and the longer the gate withholds the
-power. A single headline number therefore understates the penalty
-exactly where altitude margin matters most. Most of what either
-certified sequence gives up to the optimum is nevertheless the
-engine, not the doctrine, a distinction that bounds how much any
-revision of the published procedure could recover. The power-delayed
-row puts both in perspective: Gratton's deliberate $2$\,s pause
-costs $28$--$31$\,m over the optimum, dwarfing the engine floor and
-the doctrine effect alike.
-
-Across the $1313$ nodes of the plane, the ordering
-$|\Delta h_{\mathrm{opt}}| \le |\Delta h_{\mathrm{CAA}}| \le
-|\Delta h_{\mathrm{FAA}}|$ holds without exception, and
-$|\Delta h_{\mathrm{FAA}}| \le |\Delta h_{\mathrm{PD}}|$ at all but
-three nodes in the lowest-energy corner ($V_0 = 0.40\,V_s$,
-$\alpha_0 \ge 19^\circ$), where the wing takes longer than
-Gratton's $2$\,s clock to unstall, the gate opens after it, and the
-two arms coincide to within $0.2$\,m. The exception proves the
-mechanism: the FAA gate \emph{is} a delay, of whatever duration the
-unstall happens to take.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=\textwidth]{img/fig_procedures_ic_heatmap.pdf}
-    \caption{Excess altitude loss of each recovery procedure over the
-    optimum of Fig.~\ref{fig:ic_optimum},
-    $\Delta h_{\mathrm{opt}} - \Delta h_{\mathrm{proc}}$, from the
-    same entries; all arms fly the DP-optimal elevator schedule, so
-    power timing is the only difference between panels. Left: CAA,
-    full power from $t = 0$ through a $2$\,s ramp: the floor imposed
-    by the engine itself, nearly uniform. Middle: FAA, power gated on
-    $\alpha < \alpha_s$, then the same ramp: the floor plus the
-    doctrine penalty, largest toward the low-energy entries. Right:
-    Gratton's power-delayed protocol ($2$\,s pause, then the ramp).
-    The three panels share one scale anchored at zero excess, so the
-    ranking reads directly across.}
-    \label{fig:ic_procedures}
-\end{figure}
-
-Both figures are confined to $\gamma_0 = q_0 = 0$: one plane of a
-four-dimensional entry set. Table~\ref{tab:montecarlo} removes that
-restriction: every arm is flown from the same $1000$ Latin-hypercube
-samples spanning all four entry states
-($\gamma_0 \in [-30^\circ, 0]$, $V_0/V_s \in [0.40, 0.90]$,
-$\alpha_0 \in [14^\circ, 20^\circ]$, $q_0 \in [-20, 20]^\circ$/s),
-so the interactions the planar maps cannot show are included.
-The ranking survives intact: the CAA sequence loses less than the
-FAA sequence at $100\%$ of the sampled entries, by a median of
-$5.9$\,m. But the certificate also records how thin the margin
-becomes at its narrowest, $0.18$\,m, which no aggregate figure would
-reveal.
-
-\input{tables/table_montecarlo}
-
-The ratios, not the absolute losses, are what may be compared
-against the flight tests, and the comparison must respect what each
-arm idealizes: the gated arm is the FAA logic with zero recognition
-delay, so the FAA sequence as actually flown, with a human check in
-the loop, lies between it and the power-delayed protocol. Gratton's
-protocol decelerates at $1$\,kt/s to the natural stall break
-($V \lesssim V_s$), which corresponds to the fast edge of the
-mapped plane. Under matched power-ramp modeling, the simultaneous
-sequence loses $0.52$--$0.54$ of the power-delayed figure along the
-$V_0 = 0.90\,V_s$ row, against the $\approx 0.6$ implied by the
-flight-test chain (CAA $\approx \tfrac{2}{3} \times$ FAA
-$\approx 0.9\times$ PD). Notably, Gratton's fleet included the
-Grumman AA-5A, a direct sibling of the AA-1 modeled here, which lost
-$120$\,ft under the CAA sequence against $230$\,ft under the flown
-FAA: a ratio of $0.52$.
-
-\FloatBarrier
 \subsection{Time-Domain Recovery and the Sliding-Mode Regime}
 \label{sec:time_domain}
 
-The certified-procedure comparison of the preceding subsection still
-flies the DP-optimal elevator, which no procedural pilot reproduces.
-For a like-for-like comparison, both certified sequences were
-scripted with an identical pilot model:
-nose-down $\delta_e = +15^\circ$ held until the unstall event, then a
-closed-loop pull that holds $\alpha \approx 13^\circ$
+The optimal policy of the preceding subsection is a field of
+commands over the state space; this subsection flies it.
+Figure~\ref{fig:4dof_trajectory_riley} shows the closed-loop
+recovery from the canonical deep-stall entry (level flight,
+$\gamma_0 = 0$; $\alpha_0 = 20^\circ$; $V_0 = 0.85\,V_s$;
+$q_0 = 0$) under the exact DP policy, overlaid with the two
+certified procedures flown from the same entry by an identical
+scripted pilot: nose-down $\delta_e = +15^\circ$ held until the
+unstall event, then a closed-loop pull that holds
+$\alpha \approx 13^\circ$
 ($\delta_e = \mathrm{clip}(K_\alpha (\alpha - \alpha_{tgt}) + K_q q)$
 with $K_\alpha = 10$, $K_q = 2$), with power ramping to full over
 $2$\,s starting at $t = 0$ (CAA) or at the unstall event (FAA).
-This subsection examines one of those recoveries in the time domain
-and tabulates the rest. Figure~\ref{fig:4dof_trajectory_riley} shows
-the closed-loop recovery from the canonical deep-stall initial
-condition (level flight, $\gamma_0 = 0$; $\alpha_0 = 20^\circ$;
-$V_0 = 0.85\,V_s$; $q_0 = 0$) under the exact DP policy, overlaid
-with the two scripted procedures flown from the same entry. The
-entry speed is $0.85\,V_s$ rather than the $0.95\,V_s$ used before
-the propeller was calibrated: under Riley's thrust the aeroplane
-recovers from $0.95\,V_s$ without ever leaving controlled flight, so
-that entry no longer poses the problem this section is about.
+Pitch technique and pull authority are shared across the three
+maneuvers by construction, so whatever separates their trajectories
+traces to the one channel in which they differ: when power is
+applied. The entry speed is $0.85\,V_s$ rather than the
+$0.95\,V_s$ used before the propeller was calibrated: under Riley's
+thrust the aeroplane recovers from $0.95\,V_s$ without ever leaving
+controlled flight, so that entry no longer poses the problem this
+section is about.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.85\textwidth]{img/fig_trajectories_procedures_tau085.pdf}
+    \includegraphics[width=0.70\textwidth]{img/fig_trajectories_procedures_tau085.pdf}
     \caption{Time-domain comparison at the canonical deep-stall
-    initial condition: exact DP policy (blue, solid) vs.\ the scripted
-    CAA (orange, dashed) and FAA (green, dash-dotted) procedures of
-    Table~\ref{tab:maneuvers}. Panel~(f) isolates the protocol
-    difference, and separates what the pilot commands (dotted) from
-    what the engine delivers (solid) through Riley's first-order lag,
-    $\tau_e = 0.85$\,s: full power commanded at $t = 0$ (DP), a $2$\,s
-    ramp from $t = 0$ (CAA), the same ramp from the unstall event
-    (FAA); final losses in
-    panel~(g). The vertical dotted line marks the DP policy's
-    elevator-switch instant $t^\ast = 0.27$\,s, the reference
-    event for the pilot-error study of
-    Sec.~\ref{sec:pilot_sensitivity}. Both scripted pilots are held to
-    the same pull authority as the optimum ($\delta_e \ge -17.50^\circ$
-    at this entry), so the figure isolates the timing of the power
-    application rather than confounding it with how hard the pilot
-    hauls back. The DP traces execute the policy
-    through the barycentric action blend of
-    Sec.~\ref{sec:4dof_solver}; the intermediate deflections and
-    throttle settings of panels~(e)--(f) are convex combinations of
-    the discrete extremes, not commands the optimizer selected: the
-    underlying policy is bang-bang, and holds full throttle
-    throughout. The dashed line in panel~(c) is the
-    \emph{power-off} stall boundary of the Riley tables,
-    $\alpha_s = 14^\circ$; the superscript qualifies the boundary, not
-    the state of the aircraft, which holds full throttle throughout.
-    Under power the lift curve continues to rise past that value, so the
-    optimum's excursion above the line is not a re-stall.}
+    entry: exact DP policy (blue, solid) vs.\ the scripted CAA
+    (orange, dashed) and FAA (green, dash-dotted) procedures.
+    Panel~(f) separates commanded (dotted) from delivered (solid)
+    power through Riley's lag, $\tau_e = 0.85$\,s; final losses in
+    panel~(g). The vertical dotted line marks the DP elevator switch
+    $t^\ast = 0.27$\,s, the reference event of
+    Sec.~\ref{sec:pilot_sensitivity}. Both scripted pilots are held
+    to the optimum's own pull authority
+    ($\delta_e \ge -17.50^\circ$ here). The DP traces execute the
+    policy through the barycentric blend of
+    Sec.~\ref{sec:4dof_solver}: the intermediate deflections of
+    panels~(e)--(f) are convex combinations of the discrete
+    extremes; the underlying policy is bang-bang and holds full
+    throttle throughout. The dashed line in panel~(c) is the
+    \emph{power-off} stall boundary $\alpha_s = 14^\circ$; under
+    power the lift curve keeps rising past it, so the optimum's
+    excursion above the line is not a re-stall.}
     \label{fig:4dof_trajectory_riley}
 \end{figure}
 
-The recovery unfolds in three phases. The policy first commands full
-nose-down elevator and full power at once; the angle of attack falls
-from $20^\circ$ to the stall boundary in $0.41$\,s, while the engine,
-lagged by $\tau_e$, needs $1.95$\,s to deliver $90\%$ of the thrust
-commanded at $t = 0$. At the boundary the policy transitions to the
-pull-up and enters a \emph{sliding-mode} regime: the elevator command
-oscillates at the control rate between nose-up and mild nose-down
-deflections, actively regulating the pitch rate so that the angle of
-attack rides at the stall boundary ($\bar{\alpha} = 13.3^\circ$,
-peaks of $14.1^\circ$, i.e.\ marginally past $\alpha_s$) for the
-remainder of the pullout. The time-averaged
-elevator deflection over this phase is only $-6.4^\circ$: the
-chattering between action extremes is the discrete action set's
-approximation of the intermediate \textit{equivalent control}
-\cite{Utkin1977} that holds
-the state on the constraint surface, the classical signature of a
-singular arc realized by a bang-bang policy \cite{BrysonHo1975}. By continuously surfing the
-usable lift curve without paying the post-stall drag penalty of a
-secondary stall, the policy maximizes the normal acceleration
-throughout the arc, arresting the descent with a total altitude loss of
-$19.8$\,m from the canonical initial condition. That figure is
-dominated by the engine: the same policy flown on an instantaneous
-propeller loses $9.4$\,m, so about half of the optimum's own altitude
-loss is the cost of waiting for thrust that has been commanded but
-not yet produced. The optimum is not exempt from the lag; it is
+The recovery unfolds in three phases: full nose-down elevator and
+full power at once (the angle of attack falls from $20^\circ$ to
+the stall boundary in $0.41$\,s, while the lagged engine needs
+$1.95$\,s to deliver $90\%$ of the thrust commanded at $t = 0$); a
+\emph{sliding-mode} arc that rides the boundary
+($\bar{\alpha} = 13.3^\circ$) for the remainder of the pullout; and
+the level-off. The chattering elevator of panel~(e) is the discrete
+action set's approximation of the intermediate \textit{equivalent
+control} \cite{Utkin1977} that holds the state on the constraint
+surface (its time average is $-6.4^\circ$), the classical signature
+of a singular arc realized by a bang-bang policy
+\cite{BrysonHo1975}. The total loss is $19.8$\,m, and half of it is
+the engine's: the same policy flown on an instantaneous propeller
+loses $9.4$\,m, so the optimum is not exempt from the lag; it is
 simply the arm that commands power earliest. Absolute losses
 throughout this section inherit the uncertainty of $\tau_e$ itself,
-$0.8 \pm 0.2$\,s, which is worth
-approximately $\pm 2$\,m here; the margins \emph{between} arms are
-far less sensitive, and are what the conclusions rest on.
+$0.8 \pm 0.2$\,s, worth approximately $\pm 2$\,m here; the margins
+\emph{between} arms are far less sensitive, and are what the
+conclusions rest on. The scripted procedures differ from the
+optimum only in the power channel of panel~(f), and that is where
+their altitude goes: the $0.37$\,s FAA gating delay compounds
+through the dive into a $3.9$\,m gap at recovery ($-32.2$ vs.\
+$-36.1$\,m), and the procedures give up $12.4$ and $16.3$\,m to the
+optimum not through poor pitch flying, their pull rides the same
+boundary, but through later, slower power.
 
-The two scripted procedures overlay the same panels. Their
-pitch-control law is identical by construction (same nose-down input,
-same $\alpha$-hold pull, panel~e), so every difference between the orange
-and green trajectories, and between them and the optimum, traces back
-to the power channel of panel~(f). Three features stand out. First,
-both procedures dive about half again as deep as the optimum
-($\gamma_{min} = -14.3^\circ$ and $-15.8^\circ$ vs.\
-$-9.7^\circ$): a ramp stacked on top of the engine lag cannot arrest
-the initial sink rate the way the optimum's immediate command does.
-Second, the CAA and FAA
-trajectories are nearly indistinguishable in every state variable for
-the first second (the FAA gating delay is only $0.37$\,s at
-this entry), yet that brief power deficit compounds through the dive
-into a $3.9$\,m gap at recovery ($-32.2$ vs.\ $-36.1$\,m). Third, the
-$\alpha$-hold pilot overshoots the unstall ($\alpha$ dips to
-$8.1$--$8.2^\circ$ before settling on its $13^\circ$ target,
-panel~c) while the optimum descends only to $11.8^\circ$ before
-settling on its $13.3^\circ$ sliding floor: the procedures
-lose their altitude not through poor pitch flying but through later,
-slower power.
-
-The remaining entries are tabulated.
-Table~\ref{tab:maneuvers} reports the results, in the format of the
-flight-test tables of Gratton et al.\ \cite{Gratton2014} (methods
-across the columns, height loss per entry), with their aircraft-type
-axis replaced by the initial condition and the exact optimum added as
-the reference column; the parenthesized full-pull variants play the
-role of their controllability annotations, recording what happens when
-the pull technique degenerates. The CAA sequence loses
-less altitude at every one of the nine initial conditions, at
-$87$--$92\%$ of the FAA figure (mean $90\%$), a milder advantage
-than Gratton's two thirds because the scripted FAA pilot restores
-power at the very instant of unstall, the most favorable possible
-reading of the FAA sequence; any recognition delay moves it toward
-Gratton's power-delayed protocol. Two further observations
-follow. The gap between the exact optimum and either scripted
-procedure ($-19.8$ vs.\ $-32.2$/$-36.1$\,m at the canonical IC) is
-the margin attributable to optimal control over procedural flying, and
-it is $11.4$--$17.4$\,m across the nine entries, about three times the
-CAA-vs-FAA gap at the same entry. And replacing the
-closed-loop pull by an open-loop full pull ($\delta_e = -25^\circ$
-held, the one arm deliberately left at the actuator stop rather than
-capped at the optimum's own authority) re-stalls the wing at every
-entry, at $\alpha = 33$--$35^\circ$, and none of the eighteen
-resulting trajectories returns to level flight at all: they are still
-stalled when the $15$\,s horizon expires, by which point
-$101$--$114$\,m have been lost (parenthesized entries). The recovery
-outcome is therefore not merely more
-sensitive to \emph{how} the pull is flown than to \emph{when} power
-is applied --- the two are not commensurable, because one degrades a
-recovery and the other prevents it. This is taken up in
+One entry, however well chosen, is an anecdote.
+Table~\ref{tab:montecarlo_scripted} flies the same three maneuvers
+from $1000$ Latin-hypercube samples of the stalled-entry set,
+through the same engine lag and with the scripted pulls capped,
+entry by entry, to the pull authority the optimum commands there.
+The ranking of the canonical entry is the ranking of the set: the
+CAA sequence loses less altitude than the FAA sequence at
+$100.0\%$ of the sampled entries, with a median advantage of
+$4.8$\,m and never less than $0.2$\,m, while either procedure gives
+up a median $13.5$--$18.2$\,m to the exact optimum. The advantage
+is milder than Gratton's two thirds because the scripted FAA pilot
+restores power at the very instant of unstall, the most favorable
+possible reading of the FAA sequence; any recognition delay widens
+the gap. The single entry that fails to close under every maneuver
+is itself instructive: at the slowest corner of the set
+($V_0 = 0.43\,V_s$, $\alpha_0 = 18^\circ$, $q_0 = +19^\circ$/s) the
+optimum and the CAA sequence recover while the FAA sequence,
+waiting for the unstall before restoring power, does not. Replacing
+the closed-loop pull by an open-loop full pull
+($\delta_e = -25^\circ$ held) is worse than any of this: it
+re-stalls the wing and prevents the recovery outright, a failure
+mode not commensurable with power timing and taken up in
 Sec.~\ref{sec:pilot_sensitivity}.
 
-\input{tables/table_maneuvers}
+\input{tables/table_montecarlo_scripted}
 
 For the Riley model the conclusion is therefore unambiguous: the
 minimum-altitude-loss recovery has the CAA structure (full power
 applied simultaneously with the nose-down input, followed by a pull
-initiated at the stall boundary), and the exact optimum, the
-delayed-power sweep, and the scripted procedures all rank power
-timing exactly as the flight tests of \cite{Gratton2014} do.
+initiated at the stall boundary), and the ranking holds over the
+stalled-entry set rather than at a single entry, exactly as the
+flight tests of \cite{Gratton2014} rank it.
+
 
 \FloatBarrier
 \subsection{Robustness of the Nominal Policy to Mass and CG Variations}
@@ -1822,7 +1594,7 @@ deflection. Every experiment perturbs the closed-loop optimal policy
 directly, one axis at a time, from the canonical entry.
 
 The power axis is the one already introduced in
-Sec.~\ref{sec:caa_faa}, where it served to separate the certified
+Sec.~\ref{sec:time_domain}, where it served to separate the certified
 procedures; measured as an execution error rather than a doctrine, it
 is the mildest and the most regular of the three.
 Figure~\ref{fig:power_delay} sweeps it continuously: with the optimal
@@ -1934,7 +1706,7 @@ flown is the action blend, faithful to the Bellman valuation but not
 identical to it (Sec.~\ref{sec:policy_structure}), and in the final
 approach to level flight its vertex mix draws a spurious pull
 component from the terminal cells in which the recovery problem is
-not posed (Sec.~\ref{sec:caa_faa}). Filling those cells from their
+not posed (Sec.~\ref{sec:time_domain}). Filling those cells from their
 nearest interior neighbour removes most of that component --- the same
 correction that closed the throttle artifact above --- and what
 survives is small: the mean pull command after the switch is
@@ -1964,6 +1736,8 @@ The identical deflections that are harmless as a
 closed-loop cap re-stall the wing when held: what matters is not how
 hard the pull is, but whether it is flown on the angle of attack.
 
+\input{tables/table_maneuvers}
+
 The operational hierarchy of the three error axes is then: the
 \emph{promptness} of the pull, once the wing unstalls, dominates
 everything (superlinear); power timing comes second (linear,
@@ -1972,7 +1746,7 @@ loop while being catastrophic in open loop. For training emphasis the
 implication is direct: initiate the pull without hesitation and fly
 it on the stall boundary; the exact deflection used to get there
 is almost immaterial. This hierarchy also puts the doctrinal question
-of Sec.~\ref{sec:caa_faa} in its operational place: the entire
+of Sec.~\ref{sec:time_domain} in its operational place: the entire
 CAA-over-FAA margin (median $1.3$\,m over the certified domain) is
 smaller than the cost of a quarter-second of hesitation on the pull.
 The authorities' disagreement is real and its resolution is now
