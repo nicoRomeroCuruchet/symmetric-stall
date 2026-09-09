@@ -806,7 +806,7 @@ $C_{m_{\delta_e}}$), each on a common 14-point angle-of-attack grid
 from $-10^\circ$ to $40^\circ$, at power-off ($C_T = 0$) and a
 representative power-on condition ($C_T = 0.5$). The complete
 transcribed tables are collected in
-Appendix~\ref{app:riley_tables} for reproducibility;
+Appendix~\ref{app:riley_tables},
 Fig.~\ref{fig:riley_coeffs} plots the four that drive the recovery
 physics.
 
@@ -920,8 +920,7 @@ keeping the solver compute-bound.
 \subsection{Discretization, Stage Cost, and Solver Configuration}
 \label{sec:4dof_solver}
 
-The state-action space is discretized as detailed in
-Table~\ref{tab:4dof_discretization}. The stage reward retains the
+The stage reward retains the
 pure altitude-loss structure of the infinite-horizon formulation,
 \begin{equation}
     g(s, a) = V \sin\gamma \,\Delta t,
@@ -957,6 +956,10 @@ the grid, where the penalty is pre-assigned to the terminal cells
 and propagates inward through the multilinear backup; the negative
 branch and the inverted dive lie outside the grid and are detected
 during integration.
+
+Table~\ref{tab:4dof_discretization} details the discretization of
+the state-action space: $56 \times 81 \times 80 \times 41 =
+14{,}878{,}080$ states by $451$ actions.
 
 \begin{table}[H]
 \centering
@@ -1045,7 +1048,7 @@ higher, about $2^\circ$ per $10$\,deg/s, with nose-up it drops.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.61\textwidth]{img/riley_symmetric_stall_heatmaps.png}
+    \includegraphics[width=0.74\textwidth]{img/riley_symmetric_stall_heatmaps.png}
     \caption{Exact DP heatmaps for the 4-DOF symmetric stall recovery
     with the Riley (1985) propulsion-coupled aerodynamic model: optimal
     commanded elevator ($\delta_e^*$), throttle ($\delta_t^*$), and
@@ -1057,7 +1060,7 @@ higher, about $2^\circ$ per $10$\,deg/s, with nose-up it drops.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.61\textwidth]{img/policy_q_slices.pdf}
+    \includegraphics[width=0.74\textwidth]{img/policy_q_slices.pdf}
     \caption{The commanded-elevator policy at $V/V_s = 0.9$, at
     nose-down (top row) and nose-up (bottom row) pitch-rate slices;
     the $q = 0$ slice is in Fig.~\ref{fig:4dof_policy_riley}. The
@@ -1078,8 +1081,8 @@ angle of attack falls through that surface, at which point the policy
 switches to nose-up commands, regardless of how long that takes from
 each initial condition.
 
-The displacement of the boundary is the kinematics of the reversal
-made visible. Since $\dot{\alpha} = q - \dot{\gamma}$, a nose-down
+The displacement of the boundary in Fig.~\ref{fig:policy_q_slices}
+is the kinematics of the reversal made visible. Since $\dot{\alpha} = q - \dot{\gamma}$, a nose-down
 pitch rate means the angle of attack is already falling on its own:
 the rotation the push exists to build is already in hand, and
 holding the deflection longer buys only elevator drag

@@ -117,12 +117,18 @@ def main():
         ax.set_xlabel(r"$\alpha$ (deg)")
     for ax in axes[:, 0]:
         ax.set_ylabel(r"$\gamma$ (deg)")
-    fig.text(0.995, -0.03, "solver fields, ideal engine; thrust riley",
-             ha="right", va="bottom", fontsize=7, color="0.55")
-
+    # Same right-margin airspeed label as the main policy figure, so
+    # the two figures share the bounding-box structure and align in
+    # the manuscript.
+    for ax in axes[:, 2]:
+        ax.text(1.05, 0.5, f"V/Vs = {V_TARGET}", transform=ax.transAxes,
+                va="center", ha="left", fontsize=11)
     fig.tight_layout()
-    # Shared elevator color scale, as in the main policy figure.
-    cbar = fig.colorbar(pcm, ax=axes, fraction=0.046, pad=0.02)
+    # Shared elevator color scale, one horizontal bar below the
+    # panels, as in the main policy figure.
+    cbar = fig.colorbar(pcm, ax=axes, orientation="horizontal",
+                        fraction=0.05, pad=0.12, aspect=30,
+                        shrink=0.55)
     cbar.set_label(r"$\delta_e$ (deg)", fontsize=13)
     cbar.ax.tick_params(labelsize=11)
     from symmetric_stall import paths
