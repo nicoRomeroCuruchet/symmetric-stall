@@ -1424,19 +1424,18 @@ pre-flight scalar, and the remainder is centimetres.
 \subsection{Sensitivity to Pilot Execution Errors}
 \label{sec:pilot_sensitivity}
 
-The preceding subsections established what the optimum is and that
-it survives the parameter variations of a working aircraft. What
-remains is the pilot. A human departs from the optimal sequence
-along three axes: applying power late, switching from nose-down to
-the pull late, and pulling with the wrong deflection.
-Figure~\ref{fig:pilot_axes} puts the three on one scale. The axes
-map onto the phases of the maneuver: the power and switch errors,
-panels~(a) and~(b), live at its start, the power command at entry
-and the transition that ends the nose-down push; the pull error,
-panel~(c), belongs to the phase that follows, once the wing has
-unstalled and the flow has reattached. Every
-experiment perturbs the closed-loop optimal policy directly, one
-axis at a time, from the canonical entry.
+What remains is the pilot. A human departs from the optimal
+maneuver in three ways, one per phase: late power at entry, a late
+switch out of the nose-down push, and a mis-flown pull once the
+wing is flying again. Figure~\ref{fig:pilot_axes} measures the
+three, one panel each, always the same way: the closed-loop
+optimal policy from the canonical entry, with exactly one channel
+perturbed. The unperturbed maneuver is the one resolved in the
+time domain in Fig.~\ref{fig:4dof_trajectory_riley}. Panel~(a)
+acts at its start, on the power commanded at entry; panels~(b)
+and~(c) act on its second half, at and after the switch marked
+there at $t^\ast = 0.27$\,s: (b) mistimes the entry into the pull,
+(c) mis-flies the pull that follows.
 
 \begin{figure}[H]
     \centering
@@ -1444,76 +1443,58 @@ axis at a time, from the canonical entry.
     \caption{The three pilot-error axes at the canonical entry;
     every trajectory flies the optimal maneuver except for the one
     perturbed channel, and the dotted line is the unperturbed
-    optimum. (a)~Power delayed by $\tau$ with the optimal elevator
-    schedule held fixed, the throttle slammed or advanced over
-    $2$\,s.
-    (b)~The nose-down command held $\tau_s$ beyond the policy's
-    switch instant, with loss multipliers annotated. (c)~The pull
-    flown in its two modes on one signed deflection scale (axis
-    inverted so pulling harder reads rightward): closed loop, the
-    policy with its pull commands clipped at $\delta_e$; open loop,
-    the same deflection held constant after the switch. Dashed
-    vertical: the equivalent control; shaded: held pulls that
-    re-stall the wing.}
+    optimum. (a)~Power delayed by $\tau$. (b)~The nose-down command
+    held $\tau_s$
+    beyond the policy's switch instant, with loss multipliers
+    annotated. (c)~The pull flown timid (blue: never harder than
+    $\delta_e$, still regulated on $\alpha$) or overdone (red:
+    $\delta_e$ held with no feedback), on one signed deflection
+    scale, pulling harder rightward. Dashed vertical: the
+    equivalent control; shaded: held pulls that re-stall the wing.}
     \label{fig:pilot_axes}
 \end{figure}
 
-The power axis, panel~(a), is the mildest and the most regular:
-the loss grows monotonically, near linearly, at
-$\approx 10$\,m per second of delay. The rate barely depends on
-where the stall began: at all nine entries a $\tau = 2$\,s delay
-costs $20.7$ to $21.7$\,m over that entry's own optimum. A pilot
-half a second slow on the throttle pays $5.8$\,m, wherever the
-stall began.
+\emph{Late power}, panel~(a): the mildest error, and the most
+regular. The loss grows near linearly at $\approx 10$\,m per
+second of delay, and the rate barely depends on the entry: a
+$2$\,s delay costs $20.7$ to $21.7$\,m at all nine entries. Half a
+second on the throttle is $5.8$\,m, wherever the stall began.
 
-The switch axis, panel~(b), is the steepest of the study. The
-policy is followed until its nose-down $\to$ pull-up transition at
-$t^\ast = 0.27$\,s, the nose-down command is held $\tau_s$ longer,
-and the policy resumes. Holding it $0.5$\,s multiplies the loss by
-$1.4$; a single second multiplies it by $2.6$ ($-51.5$\,m at the
-canonical entry, $-42$ to $-57$\,m across the grid). The mechanism
-compounds: every instant past the switch is spent at full power in
-a steepening dive, so the delay converts to altitude
-superlinearly, unlike the fixed rate of the power axis.
+\emph{Late pull}, panel~(b): the steepest error of the study. The
+pilot flies the push correctly but holds it $\tau_s$ beyond the
+switch at $t^\ast = 0.27$\,s. Half a second multiplies the loss by
+$1.4$; one second by $2.6$ ($-42$ to $-57$\,m across the grid).
+The cost compounds because every instant past the switch is flown
+at full power into a steepening dive.
 
-The pull axis, panel~(c), splits into two regimes, and the
-contrast between them is the result. Flown \emph{closed loop},
-capping the pull anywhere from $-25$ to $-10^\circ$ reproduces the
-optimal loss to within $0.01$\,m: the equivalent control of the
-sliding arc averages only $\approx -5^\circ$
-(Sec.~\ref{sec:time_domain}), so any cap above it leaves enough
-authority, the chattering simply saturating at the cap. Only at
-$-5^\circ$, where the ceiling reaches the equivalent control
-itself, does the constraint bite ($1.8$\,m). Flown \emph{open
-loop}, the same deflections are catastrophic. The held-pull curve
-is a sharp asymmetric valley with its minimum exactly at
-$\delta_e = -5^\circ$, an independent confirmation of the
-equivalent-control value. At $-7.5^\circ$ and beyond the constant
-pull re-stalls the wing ($\alpha_{max}$ grows from $17.2$ to
-$35.2^\circ$), and from $-12.5^\circ$ the aircraft is still
-stalled when the horizon expires, $97.8$\,m down at full
-deflection. The
-shallow flank fails by the opposite mechanism: $-2.5^\circ$ held
-loses $33.3$\,m with no re-stall at all, through insufficient lift
-and a level-off that drags on. The identical deflections that are
-harmless as a closed-loop cap re-stall the wing when held: what
-matters is not how hard the pull is, but whether it is flown on
-the angle of attack.
+\emph{The pull itself}, panel~(c): two failure modes, and the
+asymmetry between them is the finding. The timid pilot (blue)
+dares not pull harder than $\delta_e$ but keeps flying the angle
+of attack; the overdone pull (red) hauls to $\delta_e$ and freezes
+there. The fear is free: any ceiling from $-25$ to $-10^\circ$
+reproduces the optimal loss to within $0.01$\,m, because the
+sliding arc's equivalent control averages only $\approx -5^\circ$
+(Sec.~\ref{sec:time_domain}) and the ceiling almost never binds.
+The frozen pull is what re-stalls: it keeps pitching the aircraft
+after the wing is flying again, crossing the boundary a second
+time at $-7.5^\circ$ and beyond, unrecoverable within the horizon
+from $-12.5^\circ$, $97.8$\,m down at full deflection. Freezing
+\emph{too little} fails too, without re-stalling: $-2.5^\circ$
+held loses $33.3$\,m through insufficient lift. What matters is
+not how hard the pull is, but whether it is flown on the angle of
+attack.
 
-The operational hierarchy is then: the \emph{promptness} of the
-pull dominates everything (superlinear); power timing comes second
-(linear, $\approx 10$\,m/s); and the pull \emph{vigor} is free in
-closed loop and catastrophic in open loop. For training the
+The hierarchy is then: promptness of the pull dominates
+(superlinear), power timing second (linear), pull vigor free in
+closed loop and catastrophic when frozen. For training the
 implication is direct: initiate the pull without hesitation and
-fly it on the stall boundary; the exact deflection used to get
-there is almost immaterial. The hierarchy also puts the doctrinal
-question of Sec.~\ref{sec:time_domain} in its place: the entire
-CAA-over-FAA margin, median $4.8$\,m over the sampled entry set,
-is smaller than the cost of half a second of hesitation on the
-pull. The authorities' disagreement is real and its resolution is
-now certified; but what recovery training should emphasize is not
-which sequence to fly, it is how promptly and how attentively the
-pull is flown.
+fly it on the stall boundary; the deflection used to get there is
+almost immaterial. This also puts the doctrinal question of
+Sec.~\ref{sec:time_domain} in its place: the entire CAA-over-FAA
+margin, median $4.8$\,m over the sampled entry set, is smaller
+than the cost of half a second of hesitation on the pull. What
+recovery training should emphasize is not which sequence to fly,
+it is how promptly and how attentively the pull is flown.
 
 
 \FloatBarrier
