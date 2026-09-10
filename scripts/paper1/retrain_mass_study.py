@@ -376,7 +376,7 @@ def make_dumbbell(rows, out_stem: Path) -> None:
         fig, axs = plt.subplots(nrows, ncols, squeeze=False,
                                 figsize=(5.4 * ncols, 4.2 * nrows))
         flat = axs.ravel()
-        for ax, (mf, cg_aft, sub) in zip(flat, cases):
+        for pidx, (ax, (mf, cg_aft, sub)) in enumerate(zip(flat, cases)):
             y = np.arange(len(sub))
             ax.axvline(0.0, color="0.4", lw=1.0, zorder=1)
             for k, r in enumerate(sub):
@@ -395,7 +395,9 @@ def make_dumbbell(rows, out_stem: Path) -> None:
                               for r in sub], fontsize=8)
             ax.set_xlabel(r"excess altitude loss over $\pi_{M_1}$ (m)")
             floor = [abs(r["h_pi_M1"]) for r in sub]
-            ax.set_title(f"{case_label(mf, cg_aft)}  ({715.3152 * mf:.0f} kg)\n"
+            # Panel letter, so the manuscript can address each case.
+            ax.set_title(f"({chr(ord('A') + pidx)})  "
+                         f"{case_label(mf, cg_aft)}  ({715.3152 * mf:.0f} kg)\n"
                          f"retrained policy loses {min(floor):.0f} to "
                          f"{max(floor):.0f} m", fontsize=10)
             ax.grid(alpha=0.3, axis="x")
@@ -415,8 +417,8 @@ def make_dumbbell(rows, out_stem: Path) -> None:
         fig.suptitle(r"Excess of the nominal policy over one retrained "
                      r"for the same aircraft", fontsize=12)
         fig.tight_layout()
-        from symmetric_stall.procedures import stamp_engine
-        stamp_engine(fig, engine_tau=ENGINE_TAU, elevator_tau=ELEVATOR_TAU)
+        # No provenance stamp: the manuscript figure states its plant in
+        # the caption.
         for ext in ("png", "pdf"):
             fig.savefig(f"{out_stem}.{ext}", dpi=300, bbox_inches="tight")
         plt.close(fig)

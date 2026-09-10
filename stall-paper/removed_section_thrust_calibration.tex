@@ -1,0 +1,55 @@
+\subsection{Sensitivity to the Thrust Calibration}
+\label{sec:thrust_sensitivity}
+
+One model parameter is not measured but assumed, and it deserves its
+own accounting because it is the most consequential of the study. The
+Riley tables supply the aerodynamics; they do not supply the map from
+throttle setting to thrust. As stated in Sec.~\ref{sec:riley_aero},
+$K_t$ is calibrated by requiring that full throttle sustain level
+cruise at $V_{max} = 2V_s$, giving $K_t \approx 1151$\,N. Measured
+against the $108$\,hp continuous rating that Riley does document
+(Table~\ref{tab:aa1_params}), that calibration implies a propulsive
+efficiency of $\eta \approx 0.90$ at $V_{max}$. The propeller of this
+airframe is a two-blade fixed-pitch unit turning at $2600$\,rpm
+(Table~\ref{tab:aa1_params}), which at $V_{max}$ places it at an advance
+ratio $J = V/(nD) \approx 0.81$. Full-scale tests of two-blade
+fixed-pitch propellers report, at that advance ratio, an efficiency near
+$0.76$ at a representative fixed blade angle, rising to $\approx 0.85$
+only along the envelope obtained by \emph{re-pitching} the blade for
+each condition --- an option a fixed-pitch installation does not have
+--- with an absolute peak of $\approx 0.87$ reached at
+$J \approx 1.25$--$1.55$ \cite{HartmanBiermann1938}. The calibration
+therefore assumes a propulsive efficiency above the peak that propeller
+class attains anywhere, and roughly $18\%$ above what a fixed blade
+angle delivers at the relevant operating point.
+% Cifras tomadas de las cartas de NACA-TR-640 para la helice 5868-9
+% (2 palas, Clark Y). Comparacion de CLASE, no de modelo: esas helices son
+% de 10 ft y perfiles de 1938; la de la AA-1 es de 5.9 ft. Lo que se compara
+% es el orden de magnitud del rendimiento alcanzable, no un valor puntual.
+
+The consequence is not marginal. Flying the \emph{nominal} policy on
+plants whose engine delivers $\eta \in [0.75, 0.95]$ of the modelled
+thrust --- the pilot commands the same throttle fraction, the airframe
+receives less --- moves the altitude loss at the canonical entry from
+$6.1$ to $15.8$\,m, a factor of $2.6$. For scale, the two model
+corrections that this section's aerodynamics required move the same
+number by $0.4$ and $0.9$\,m. The thrust calibration dominates every
+other uncertainty in the model by an order of magnitude, and no choice
+of $\eta$ can be defended from the wind-tunnel data alone.
+
+What survives the uncertainty is the comparison the paper is actually
+about. Across the same range, the ordering of the recovery strategies
+never changes,
+\begin{equation*}
+    \text{DP optimum} \;>\; \text{CAA} \;>\; \text{FAA}
+    \;>\; \text{power-delayed},
+\end{equation*}
+and the margin of the optimum over the CAA doctrine stays between
+$7.9$ and $9.2$\,m while the absolute losses swing by $9.7$\,m. The
+advantage of optimal control over procedural flying is therefore a
+property of the control law, not an artifact of how the propeller was
+calibrated; the absolute altitude figures should be read as conditional
+on $\eta \approx 0.90$, and rescaled accordingly for an airframe whose
+propulsive efficiency is known.
+
+

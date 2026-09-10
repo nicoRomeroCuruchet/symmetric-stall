@@ -1347,235 +1347,176 @@ beyond the certificated weight, is removed by one pre-flight
 scalar.
 
 
+\subsection{Retraining for the Perturbed Aircraft}
+\label{sec:retrain}
+
+The matrix measures the nominal policy's degradation; it cannot
+say how much of that degradation is avoidable, because it never
+computes the policy each perturbed aircraft deserves. This
+subsection does. The policy is re-solved, at full grid, for four
+loadings: mass $\pm 10\%$, the CG $10\%$ of chord forward, and the
+combined stress case, $+15\%$ mass with the forward CG. Three arms
+fly the same aircraft from the same true airspeed: the nominal
+policy as-is (raw), the nominal policy with its stall-speed
+normalization corrected from the pre-flight weight (rescaled), and
+the re-solved policy $\pi_{M_1}$, the floor. Entries are deep,
+$6$ to $18^\circ$ past the boundary, so every cell is a recovery
+the policy must work for.
+
+Unlike the matrix of Fig.~\ref{fig:robustness_matrix}, which
+measures the perturbed aircraft against the nominal one and so
+mixes the physics of the perturbation into every cell, here every
+comparison is on the same aircraft: the physics cancels, and what
+remains is policy error alone. That is why
+Fig.~\ref{fig:robustness_matrix} reads in metres and
+Fig.~\ref{fig:retrain_mass} in centimetres.
+Figure~\ref{fig:retrain_mass} reports the rescaled arm against its
+floor. The raw arm degrades worst where the entry is fast and the
+aircraft heavy: up to $+14.1\%$ of the retrained loss at $+10\%$
+mass (panel~B), $+18.6\%$ at the combined case (panel~D).
+Rescaling closes nearly all
+of it: no cell exceeds $+2.3\%$. The CG case (panel~C) needs no
+correction
+at all: the nominal policy flies within $0.3\%$ of its retrained
+floor, though nothing in the observation carries the CG,
+consistent with the switching surface being a property of the
+aerodynamic tables rather than of the trim.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{img/fig_retrain_mass.pdf}
+    \caption{Excess altitude loss of the nominal policy, stall-speed
+    normalization rescaled from the pre-flight weight, over the
+    policy re-solved for that aircraft ($\pi_{M_1}$), at nine deep
+    entries per loading: (A) $-10\%$ mass, (B) $+10\%$ mass,
+    (C) CG $10\%$ of chord forward, (D) $+15\%$ mass with the
+    forward CG. In parentheses, next to each entry: the altitude
+    lost by the retrained policy $\pi_{M_1}$ there, the optimum for
+    that aircraft and the zero of the axis.}
+    \label{fig:retrain_mass}
+\end{figure}
+
+Two readings of the figure need stating. The panel titles fall
+with the mass, $9$ to $27$\,m in panel~A against $16$ to $39$\,m
+in panel~B:
+a lighter aircraft carries less energy into the dive and its
+pullout is cheaper, so losing less at lower weight is the physics,
+not an artifact. And several cells in panels A and C fall below
+zero, a non-optimal policy beating the optimum, which \emph{is}
+impossible: $\pi_{M_1}$'s optimality holds on the discretized
+process, while the closed-loop evaluation adds the rollout's
+integration step, the interpolated action blend, and the stopping
+rule, none of which the Bellman recursion sees. The largest
+negative cell is $-0.23$\,m, and that value bounds the evaluation
+noise of the whole figure: every excess, positive or negative,
+carries an uncertainty of that order, so a diamond within
+$\approx 0.2$\,m of zero means the two policies fly the same
+recovery, and its sign carries no information.
+
+Retraining, several GPU-hours per policy, buys $0.1$ to $0.4$\,m
+on recoveries costing $9$ to $46$\,m. The objection that a
+tabulated optimum holds only at the point it was solved for is
+answered quantitatively: the whole recoverable gap is one
+pre-flight scalar, and the remainder is centimetres.
+
+
+
 \subsection{Sensitivity to Pilot Execution Errors}
 \label{sec:pilot_sensitivity}
 
-The preceding subsections established what the optimum is and that it
-survives the parameter variations of a working aircraft. What remains
-is the pilot. A human departs from the optimal sequence along three
-axes, and this subsection places all three on a common scale so their
-magnitudes can be compared: applying power late, switching from
-nose-down to the pull late, and pulling with less than the optimal
-deflection. Every experiment perturbs the closed-loop optimal policy
-directly, one axis at a time, from the canonical entry.
-
-The power axis is the one already introduced in
-Sec.~\ref{sec:time_domain}, where it served to separate the certified
-procedures; measured as an execution error rather than a doctrine, it
-is the mildest and the most regular of the three.
-Figure~\ref{fig:power_delay} sweeps it continuously: with the optimal
-elevator schedule held fixed and only the throttle channel delayed by
-$\tau$, the loss grows monotonically and very nearly linearly, at
-$\approx 7.7$\,m per second of delay. The sweep's zero-delay point now
-coincides with the reference optimum to within $0.01$\,m: the
-throttle-averaging artifact that previously separated them, an
-intermediate throttle returned by the blend near the absorbing
-boundary, is removed once the policy of the terminal cells is filled
-from their nearest interior neighbour rather than left at its
-initialisation. The rate is remarkably insensitive
-to where the aircraft starts: repeating the sweep at all nine
-initial conditions yields parallel curves, and a $\tau = 2$\,s delay
-costs between $13.1$ and $16.0$\,m of excess over each entry's own
-optimum across the whole grid.
-A pilot who is half a second slow on the throttle pays $3.9$\,m,
-wherever the stall began.
+The preceding subsections established what the optimum is and that
+it survives the parameter variations of a working aircraft. What
+remains is the pilot. A human departs from the optimal sequence
+along three axes: applying power late, switching from nose-down to
+the pull late, and pulling with the wrong deflection.
+Figure~\ref{fig:pilot_axes} puts the three on one scale. The axes
+map onto the phases of the maneuver: the power and switch errors,
+panels~(a) and~(b), live at its start, the power command at entry
+and the transition that ends the nose-down push; the pull error,
+panel~(c), belongs to the phase that follows, once the wing has
+unstalled and the flow has reattached. Every
+experiment perturbs the closed-loop optimal policy directly, one
+axis at a time, from the canonical entry.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.48\textwidth]{img/fig_procedures.pdf}
-    \caption{The power axis: altitude loss vs.\ power-application
-    delay $\tau$ at the canonical initial condition
-    ($\alpha_0 = 20^\circ$, $V_0 = 0.95\,V_s$), with the optimal
-    elevator schedule held fixed, for the instantaneous and
-    $2$\,s-ramp power models. The dotted line marks the DP optimum
-    ($\tau = 0$, CAA-like simultaneous power); the diamond, the gated
-    variant (idealized FAA logic); the square, Gratton's power-delayed
-    protocol ($\tau = 2$\,s delay plus $2$\,s ramp). The loss grows
-    monotonically, by $\approx 7.7$\,m per second of delay: the
-    linear reference against which the two pitch axes of
-    Fig.~\ref{fig:pilot_sensitivity} should be read.}
-    \label{fig:power_delay}
+    \includegraphics[width=\textwidth]{img/fig_pilot_axes.pdf}
+    \caption{The three pilot-error axes at the canonical entry;
+    every trajectory flies the optimal maneuver except for the one
+    perturbed channel, and the dotted line is the unperturbed
+    optimum. (a)~Power delayed by $\tau$ with the optimal elevator
+    schedule held fixed, the throttle slammed or advanced over
+    $2$\,s.
+    (b)~The nose-down command held $\tau_s$ beyond the policy's
+    switch instant, with loss multipliers annotated. (c)~The pull
+    flown in its two modes on one signed deflection scale (axis
+    inverted so pulling harder reads rightward): closed loop, the
+    policy with its pull commands clipped at $\delta_e$; open loop,
+    the same deflection held constant after the switch. Dashed
+    vertical: the equivalent control; shaded: held pulls that
+    re-stall the wing.}
+    \label{fig:pilot_axes}
 \end{figure}
 
-The two pitch axes are measured the same way. In the first, the policy
-is followed until its nose-down $\to$ pull-up
-transition, the nose-down command is then held for $\tau_s$ additional
-seconds, and the policy resumes. The second axis, the pull itself,
-is flown in two modes that bracket how a human might execute it:
-\emph{closed loop}, where the policy is followed but its pull
-commands are capped at a maximum deflection
-$|\delta_e^{pull}| \in [5^\circ, 25^\circ]$ (a pilot who limits
-authority but keeps regulating on the aircraft's response); and
-\emph{open loop}, where after the switch a constant deflection
-$-|\delta_e^{pull}|$ is simply held, with no feedback on the angle of
-attack (a pilot who hauls and freezes). Both interventions leave the
-nose-down phase untouched: they act from the switch instant
-$t^\ast \approx 0.24$\,s marked across the panels of
-Fig.~\ref{fig:4dof_trajectory_riley}: the first experiment
-perturbs the \emph{timing} of that transition, the second the
-\emph{execution} of the pull that follows it.
+The power axis, panel~(a), is the mildest and the most regular:
+the loss grows monotonically, near linearly, at
+$\approx 10$\,m per second of delay. The rate barely depends on
+where the stall began: at all nine entries a $\tau = 2$\,s delay
+costs $20.7$ to $21.7$\,m over that entry's own optimum. A pilot
+half a second slow on the throttle pays $5.8$\,m, wherever the
+stall began.
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=\textwidth]{img/fig_pilot_sensitivity.png}
-    \caption{Sensitivity of the recovery to pilot execution errors at
-    the canonical IC. (a)~Delaying the nose-down $\to$ pull-up switch
-    by $\tau_s$, with the loss multipliers annotated. (b)~The pull
-    phase flown in its two modes, on one signed deflection scale
-    (axis inverted so that pulling harder reads rightward): closed
-    loop (blue), the policy with its pull commands clipped at
-    $\delta_e$; open loop (red), the same deflection held constant
-    after the switch. Dotted line: the optimal loss; dashed vertical:
-    the equivalent control $\bar{\delta}_e \approx -5^\circ$; shaded:
-    the held pulls that re-stall the wing ($\alpha > \alpha_s$). Note
-    that the abscissa means a different thing for each curve: the
-    deflection actually flown for the open loop, only a ceiling for the
-    closed loop.}
-    \label{fig:pilot_sensitivity}
-\end{figure}
+The switch axis, panel~(b), is the steepest of the study. The
+policy is followed until its nose-down $\to$ pull-up transition at
+$t^\ast = 0.27$\,s, the nose-down command is held $\tau_s$ longer,
+and the policy resumes. Holding it $0.5$\,s multiplies the loss by
+$1.4$; a single second multiplies it by $2.6$ ($-51.5$\,m at the
+canonical entry, $-42$ to $-57$\,m across the grid). The mechanism
+compounds: every instant past the switch is spent at full power in
+a steepening dive, so the delay converts to altitude
+superlinearly, unlike the fixed rate of the power axis.
 
-Figure~\ref{fig:pilot_sensitivity} shows that the two pitch axes could
-hardly be more asymmetric. The switch delay is the steepest axis of
-the entire study: at the canonical IC, holding the nose down
-$0.25$\,s too long costs $3.7$\,m, $0.5$\,s multiplies the loss by
-$3.0$, and a single second multiplies it by $6.3$ ($-50$\,m); across
-the IC grid, one held second lands between $-39$ and $-54$\,m. The
-mechanism compounds: every instant spent past the switch point is
-spent at full power in a steepening dive, so the delay converts to
-altitude superlinearly, unlike the power axis above, whose cost is
-a fixed $\approx 7.7$\,m per second.
+The pull axis, panel~(c), splits into two regimes, and the
+contrast between them is the result. Flown \emph{closed loop},
+capping the pull anywhere from $-25$ to $-10^\circ$ reproduces the
+optimal loss to within $0.01$\,m: the equivalent control of the
+sliding arc averages only $\approx -5^\circ$
+(Sec.~\ref{sec:time_domain}), so any cap above it leaves enough
+authority, the chattering simply saturating at the cap. Only at
+$-5^\circ$, where the ceiling reaches the equivalent control
+itself, does the constraint bite ($1.8$\,m). Flown \emph{open
+loop}, the same deflections are catastrophic. The held-pull curve
+is a sharp asymmetric valley with its minimum exactly at
+$\delta_e = -5^\circ$, an independent confirmation of the
+equivalent-control value. At $-7.5^\circ$ and beyond the constant
+pull re-stalls the wing ($\alpha_{max}$ grows from $17.2$ to
+$35.2^\circ$), and from $-12.5^\circ$ the aircraft is still
+stalled when the horizon expires, $97.8$\,m down at full
+deflection. The
+shallow flank fails by the opposite mechanism: $-2.5^\circ$ held
+loses $33.3$\,m with no re-stall at all, through insufficient lift
+and a level-off that drags on. The identical deflections that are
+harmless as a closed-loop cap re-stall the wing when held: what
+matters is not how hard the pull is, but whether it is flown on
+the angle of attack.
 
-The pull axis, by contrast, splits into two regimes that panel~(b)
-overlays on the same deflection scale, and the contrast between them
-\emph{is} the result. Flown closed loop, the pull is remarkably
-forgiving: capping the pull anywhere between $-25^\circ$ and
-$-10^\circ$ changes the loss by less than the $\pm 0.3$\,m execution
-band; the equivalent control that holds the sliding arc averages
-only $\approx -5^\circ$ (Sec.~\ref{sec:time_domain}), so any cap above it
-leaves enough authority, with the chattering simply saturating at the
-cap. The flatness of that curve is a direct reading of how little pull
-the policy actually asks for. Its demand averages $-4.99^\circ$ and
-exceeds $5^\circ$ over just $5.7\%$ of the pull phase, the large
-deflections being brief chattering spikes of the sliding mode that peak
-at $-19.69^\circ$. A cap at $-20^\circ$ or beyond therefore never binds
-and reproduces the optimum exactly; caps of $-15^\circ$ and $-10^\circ$
-clip only those spikes; and only at $-5^\circ$, where the ceiling
-reaches the equivalent control itself, does the constraint bite. Nor does any clipped case re-enter the stall in a way the
-uncapped policy avoids: across every cap of panel~(b) the angle of
-attack peaks at the same $14.4^\circ$ the optimum itself reaches
-(Sec.~\ref{sec:time_domain}), marginally past $\alpha_s$ and identical
-across caps, because the clip bounds only how hard the pilot may pull,
-while the release that the regulation commands whenever $\alpha$
-approaches the boundary passes through it untouched. The intermediate caps in fact \emph{edge out} the uncapped
-execution, by up to $0.17$\,m. No optimality is violated: what is
-flown is the action blend, faithful to the Bellman valuation but not
-identical to it (Sec.~\ref{sec:policy_structure}), and in the final
-approach to level flight its vertex mix draws a spurious pull
-component from the terminal cells in which the recovery problem is
-not posed (Sec.~\ref{sec:time_domain}). Filling those cells from their
-nearest interior neighbour removes most of that component --- the same
-correction that closed the throttle artifact above --- and what
-survives is small: the mean pull command after the switch is
-$-4.89^\circ$ uncapped against the $\approx -5^\circ$ equivalent
-control. A cap trims the remainder ($-4.82^\circ$ when capped at
-$10^\circ$), the level-off closes $0.74$\,s sooner, and the gain
-stays inside the same $\pm 0.3$\,m band that bounds every
-execution-level effect in this paper. Flown \emph{open loop}, the
-same deflections are catastrophic:
-the held-pull curve is a sharp, asymmetric valley whose minimum sits
-exactly at $\delta_e = -5^\circ$ (an independent confirmation of
-the equivalent-control value), and at and beyond $-7.5^\circ$ the constant
-pull drives the angle of attack back across $\alpha_s$
-(secondary stall, shaded region: $\alpha_{max}$ grows monotonically
-from $17.0^\circ$ to $35.4^\circ$) with losses escalating to
-$-127$\,m at full deflection, the endpoint of the continuum whose
-scripted counterparts are the open-loop full-pull entries of
-Table~\ref{tab:maneuvers} ($-130$ to $-132$\,m at this entry, flown
-with their own power schedules rather than the policy's). The valley's two flanks fail by opposite mechanisms:
-$-5^\circ$ held merely grazes the boundary
-($\alpha_{max} = 14.1^\circ$), the equivalent control held
-by hand, whereas $-2.5^\circ$ nearly triples the optimal loss ($-20.97$\,m) with no
-re-stall at all, through insufficient lift and a level-off that
-drags on. Re-stall is therefore confined to a single branch and a
-single direction: deflection beyond $-7.5^\circ$, \emph{sustained}.
-The identical deflections that are harmless as a
-closed-loop cap re-stall the wing when held: what matters is not how
-hard the pull is, but whether it is flown on the angle of attack.
-
-\input{tables/table_maneuvers}
-
-The operational hierarchy of the three error axes is then: the
-\emph{promptness} of the pull, once the wing unstalls, dominates
-everything (superlinear); power timing comes second (linear,
-$\approx 7.7$\,m/s); and the pull \emph{vigor} barely matters in closed
-loop while being catastrophic in open loop. For training emphasis the
-implication is direct: initiate the pull without hesitation and fly
-it on the stall boundary; the exact deflection used to get there
-is almost immaterial. This hierarchy also puts the doctrinal question
-of Sec.~\ref{sec:time_domain} in its operational place: the entire
-CAA-over-FAA margin (median $1.3$\,m over the certified domain) is
-smaller than the cost of a quarter-second of hesitation on the pull.
-The authorities' disagreement is real and its resolution is now
-certified. But what recovery training should emphasize is not
+The operational hierarchy is then: the \emph{promptness} of the
+pull dominates everything (superlinear); power timing comes second
+(linear, $\approx 10$\,m/s); and the pull \emph{vigor} is free in
+closed loop and catastrophic in open loop. For training the
+implication is direct: initiate the pull without hesitation and
+fly it on the stall boundary; the exact deflection used to get
+there is almost immaterial. The hierarchy also puts the doctrinal
+question of Sec.~\ref{sec:time_domain} in its place: the entire
+CAA-over-FAA margin, median $4.8$\,m over the sampled entry set,
+is smaller than the cost of half a second of hesitation on the
+pull. The authorities' disagreement is real and its resolution is
+now certified; but what recovery training should emphasize is not
 which sequence to fly, it is how promptly and how attentively the
 pull is flown.
 
+
 \FloatBarrier
-\subsection{Sensitivity to the Thrust Calibration}
-\label{sec:thrust_sensitivity}
-
-One model parameter is not measured but assumed, and it deserves its
-own accounting because it is the most consequential of the study. The
-Riley tables supply the aerodynamics; they do not supply the map from
-throttle setting to thrust. As stated in Sec.~\ref{sec:riley_aero},
-$K_t$ is calibrated by requiring that full throttle sustain level
-cruise at $V_{max} = 2V_s$, giving $K_t \approx 1151$\,N. Measured
-against the $108$\,hp continuous rating that Riley does document
-(Table~\ref{tab:aa1_params}), that calibration implies a propulsive
-efficiency of $\eta \approx 0.90$ at $V_{max}$. The propeller of this
-airframe is a two-blade fixed-pitch unit turning at $2600$\,rpm
-(Table~\ref{tab:aa1_params}), which at $V_{max}$ places it at an advance
-ratio $J = V/(nD) \approx 0.81$. Full-scale tests of two-blade
-fixed-pitch propellers report, at that advance ratio, an efficiency near
-$0.76$ at a representative fixed blade angle, rising to $\approx 0.85$
-only along the envelope obtained by \emph{re-pitching} the blade for
-each condition --- an option a fixed-pitch installation does not have
---- with an absolute peak of $\approx 0.87$ reached at
-$J \approx 1.25$--$1.55$ \cite{HartmanBiermann1938}. The calibration
-therefore assumes a propulsive efficiency above the peak that propeller
-class attains anywhere, and roughly $18\%$ above what a fixed blade
-angle delivers at the relevant operating point.
-% Cifras tomadas de las cartas de NACA-TR-640 para la helice 5868-9
-% (2 palas, Clark Y). Comparacion de CLASE, no de modelo: esas helices son
-% de 10 ft y perfiles de 1938; la de la AA-1 es de 5.9 ft. Lo que se compara
-% es el orden de magnitud del rendimiento alcanzable, no un valor puntual.
-
-The consequence is not marginal. Flying the \emph{nominal} policy on
-plants whose engine delivers $\eta \in [0.75, 0.95]$ of the modelled
-thrust --- the pilot commands the same throttle fraction, the airframe
-receives less --- moves the altitude loss at the canonical entry from
-$6.1$ to $15.8$\,m, a factor of $2.6$. For scale, the two model
-corrections that this section's aerodynamics required move the same
-number by $0.4$ and $0.9$\,m. The thrust calibration dominates every
-other uncertainty in the model by an order of magnitude, and no choice
-of $\eta$ can be defended from the wind-tunnel data alone.
-
-What survives the uncertainty is the comparison the paper is actually
-about. Across the same range, the ordering of the recovery strategies
-never changes,
-\begin{equation*}
-    \text{DP optimum} \;>\; \text{CAA} \;>\; \text{FAA}
-    \;>\; \text{power-delayed},
-\end{equation*}
-and the margin of the optimum over the CAA doctrine stays between
-$7.9$ and $9.2$\,m while the absolute losses swing by $9.7$\,m. The
-advantage of optimal control over procedural flying is therefore a
-property of the control law, not an artifact of how the propeller was
-calibrated; the absolute altitude figures should be read as conditional
-on $\eta \approx 0.90$, and rescaled accordingly for an airframe whose
-propulsive efficiency is known.
-
-
 \section{Conclusions}
 
 Exact dynamic programming for aircraft upset recovery has been
@@ -1797,8 +1738,6 @@ Stall angle of attack & $\alpha_s$ & $14$ & deg \\
 \multicolumn{4}{c}{\textit{Derived}} \\
 \midrule
 Stall speed, $V_s = \sqrt{2mg/(\rho S C_{L_{stall}})}$ & $V_s$ & $31.58$ & m/s \\
-Calibration cruise speed, $2V_s$ & $V_{max}$ & $63.16$ & m/s \\
-Thrust gain, $T = K_t\,\delta_t$ & $K_t$ & $1151$ & N \\
 \bottomrule
 \end{tabular}
 \end{table}

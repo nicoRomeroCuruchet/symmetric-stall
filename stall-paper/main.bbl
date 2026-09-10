@@ -1,4 +1,4 @@
-\begin{thebibliography}{24}
+\begin{thebibliography}{23}
 \newcommand{\enquote}[1]{``#1''}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
@@ -144,13 +144,5 @@ Utkin, V.~I., \enquote{Variable structure systems with sliding modes,}
 \bibitem[{Bryson and Ho(1975)}]{BrysonHo1975}
 Bryson, A.~E., and Ho, Y.-C., \emph{Applied Optimal Control: Optimization,
   Estimation, and Control}, Hemisphere Publishing, Washington, DC, 1975.
-
-\bibitem[{Hartman and Biermann(1938)}]{HartmanBiermann1938}
-Hartman, E.~P., and Biermann, D., \enquote{The Aerodynamic Characteristics of
-  Full-Scale Propellers Having 2, 3, and 4 Blades of {C}lark {Y} and {R.A.F.} 6
-  Airfoil Sections,} Tech. Rep. NACA-TR-640, National Advisory Committee for
-  Aeronautics, Washington, DC, 1938.
-\newblock \urlprefix\url{https://ntrs.nasa.gov/citations/19930091715},
-  aerodynamic tests of seven full-scale 10-ft-diameter propellers.
 
 \end{thebibliography}
