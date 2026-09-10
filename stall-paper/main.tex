@@ -988,13 +988,12 @@ Every closed-loop evaluation reported in this
 section executes the policy through the barycentric action blend: at
 an off-grid state, the commanded action is the convex combination of
 the argmax actions of the $16$ surrounding vertices under the weights
-of Eq.~\eqref{baricentric_eq}. Section~\ref{sec:time_domain} shows
-why the blend is the solution concept the converged policy requires
-and not a smoothing: the optimal law is bang-bang on a switching
-surface, and since the plant is affine in each control channel (the
-elevator enters $C_L$ and $C_m$ linearly, the throttle through
-$C_T$, in which the tables are interpolated linearly), the blend
-realizes the Filippov solution \cite{Filippov1988} on that surface.
+of Eq.~\eqref{baricentric_eq}. Section~\ref{sec:time_domain},
+where the closed-loop trajectory is flown and the policy's
+switching surface becomes visible, shows why the blend is the
+solution concept the converged policy requires and not a
+smoothing: on that surface the blend realizes the Filippov
+solution \cite{Filippov1988}.
 Evaluated greedily instead (re-deriving the $\arg\max$ at the
 continuous state, which discards the combination), the policy
 chatters between the bang-bang extremes and the pitch-rate
@@ -1174,10 +1173,7 @@ with $K_\alpha = 10$, $K_q = 2$). Power ramps to full over $2$\,s
 from $t = 0$ (CAA) or from the unstall event (FAA).
 Pitch technique and pull authority are shared across the three
 maneuvers by construction, so the trajectories differ only in when
-power is applied. The entry speed is $0.85\,V_s$ rather than the
-$0.95\,V_s$ used before the propeller was calibrated: under Riley's
-thrust the aeroplane recovers from $0.95\,V_s$ without leaving
-controlled flight.
+power is applied.
 
 \begin{figure}[H]
     \centering
@@ -1212,18 +1208,33 @@ the remainder of the pullout ($\bar{\alpha} = 13.3^\circ$; the
 arrest statistic of Table~\ref{tab:closed_loop_alpha}, averaged
 only while the climb is being established, puts the same floor at
 $13.9^\circ$). Third, the level-off. The chattering elevator of
-panel~(e) is the discrete action set's approximation of the
-intermediate \textit{equivalent control} \cite{Utkin1977} that
-holds the state on the constraint surface; its time average is
-$-6.4^\circ$. This is the classical signature of a singular arc
-realized by a bang-bang policy \cite{BrysonHo1975}. On the arc the
-blend of Sec.~\ref{sec:4dof_solver} realizes the equivalent control
-rather than approximating it: the elevator-channel residual is
-$0.6\%$ of the field magnitude at the canonical entry, and the
-cross-channel and quadratic-drag corrections stay inside the
-$\pm 0.3$\,m execution band. Sec.~\ref{sec:pilot_sensitivity}
-confirms the equivalent control independently. Only the elevator is
-at stake: the throttle commands full power almost everywhere. The total loss is $19.8$\,m, and half of it is
+panel~(e) is the bang-bang policy meeting its own mathematics.
+The closed loop $\dot{x} = f(x, \pi(x))$ has a discontinuous
+right-hand side (the elevator maps of
+Fig.~\ref{fig:4dof_policy_riley}, full nose-up against full
+nose-down across the white curve), and on the arc the
+discontinuity attracts: the push above the boundary drives
+$\alpha$ down, the pull below drives it up. Both fields point into
+the surface, and no classical solution exists there. Filippov
+\cite{Filippov1988} repairs this: on the surface the solution may
+follow any convex combination of the two fields; the sliding one
+cancels the normal component, and it is the limit of chattering at
+infinite switching frequency. Because the plant is affine in the
+elevator, combining fields equals combining actions: the
+\textit{equivalent control} \cite{Utkin1977}, $\approx -5^\circ$,
+an action outside the discrete set, and exactly what the blend of
+Sec.~\ref{sec:4dof_solver} commands near the surface, where its
+$16$ vertices mix push and pull; a mixture that pulls too hard
+raises $\alpha$, shifts the query toward push vertices, and
+corrects, so the closed loop finds the sliding weight by itself.
+Up to the one non-affine term, the quadratic drag (a $0.6\%$
+residual, under the $\pm 0.3$\,m band), the blend realizes the
+Filippov solution rather than approximating it. Panel~(e) shows
+that solution at finite frequency, mean deflection $-6.4^\circ$
+over the arc, the classical signature of a singular arc
+\cite{BrysonHo1975}; Sec.~\ref{sec:pilot_sensitivity} measures the
+equivalent control independently. Only the elevator is at stake:
+the throttle commands full power almost everywhere. The total loss is $19.8$\,m, and half of it is
 the engine's: the same policy flown on an instantaneous propeller
 loses $9.4$\,m; the optimum is simply the arm that commands power
 earliest. The scripted procedures differ from the
