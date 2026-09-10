@@ -1535,22 +1535,24 @@ property of the optimum: nothing in the formulation names a
 procedure, yet the converged policy commands full power essentially
 everywhere and switches from nose-down to pull on a surface pinned to
 the stall angle. The resulting ordering, optimum $\le$ CAA $\le$
-FAA $\le$ power-delayed, is certified per entry rather than on
-average: it holds without a single exception over the $2300$ valid
-nodes of the entry planes and over $1000$ Latin-hypercube samples of
-the full four-dimensional stalled-entry set, with a median CAA
-advantage of $1.32$\,m and a narrowest of $0.05$\,m.
+FAA, is certified per entry rather than on average: flown by an
+identical scripted pilot through the engine lag, the CAA sequence
+loses less altitude than the FAA sequence at $100.0\%$ of $1000$
+Latin-hypercube samples of the four-dimensional stalled-entry set,
+with a median advantage of $4.8$\,m, shrinking to $0.2$\,m at the
+closest entry.
 
-The exact solution also separates what flight test cannot. Of the
-altitude either certified sequence concedes to the optimum, most is
-the engine: reaching full power through a $2$\,s ramp costs
-$\approx 4$--$8$\,m at every entry, a floor no procedure on this aircraft can
-avoid, while the doctrine itself costs a median of $1.3$\,m and at
-most $4.2$\,m, largest exactly where altitude margin is scarcest; a deliberate $2$\,s pause
-dwarfs both at $13$--$23$\,m. Under matched power-ramp modeling the
-simulated CAA-to-power-delayed ratio at the natural stall break is
-$0.61$--$0.62$, in close agreement with the $\approx 0.6$ implied by
-the flight-test campaign of Gratton et al.\ \cite{Gratton2014}
+The exact solution also separates what flight test cannot. The
+engine dominates: half of the optimum's own loss at the canonical
+entry is thrust commanded but not yet delivered ($19.8$\,m against
+$9.4$\,m on an instantaneous propeller), and either certified
+procedure gives up a further median $13.5$ to $18.2$\,m to the
+optimum through later, slower power, not through pitch flying. The
+doctrine itself, CAA over FAA, is worth a median $4.8$\,m, milder
+than the two-thirds ratio of the flight-test campaign of Gratton
+et al.\ \cite{Gratton2014} because the scripted FAA pilot restores
+power at the instant of unstall; any recognition delay widens the
+gap.
 
 The optimum is moreover flyable, because its structure is expressible
 in the language pilots already use. The nose-down-to-pull transition
@@ -1561,13 +1563,13 @@ power at once, push until the wing unstalls, then pull to the edge of
 the usable lift and hold it there.
 
 The sensitivity study then relocates the operational emphasis. The
-promptness of that pull dominates everything, converting hesitation
-to altitude superlinearly at $24$--$42$\,m per held second; power
-timing is linear at $\approx 7.7$\,m per second; and the vigor of the
+promptness of that pull dominates everything, multiplying the loss
+by $2.6$ per held second; power
+timing is linear at $\approx 10$\,m per second; and the vigor of the
 pull barely matters while it is flown on the angle of attack, yet
 becomes catastrophic the moment it is not. The entire doctrinal
-margin the authorities disagree over is worth less altitude than a
-quarter-second of hesitation on the pull.
+margin the authorities disagree over is worth less altitude than
+half a second of hesitation on the pull.
 
 The nominal policy is also robust to everything an operator cannot
 control: flown unchanged across the aircraft's achievable loading
@@ -1575,7 +1577,10 @@ envelope it never departs controlled flight, the switching surface
 survives the entire longitudinal CG range, and the heavy-overload
 failures are informational rather than aerodynamic: completing the
 level-off requires only that the stall speed used for normalization
-reflect the weight of the day, a single pre-flight scalar.
+reflect the weight of the day, a single pre-flight scalar. Nor is
+the optimum a point solution: re-solving the policy for the
+perturbed aircraft buys $0.1$ to $0.4$\,m on recoveries costing
+$9$ to $46$\,m; the whole recoverable gap is that same scalar.
 
 These claims are deliberately scoped: one airframe, one aerodynamic
 model, and the symmetric regime in which the certified procedures
